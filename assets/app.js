@@ -10,7 +10,14 @@ function create(tag, text, className) { const el = document.createElement(tag); 
 function fmt(n) { return Number(n).toLocaleString('en-US'); }
 function size(n) { if(n<1024) return fmt(n)+' B'; if(n<1048576) return (n/1024).toFixed(1)+' KiB'; return (n/1048576).toFixed(2)+' MiB'; }
 function status(t) { $('status').textContent = t; }
-function urlFor(c, path) { return ARCHIVE + encodeURIComponent(FILES[c]) + '/' + path.split('/').map(encodeURIComponent).join('/'); }
+function urlFor(c, path) {
+  // Internet Archive expects the full internal 7z member path as one URL component.
+  const member = encodeURIComponent(path).replace(
+    /[!'()*]/g,
+    ch => '%' + ch.charCodeAt(0).toString(16).toUpperCase()
+  );
+  return ARCHIVE + encodeURIComponent(FILES[c]) + '/' + member;
+}
 async function json(path) { const resp = await fetch(root + path); if(!resp.ok) throw new Error(`Failed to load ${path} (HTTP ${resp.status})`); return await resp.json(); }
 async function record(id) { const chunk = Math.floor(id/manifest.record_chunk); if(!recordCache.has(chunk)) recordCache.set(chunk,json('records/'+String(chunk).padStart(4,'0')+'.json')); return (await recordCache.get(chunk))[id%manifest.record_chunk]; }
 async function lookup(mode, hash) { const key = mode+':'+hash.substring(0,2); if(!hashCache.has(key)) hashCache.set(key, json(mode+'/'+hash.slice(0,2)+'.json').catch(e=>{if(String(e).includes('404')) return {}; throw e;})); return (await hashCache.get(key))[hash]; }
