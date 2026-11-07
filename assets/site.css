@@ -5,7 +5,6 @@
 .download-notice .notice-mark{width:26px;height:26px;border:1px solid #72918b;border-radius:50%;color:#b9d8d0;display:grid;place-items:center;flex:none;font-weight:700;font-size:16px}
 .download-notice strong{font-size:14px;color:var(--text)}
 .download-notice p{margin:7px 0 0;font-size:13px;line-height:1.6;color:var(--muted)}
-.source .source-delay{display:block;margin:8px 0 0;font-size:11px;line-height:1.45;color:var(--muted)}
 @media(max-width:650px){.download-notice{padding:16px 14px;gap:10px}}
 
 /* v4: enriched but compact result details. */
@@ -24,3 +23,10 @@
 
 /* Short, permanent provenance note beneath the search field. */
 .provenance{margin-top:6px;color:#a2b4b1;line-height:1.55;max-width:860px}
+
+/* Streamlined per-archive file cards: archive + CRC, single full path, link. */
+.source-head{justify-content:flex-start;gap:14px}
+.source-crc{color:var(--muted);font-size:11px;white-space:nowrap}
+.source-crc code{color:#c4d6d0;font-size:11px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.source .path{user-select:text;margin:11px 0 10px;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
+.source .path-filename{font-weight:700;color:var(--text)}

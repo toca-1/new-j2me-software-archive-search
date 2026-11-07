@@ -201,15 +201,24 @@ function renderResult(id, record) {
   const list = elem('div', undefined, 'sources');
   for (const [coll, name, path, crc] of sources) {
     const section = elem('div', undefined, 'source');
-    const top = elem('div', undefined, 'source-line');
+    const top = elem('div', undefined, 'source-line source-head');
     top.append(elem('span', coll === 0 ? 'JARchiveLite' : 'JARchive Full', 'pill'));
-    top.append(elem('span', name, 'small'));
-    section.append(top, elem('div', path, 'path'));
+    const checksum = elem('span', undefined, 'source-crc');
+    checksum.append(document.createTextNode('CRC32 '), elem('code', crc));
+    top.append(checksum);
+
+    // Keep the exact archive path as selectable plain text. Its last path
+    // component is bold, without adding Markdown markers or duplicate labels.
+    const fullPath = elem('div', undefined, 'path');
+    const slash = path.lastIndexOf('/');
+    if (slash >= 0) fullPath.append(document.createTextNode(path.slice(0, slash + 1)));
+    fullPath.append(elem('strong', path.slice(slash + 1), 'path-filename'));
+
     const actions = elem('div', undefined, 'source-line');
     const link = elem('a', 'Open JAR at Internet Archive ↗');
     link.href = urlFor(coll, path); link.target = '_blank'; link.rel = 'noopener noreferrer';
-    actions.append(link, copyButton(path, 'Copy path'), elem('span', 'CRC32 ' + crc, 'small'));
-    section.append(actions, elem('span', 'Large archives may take minutes to serve a JAR; HTTP 504 means Internet Archive is busy.', 'source-delay'));
+    actions.append(link);
+    section.append(top, fullPath, actions);
     list.append(section);
   }
   card.append(list);
