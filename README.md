@@ -38,3 +38,7 @@ This is a complete *file-content* index of the two JARchive v11 collections; onl
 ### Offline source preservation
 
 Keep a backup of `jarchive-combined-verified.csv` and its summary JSON. Host a `.csv.gz` copy in a GitHub Release or Internet Archive item and link to it from the website. Avoid placing a very large raw CSV in normal Git history. Scripts and website source can be licensed separately from archived JAR contents. Cite and credit the original archive author and sources.
+
+## AI Disclaimer
+
+tbd
