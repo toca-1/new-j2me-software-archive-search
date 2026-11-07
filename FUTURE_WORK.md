@@ -14,6 +14,7 @@
 - [ ] **Further visual redesign.** Refine typography, spacing, result-card layout, accessibility and mobile presentation in response to user feedback.
 - [ ] **Fuller provenance display.** Optionally reveal more than the currently published first two original source locations per manifest, with care for database size, usability, and potentially sensitive historical paths.
 - [ ] **Metadata quality tools.** Identify conflicting or incomplete manifest fields; allow users to distinguish archive-supplied metadata from verified checksums and inferred game associations.
+- [ ] **Better title.** Put a title which describes more specifically what it is about rather than a generic title
 
 ## Downloads and offline use
 
