@@ -30,3 +30,19 @@
 .source-crc code{color:#c4d6d0;font-size:11px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
 .source .path{user-select:text;margin:11px 0 10px;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
 .source .path-filename{font-weight:700;color:var(--text)}
+/* Make the JAR download link more prominent */
+.source a.jar-download-link {
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.5;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.source a.jar-download-link:hover {
+  color: #aaf3d6;
+}
+.source a.jar-download-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+}

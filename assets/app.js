@@ -215,7 +215,7 @@ function renderResult(id, record) {
     fullPath.append(elem('strong', path.slice(slash + 1), 'path-filename'));
 
     const actions = elem('div', undefined, 'source-line');
-    const link = elem('a', 'Open JAR at Internet Archive ↗');
+    const link = elem('a', 'Download JAR from the Internet Archive', 'jar-download-link');
     link.href = urlFor(coll, path); link.target = '_blank'; link.rel = 'noopener noreferrer';
     actions.append(link);
     section.append(top, fullPath, actions);
