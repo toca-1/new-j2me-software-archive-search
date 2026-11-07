@@ -1,0 +1,1 @@
+{"archive":"j2me-archive-unified-2019-09","records":536025,"blocks":63,"representative_blocks_tested":63,"record_chunk_size":1024,"name_chunk_size":32768,"name_chunks":17,"search_limit":40,"schema":["filename","archive_path","size_bytes","sha1","solid_block","required_parts"]}

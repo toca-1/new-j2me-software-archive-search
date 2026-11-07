@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101b29">
+  <meta name="description" content="Search original J2ME archive filenames and SHA-1 hashes, then recover individual files by downloading only the required archive parts.">
+  <title>Unified J2ME Archive Search</title>
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Unified J2ME Archive Search homepage"><span class="brand-mark">J2</span><span>Unified J2ME Archive <b>Search</b></span></a>
+      <nav><a target="_blank" rel="noopener" href="https://github.com/toca-1/unified-j2me-archive-search">GitHub source ↗</a><a target="_blank" rel="noopener" href="https://archive.org/details/j2me-archive-unified-2019-09">Original archive ↗</a></nav>
+    </header>
+    <main>
+      <section class="hero">
+        <div class="eyebrow">SEPTEMBER 2019 UNIFIED J2ME ARCHIVE · INDEPENDENT INDEX</div>
+        <h1>Find the exact <em>J2ME build.</em></h1>
+        <p class="lede">Search the archive by filename or SHA-1, then recover a specific file without downloading all 84 GiB of archive volumes.</p>
+        <div class="stats">
+          <div><strong id="record-count">536,025</strong><small>Nonempty files indexed</small></div>
+          <div><strong>63 / 63</strong><small>Solid blocks sample-tested</small></div>
+          <div><strong>43</strong><small>Original split volumes</small></div>
+        </div>
+      </section>
+      <section class="search-panel" aria-label="Search archive">
+        <div class="heading-row"><h2>Search files</h2><span class="micro">No login required</span></div>
+        <div class="switch" role="group" aria-label="Search type">
+          <button id="mode-filename" class="active" type="button" aria-pressed="true">Filename</button>
+          <button id="mode-sha" type="button" aria-pressed="false">SHA-1 hash</button>
+        </div>
+        <div class="input-row"><label class="sr-only" for="query">Search query</label><input id="query" type="search" autocomplete="off" spellcheck="false" placeholder="e.g. Coca-Cola or Need for Speed"><button id="search-button" type="button">Search <span aria-hidden="true">→</span></button></div>
+        <div class="search-help" id="search-help">Case-insensitive substring search. First filename search downloads a compressed filename catalog.</div>
+      </section>
+      <section class="results-section" aria-label="Search results">
+        <div class="heading-row"><h2>Results</h2><span id="result-status" class="micro" role="status" aria-live="polite">Enter a search above</span></div>
+        <div id="results" class="results"><div class="empty-state"><div class="empty-icon">⌕</div><p>Search for a game title or paste a 40-character SHA-1 hash.</p><span>Every result includes its archive path and partial-download instructions.</span></div></div>
+      </section>
+      <section class="guide">
+        <div><span class="eyebrow">HOW RECOVERY WORKS</span><h2>No full archive download required</h2><p>The compressed archive contains 63 independently decompressible solid blocks. A recovery helper downloads just the volumes containing the selected block, plus the volumes needed for the archive metadata. Missing volumes are represented by sparse files, then the extracted file is checked against its SHA-1.</p></div>
+        <div class="guide-card"><div>1 <span>Find your file and copy its recovery command.</span></div><div>2 <span>Install <code>python3</code>, <code>curl</code>, and <code>7zip</code> on Linux.</span></div><div>3 <span>Run the command; the helper downloads, extracts, and verifies the file.</span></div><a href="j2me_fetch.py" download>Download recovery helper (Python) ↓</a></div>
+      </section>
+    </main>
+    <footer><span>Community-built index; not affiliated with the original archive's maintainers. Block-level validation used one representative JAR per block, not every file.</span><span><a href="https://github.com/toca-1/unified-j2me-archive-search">Source & methodology ↗</a></span></footer>
+  </div>
+</body>
+</html>
