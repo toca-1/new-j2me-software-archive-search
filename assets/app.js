@@ -1,5 +1,5 @@
 'use strict';
-// New J2ME Software Archive Search v4 — no external JS dependencies.
+// New J2ME Software Archive Search v4: no external JS dependencies.
 const $ = id => document.getElementById(id);
 const ROOT = './data/';
 const IA = 'https://archive.org/download/96x65pixels_j2me/';
