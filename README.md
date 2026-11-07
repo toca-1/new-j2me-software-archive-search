@@ -1,44 +1,79 @@
-# New J2ME Software Archive — Search
+# New J2ME Software Archive — Search (v4)
 
-Independent searchable index for [The “New” J2ME software archive](https://archive.org/details/96x65pixels_j2me) by TwoSpacesSG.
+Independent searchable index for [TwoSpacesSG's **New J2ME Software Archive**](https://archive.org/details/96x65pixels_j2me), covering **JARchive v11** and **JARchiveLite v11**. This project is not affiliated with or maintained by the archive's creators or Internet Archive.
 
-## Coverage
+## Coverage and verification
 
-The source is the **verified** `jarchive-combined-verified.csv` containing 816,215 archived file entries (198,184 JARchiveLite v11; 618,031 JARchive v11). After grouping identical SHA-256 values there are **620,287** distinct file contents: 195,928 present in both collections, 2,256 Lite-only, 422,103 Full-only.
+The input index was independently computed from the extracted archive file bytes, with the single Linux-overlong file streamed directly from the source 7z. SHA-1, SHA-256, CRC32 and original file sizes were verified against available archival metadata. The verified master index contains **816,215** file entries, representing **620,287** distinct SHA-256 contents. Among these, **195,928** contents appear in both collections; **2,256** only in Lite; **422,103** only in Full.
 
-All SHA-1 and SHA-256 checksums were calculated from actual contents and compared to available original metadata (Lite DAT SHA-1, Full filename SHA-256, archive CRC32/size). A single filename too long for Linux ext4 was hashed by streaming the file directly from the 7z archive.
+All 816,215 entries were subsequently matched against the collections' supplied infofiles metadata. The provenance source paths identify historical origins; they are not guaranteed downloadable URLs.
 
-## Build the index
+## Search features
 
-Download/unzip this starter to a folder, then run in Ubuntu:
+- Substring search of original **filename**, **MIDlet-Name**, or **MIDlet-Vendor**; no account or server-side search required.
+- Exact lookup of verified **SHA-1** or **SHA-256**.
+- Deduplicated file content, with both Full and Lite archive paths and CRC32 values where applicable.
+- MIDlet name, vendor, version, CLDC and MIDP shown in each result.
+- A compact display of scalar manifest attributes (individual values capped at 4,000 characters) and a configurable number of source locations, fetched only when a result is expanded.
+- Per-JAR Internet Archive links. These may be slow or intermittently return HTTP 504 because Archive.org handles archive member extraction.
 
-```sh
+The query-to-shard index avoids fetching the complete filename catalog for most searches. Very common or short search terms may still need many shards. The site uses standard browser gzip decompression, so a modern browser is required.
+
+## Rebuild the site locally
+
+Required input files, created by the separate verification and enrichment pipeline:
+
+1. `jarchive-enriched.csv` — verified SHA-1/SHA-256 index with basic MIDlet fields.
+2. `jarchive-enriched-details.jsonl.gz` — manifest fields and original source locations.
+
+With the supplied `index.html`, `assets/` and `build_site.py` in this directory, run:
+
+```bash
 python3 build_site.py \
-  --input ~/Downloads/jarchive-combined-verified.csv \
+  --input ~/Downloads/jarchive-enriched.csv \
+  --details ~/Downloads/jarchive-enriched-details.jsonl.gz \
   --out . \
   --expected-count 816215
 ```
 
-`data/` is created locally. Commit the website files and generated `data/` to your GitHub Pages repository, selecting **main** / **root** in Settings → Pages. Build does not rehash or extract JAR files. It groups matching contents by SHA-256, keeping *both* original archive paths. The archive source is represented in each result.
+Python 3's standard library is sufficient. Building the site does **not** read the original 7z files or rehash JARs.
 
-The static site uses 1024-entry record chunks and SHA-1/SHA-256 prefix indexes. Filename search builds alphabetically sorted compressed shards plus a 2-gram/3-gram-to-shard bitmap. The browser intersects grams from the query and downloads only candidate name shards, in parallel. Exact hash lookups still retrieve only a small prefix index and record chunk. `DecompressionStream('gzip')` is used in modern browsers for filename lookup. Serve through a local HTTP server for testing, rather than opening `index.html` as a local file:
+The builder uses a temporary SQLite database and writes to a staging directory. It replaces `data/` only after it has successfully generated and checked the new output. On successful completion it prints total byte size and file count, and writes `data/build-summary.json`.
 
-```sh
+The default `--max-original-paths 2` publishes the first two historical original paths per manifest; the total available path count is retained. Use `--max-original-paths 0` to omit original paths from the website or `-1` to publish all paths (larger output and potential personal information in historical paths). The complete original metadata remains untouched outside the website.
+
+### Test locally
+
+```bash
 python3 -m http.server 8000
 ```
 
-Open http://localhost:8000/ to test.
+Open http://localhost:8000/ . The app reads `.json.gz` blobs and decompresses them in the browser if the server does not decompress them. **Do not open `index.html` directly as a `file://` page**, because browsers restrict local `fetch()`.
 
-## Download links and limitations
+## Files and data design
 
-Each result has a link for the corresponding member of the Internet Archive 7z file using the `archive.org/download/96x65pixels_j2me/<archive>/<member>` pattern. **Verify at least one real link from each collection before announcing single-file downloading.** Internet Archive may require tens of seconds or several minutes to retrieve a member of these large solid 7z archives, and sometimes returns HTTP 504 when busy. The search website cannot speed up Archive.org or guarantee availability; retry later if necessary. The link encoder escapes embedded slashes as %2F, matching Internet Archive’s own archive member links. The website does not mirror JAR files or serve malicious code directly.
+- `data/manifest.json` — schema version and counts.
+- `data/names/grams.json.gz` — gram-to-shard bitmap for exact substring search.
+- `data/names/NNN.json.gz` — sorted searchable labels (filename, MIDlet name, vendor) mapped to unique content IDs.
+- `data/records/NNNN.json.gz` — grouped file contents, both checksums, original archive paths and summary metadata.
+- `data/sha1/X.json.gz` and `data/sha256/X.json.gz` — one compressed lookup bucket per leading hexadecimal digit.
+- `data/details/NNNN.json.gz` — lazily fetched manifest/provenance entries corresponding to the same IDs as `records`.
 
-This is a complete *file-content* index of the two JARchive v11 collections; only ordinary file entries were indexed (not directory rows). Each source path is preserved. Search currently matches original filenames, not all directory path segments or manifest titles. A file-tree explorer and manifest-based title search can be added later.
+The large source CSV and details JSONL are **not published** by this site package. If releasing those complete sources, use a separately documented release/archive and review provenance paths first.
 
-### Offline source preservation
+## Deployment
 
-Keep a backup of `jarchive-combined-verified.csv` and its summary JSON. Host a `.csv.gz` copy in a GitHub Release or Internet Archive item and link to it from the website. Avoid placing a very large raw CSV in normal Git history. Scripts and website source can be licensed separately from archived JAR contents. Cite and credit the original archive author and sources.
+The generated `data/` folder plus `index.html`, `assets/`, `.nojekyll`, `build_site.py` and `README.md` can be deployed as static files. Keep the repository's `.git` directory when replacing a previous site. **Do not mix v3 `data/` with v4 JavaScript.** See [UPGRADE.txt](UPGRADE.txt) for exact steps.
 
-## Filename index v3 upgrade
+GitHub Pages documents a [1 GB published-site limit and a 10-minute deployment timeout](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits). Compression and fewer files reduce the publishing load, but cannot guarantee that a stuck GitHub-side deployment will recover.
 
-After updating `build_site.py` and `assets/app.js`, you **must regenerate `data/`** from your original verified CSV. The new browser script requires `name_index_version: 2` and `data/names/grams.json.gz`; the old 25 filename shards are not compatible. Rebuilding does not extract archives or recalculate hashes. The original verified CSV is not modified. The site displays a prominent download-delay warning and a reminder with each result link.
+## Known limitations
+
+- A manifest title can match several builds; this is not automatic fuzzy game/version grouping.
+- Some manifest fields and old source paths may be missing or misleading in the original archival metadata. Identifiers and checksums come from verified JAR bytes, not from manifest titles.
+- The public metadata includes at most the configured count of original source paths. Full original paths and untruncated manifest details remain in the original source infofiles and your original enrichment output.
+- An Internet Archive 504 timeout is outside this website's control.
+
+## Attribution
+
+Archive source: [TwoSpacesSG / Internet Archive](https://archive.org/details/96x65pixels_j2me). The search tool and indexing workflow are independently produced, not endorsed by the source archive. Choose and add a repository license separately after reviewing any reused code and dataset rights.

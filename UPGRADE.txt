@@ -1,40 +1,72 @@
-New J2ME Software Archive Search — filename-speed + download-warning update
+New J2ME Software Archive Search — v4
+======================================
 
-Includes source files only. The large data/ folder is NOT bundled; generate it
-from your previously verified jarchive-combined-verified.csv.
+This is a NEW WEBSITE SOURCE PACKAGE. It intentionally does not contain the
+huge generated data/ directory. It consumes your already enriched and
+verified data; NO 7z extraction, JAR rehashing, or archive downloads.
 
-1) Unzip this package into the VirtualBox shared folder, resulting in:
-   /media/sf_share/new-j2me-site-v3/
+1. Unzip into the VirtualBox shared folder, for example:
+       /media/sf_share/new-j2me-site-v4/
 
-2) In Ubuntu, regenerate site data (no 7z extraction and no hashing):
-   python3 /media/sf_share/new-j2me-site-v3/build_site.py \
-     --input ~/Downloads/jarchive-combined-verified.csv \
-     --out /media/sf_share/new-j2me-site-v3 \
+2. On Ubuntu, generate the compressed v4 data:
+
+   python3 /media/sf_share/new-j2me-site-v4/build_site.py \
+     --input ~/Downloads/jarchive-enriched.csv \
+     --details ~/Downloads/jarchive-enriched-details.jsonl.gz \
+     --out /media/sf_share/new-j2me-site-v4 \
      --expected-count 816215
 
-   Confirm: 816,215 rows, 620,287 unique hashes.
-   Confirm the new file exists: data/names/grams.json.gz
+   This uses the first TWO original source paths per manifest in the public
+   metadata. The original full details file remains untouched.
+   If you prefer to publish NO original source paths, add:
+     --max-original-paths 0
+   If you want all paths (potentially very large), use:
+     --max-original-paths -1
 
-3) Optional local test:
-   cd /media/sf_share/new-j2me-site-v3
-   python3 -m http.server 8000
+3. Verify the totals, and inspect the newly generated report:
+       cat /media/sf_share/new-j2me-site-v4/data/build-summary.json
+       du -sh /media/sf_share/new-j2me-site-v4/data
+       find /media/sf_share/new-j2me-site-v4/data -type f | wc -l
+
+   Expected counts: 816,215 archive entries, 620,287 unique content hashes,
+   195,928 shared, 2,256 Lite-only and 422,103 Full-only. The generator
+   reports the ACTUAL size; it is not predictable without the full inputs.
+
+4. Local test:
+       cd /media/sf_share/new-j2me-site-v4
+       python3 -m http.server 8000
    Open http://localhost:8000/ in the Ubuntu browser.
-   Search Coca-Cola FM; try SHA-1 and SHA-256 lookup too.
+   Test:
+     - Filename search: Coca-Cola
+     - MIDlet title search: Coca-Cola FM
+     - Vendor search: Blue Sphere Games
+     - SHA-256: a7a6ba96ce6046042621248f99b4f2ced399ecf1b0d8a851039ece44d948d17f
+     - Click 'Show manifest & original sources' for a result
+     - Test a direct Internet Archive JAR URL (a 504 means the server is busy)
 
-4) In Windows, open the GitHub Desktop clone of
-   toca-1/new-j2me-software-archive-search.
-   DELETE the old assets/ and data/ directories (not .git/).
-   COPY ALL CONTENTS of share/new-j2me-site-v3/ into the clone root.
-   Keep .git/ and verify index.html is at the root, not in a nested folder.
-   Commit and Push origin in GitHub Desktop.
+5. DO NOT publish while your GitHub Pages deployment is stuck queued/failed.
+   Check the status first, and keep a local backup of your current repository.
+   When ready, replace the old index.html, assets/, data/, build_site.py,
+   README.md and UPGRADE.txt in your GitHub Desktop clone. KEEP its hidden
+   .git directory. Commit and push once, then check the Actions deployment.
+   Never add jarchive-enriched.csv or full infofiles to the Pages source tree.
 
-5) Hard-refresh your live GitHub Pages site. If the browser says the
-   filename index is outdated, data/ and assets/app.js are out of sync:
-   verify that data/manifest.json contains "name_index_version":2.
+6. This version changes the data schema completely. DO NOT mix v3 data/
+   files with v4 assets/app.js. A hard refresh (Ctrl+F5) may be needed.
 
-Notes:
-- For short/common terms, many shards may still be necessary. Targeted
-  searching mainly speeds up more distinctive filename substrings.
-- Internet Archive itself serves the JAR files. HTTP 504 (busy server)
-  is beyond the website's control. Retry later.
-- No data or files are silently uploaded: the zip is a local source update.
+Features:
+ - Verified SHA-1 and SHA-256 lookup
+ - Substring search across filenames, MIDlet-Name and MIDlet-Vendor
+ - Compact compressed record, hash and query index shards
+ - Duplicate grouping across Full and Lite
+ - MIDlet name/vendor/version/CLDC/MIDP in cards
+ - On-demand full manifest and capped original source locations
+ - Internet Archive direct member links, with slow/HTTP 504 warnings
+
+Caveats:
+ - Search is NOT fuzzy spelling correction or semantic game clustering.
+ - Historical original paths are not themselves download links.
+ - First-time searches for very common two-character terms can still request
+   many name shards.
+ - An efficient package may help Pages deployment, but cannot resolve a
+   GitHub-side stuck deployment or resource/concurrency issue by itself.
