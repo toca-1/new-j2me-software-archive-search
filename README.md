@@ -15,8 +15,8 @@ The site uses standard browser gzip decompression, so a modern browser is requir
 
 Required input files, created by the separate verification and enrichment pipeline:
 
-1. `jarchive-enriched.csv` — verified SHA-1/SHA-256 index with basic MIDlet fields
-2. `jarchive-enriched-details.jsonl.gz` — manifest fields and original source locations
+1. `jarchive-enriched.csv`: verified SHA-1/SHA-256 index with basic MIDlet fields
+2. `jarchive-enriched-details.jsonl.gz`: manifest fields and original source locations
 
 With the supplied `index.html`, `assets/` and `build_site.py` in this directory, run:
 
@@ -40,12 +40,12 @@ Open http://localhost:8000/ . The app reads `.json.gz` blobs and decompresses th
 
 ## Files and data design
 
-- `data/manifest.json` — schema version and counts
-- `data/names/grams.json.gz` — gram-to-shard bitmap for exact substring search
-- `data/names/NNN.json.gz` — sorted searchable labels (filename, MIDlet name, vendor) mapped to unique content IDs
-- `data/records/NNNN.json.gz` — grouped file contents, both checksums, original archive paths and summary metadata
-- `data/sha1/X.json.gz` and `data/sha256/X.json.gz` — one compressed lookup bucket per leading hexadecimal digit
-- `data/details/NNNN.json.gz` — lazily fetched manifest/provenance entries corresponding to the same IDs as `records`
+- `data/manifest.json`: schema version and counts
+- `data/names/grams.json.gz`: gram-to-shard bitmap for exact substring search
+- `data/names/NNN.json.gz`: sorted searchable labels (filename, MIDlet name, vendor) mapped to unique content IDs
+- `data/records/NNNN.json.gz`: grouped file contents, both checksums, original archive paths and summary metadata
+- `data/sha1/X.json.gz` and `data/sha256/X.json.gz`: one compressed lookup bucket per leading hexadecimal digit
+- `data/details/NNNN.json.gz`: lazily fetched manifest/provenance entries corresponding to the same IDs as `records`
 
 The large source CSV and details JSONL are **not published** by this site package.
 
@@ -54,6 +54,10 @@ The large source CSV and details JSONL are **not published** by this site packag
 - A manifest title can match several builds; this is not automatic fuzzy game/version grouping
 - Some manifest fields and old source paths may be missing or misleading in the original archival metadata
 - The public metadata includes at most the configured count of original source paths. Full original paths and untruncated manifest details remain in the original source infofiles and your original enrichment output
+
+## Future work
+
+Planned and possible improvements are tracked in [**Future work**](FUTURE_WORK.md); note that these would just be optional enhancements.
 
 ## Attribution
 
