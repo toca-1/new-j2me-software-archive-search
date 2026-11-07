@@ -1,8 +1,4 @@
-__pycache__/
-*.pyc
+*.sqlite
 *.csv
 *.csv.gz
-*.sqlite
-*.torrent
-*.7z.*
-.DS_Store
+__pycache__/

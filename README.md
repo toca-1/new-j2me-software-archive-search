@@ -1,48 +1,40 @@
-# Unified J2ME Archive Search
+# New J2ME Software Archive — Search
 
-Static GitHub Pages index of the [Unified J2ME Archive (September 2019)](https://archive.org/details/j2me-archive-unified-2019-09), built for locating exact JARs and verifying TAS reproduction builds.
+Independent searchable index for [The “New” J2ME software archive](https://archive.org/details/96x65pixels_j2me) by TwoSpacesSG.
 
-**Website:** https://toca-1.github.io/unified-j2me-archive-search/
+## Coverage
 
-## What is indexed
+The source is the **verified** `jarchive-combined-verified.csv` containing 816,215 archived file entries (198,184 JARchiveLite v11; 618,031 JARchive v11). After grouping identical SHA-256 values there are **620,287** distinct file contents: 195,928 present in both collections, 2,256 Lite-only, 422,103 Full-only.
 
-536,025 nonempty, regular files from the original archive, with their exact filenames, archive paths, sizes, SHA-1 hashes, solid block IDs and required 7z volumes. There are 63 solid blocks; a representative JAR from each block was successfully recovered using sparse substitute volumes, with a matching SHA-1. This is **block-level sampling**, not individual validation of every one of the 536,025 files.
+All SHA-1 and SHA-256 checksums were calculated from actual contents and compared to available original metadata (Lite DAT SHA-1, Full filename SHA-256, archive CRC32/size). A single filename too long for Linux ext4 was hashed by streaming the file directly from the 7z archive.
 
-234,919 symlink entries were excluded because 7-Zip's extraction refused to create them, and a separate 4,894 genuinely zero-byte files were omitted from the searchable index. Names alone do not guarantee working games. Files themselves are **not** redistributed here.
+## Build the index
 
-## Build or rebuild the website data
+Download/unzip this starter to a folder, then run in Ubuntu:
 
-Install Python 3. Copy `j2me-search-index-with-parts.csv` to your machine (do not commit it). From this repository's root:
-
-```bash
-python3 build_site.py --input /path/to/j2me-search-index-with-parts.csv --expected-count 536025
+```sh
+python3 build_site.py \
+  --input ~/Downloads/jarchive-combined-verified.csv \
+  --out . \
+  --expected-count 816215
 ```
 
-No external Python packages are needed. This produces `data/` with small record shards, a compressed filename catalog and SHA-1 prefix lookup files. The website is a static HTML/CSS/JavaScript frontend, with no API or account requirements.
+`data/` is created locally. Commit the website files and generated `data/` to your GitHub Pages repository, selecting **main** / **root** in Settings → Pages. Build does not rehash or extract JAR files. It groups matching contents by SHA-256, keeping *both* original archive paths. The archive source is represented in each result.
 
-Filename search downloads a compressed **names-only** catalog upon first use, then fetches only the requested result record shards. Exact SHA-1 lookup fetches only the relevant 2-hex-prefix shard and result record shard. The full original CSV is not downloaded by visitors.
+The static site uses 1024-entry record chunks, 256 SHA-1 prefix index files, 256 SHA-256 prefix index files, and compressed filename shards. Filename lookup loads compressed filename shards on first use; exact hash lookups retrieve a small prefix index and record chunk. `DecompressionStream('gzip')` is used in modern browsers for filename lookup. Serve through a local HTTP server for testing, rather than opening `index.html` as a local file:
 
-For local testing, run `python3 -m http.server 8000` from the repository folder and visit http://localhost:8000/. Do not open `index.html` using `file://`, since browser fetches require a web server.
-
-## Recover one file
-
-On Ubuntu/Linux:
-
-```bash
-sudo apt install python3 curl 7zip
-python3 j2me_fetch.py --parts 001,010,011,043 --path 'dertz.in/dls/01269-3D DOOM-3.jar' --sha1 d2e3d085d25a80515a2527ef499a1025f5cd837e
+```sh
+python3 -m http.server 8000
 ```
 
-The helper downloads only selected real 7z volumes from the original Archive.org item, unwraps the `.001.zip` first volume, creates *sparse* placeholders with the expected logical volume sizes, extracts the specific file and verifies its SHA-1. A sparse placeholder consumes virtually no physical disk space on a supporting filesystem, but the necessary actual downloaded data still requires storage.
+Open http://localhost:8000/ to test.
 
-You need the **complete** split-archive metadata volumes (`001` and `043`) plus the real compressed-data volumes for the file's solid block. Missing parts are not independently extractable ZIPs. If a download is unavailable or corrupted, recovery will fail; matching SHA-1 is the ultimate test.
+## Download links and limitations
 
-## Publishing on GitHub Pages
+Each result has a link for the corresponding member of the Internet Archive 7z file using the `archive.org/download/96x65pixels_j2me/<archive>/<member>` pattern. **Verify at least one real link from each collection before announcing single-file downloading.** The Internet Archive archive viewer may be rate-limited or unavailable; archived 7z files are solid archives, so member extraction on the server may have costs or delays. The website does not mirror JAR files or serve malicious code directly.
 
-Clone this repo, run `build_site.py`, commit the generated `data/` directory and source files, and push `main`. In Settings → Pages, use **Deploy from a branch** → `main` → `/(root)`. The repository's root contains `.nojekyll` so Pages serves static assets without a Jekyll transformation.
+This is a complete *file-content* index of the two JARchive v11 collections; only ordinary file entries were indexed (not directory rows). Each source path is preserved. Search currently matches original filenames, not all directory path segments or manifest titles. A file-tree explorer and manifest-based title search can be added later.
 
-## Credits and scope
+### Offline source preservation
 
-This is an independently generated index of an existing preservation collection, not an official archive or a mirror of game software. Indexing methodology: original 7-Zip listing → extracted file SHA-1 checksums → rejection of symlink placeholders and empty files → attachment of solid-block/volume ranges → one successful SHA-1 recovery test per solid block.
-
-The helper currently targets Linux and POSIX filesystems. Other platforms may need adjustments for sparse files and 7-Zip command compatibility.
+Keep a backup of `jarchive-combined-verified.csv` and its summary JSON. Host a `.csv.gz` copy in a GitHub Release or Internet Archive item and link to it from the website. Avoid placing a very large raw CSV in normal Git history. Scripts and website source can be licensed separately from archived JAR contents. Cite and credit the original archive author and sources.
