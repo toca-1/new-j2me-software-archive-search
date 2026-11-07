@@ -288,8 +288,8 @@ async function init() {
     $('query').placeholder = searchMode === 'name' ? 'Filename, game title or vendor…' :
       searchMode === 'sha1' ? '40-character SHA-1…' : '64-character SHA-256…';
     $('hint').textContent = searchMode === 'name' ?
-      'Case-insensitive substring search across filenames, MIDlet titles and vendors. Only relevant index shards are loaded.' :
-      `Exact ${searchMode.toUpperCase()} lookup loads one compressed hash bucket.`;
+      'Search filenames, game titles and vendors (case-insensitive).' :
+      `Enter the complete ${searchMode.toUpperCase()} hash to find an exact match.`;
     $('query').focus();
   }));
   $('search-form').addEventListener('submit', e => { e.preventDefault(); runSearch(); });
