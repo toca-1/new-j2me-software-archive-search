@@ -11,6 +11,10 @@
 
 The site uses standard browser gzip decompression, so a modern browser is required.
 
+## Download the complete index
+
+The complete verified CSV index is available in the [index-v1 GitHub Release](https://github.com/toca-1/new-j2me-software-archive-search/releases/tag/index-v1). It contains 816,215 archived file entries representing 620,287 unique file contents across JARchive v11 and JARchiveLite v11. The release also includes a SHA-256 checksum and verification summary. No JAR files are redistributed.
+
 ## Rebuild the site locally
 
 Required input files, created by the separate verification and enrichment pipeline:
