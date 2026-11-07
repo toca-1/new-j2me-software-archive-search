@@ -23,7 +23,6 @@
 
 ## Preservation, documentation and maintenance
 
-- [ ] **Publish a downloadable master index.** Release the verified 816,215-entry CSV (and validation summary), ideally as a compressed download, separately from the small search files served by the website.
 - [ ] **Document reproducibility.** Publish or refine the indexing, extraction, hashing and metadata-join methodology, including the overlong Linux filename handled by archive streaming.
 - [ ] **Review licensing and attribution.** Keep the independent-project disclaimer, credit TwoSpacesSG and source collections, and review rights before choosing a license for code or derived datasets.
 - [ ] **Keep the static site efficient.** Monitor initial search speed, memory use, generated file count and GitHub Pages deployment reliability as the index evolves.
