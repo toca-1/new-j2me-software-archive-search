@@ -15,7 +15,13 @@
     <section class="search" aria-label="Search archive"><div class="search-top"><h2>Search the archive</h2><span>JARchive v11 + JARchiveLite v11</span></div>
       <div class="modes" role="group" aria-label="Search field"><button class="active" type="button" data-mode="name" aria-pressed="true">Filename</button><button type="button" data-mode="sha1" aria-pressed="false">SHA-1</button><button type="button" data-mode="sha256" aria-pressed="false">SHA-256</button></div>
       <form id="search-form"><label for="query" class="sr-only">Search query</label><input id="query" type="search" spellcheck="false" autocomplete="off" placeholder="Game title or filename…" required><button type="submit">Search <span aria-hidden="true">↗</span></button></form>
-      <p class="hint" id="hint">Case-insensitive filename search. The first filename search loads a compressed catalog.</p></section>
+      <p class="hint" id="hint">Case-insensitive substring search. Only relevant filename index shards are loaded.</p></section>
+    <aside class="download-notice" aria-label="Internet Archive download availability">
+      <div class="notice-mark" aria-hidden="true">ⓘ</div>
+      <div><strong>JAR downloads may take a while or temporarily fail.</strong>
+        <p>Files are served by Internet Archive, not this website. Opening a file inside a large 7z collection may take tens of seconds or several minutes. If Internet Archive displays “Sorry, we're kinda busy” (HTTP 504), try refreshing later. Search and checksums here remain available even when their download servers are busy.</p>
+      </div>
+    </aside>
     <section class="results-section" aria-label="Search results"><div class="result-heading"><h2>Results</h2><span id="status" role="status" aria-live="polite">Enter a search to begin</span></div><div id="results" class="results"><div class="empty">Try searching for <strong>Coca-Cola FM</strong> or paste an exact checksum.</div></div><button id="more" type="button" hidden>Show more results</button></section>
     <section class="about"><div><span class="eyebrow">ABOUT THIS INDEX</span><h2>One index. Two collections.</h2><p>Identical content is grouped by SHA-256, while every original archive path remains visible. The source collection is indicated for every file.</p></div><div class="about-details"><p><strong>Verification</strong><br>Both SHA-1 and SHA-256 were calculated from real extracted file bytes, with one path-too-long case streamed directly from 7z. File sizes and CRC32 were checked.</p><p><strong>Downloads</strong><br>The original files are hosted by Internet Archive. Archive member links use Internet Archive's archive viewer and may depend on its availability.</p></div></section>
   </main>

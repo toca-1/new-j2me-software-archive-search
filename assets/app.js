@@ -3,8 +3,10 @@ const $ = id => document.getElementById(id);
 const root = './data/';
 const ARCHIVE = 'https://archive.org/download/96x65pixels_j2me/';
 const FILES = ['JARchiveLite_v11.7z', 'JARchive_v11.7z'];
-let manifest, mode = 'name', names = null, pendingNames = null, activeResults = [], shown = 0, token = 0, matchedNames = new Map();
-const recordCache = new Map(), hashCache = new Map();
+let manifest, mode = 'name', activeResults = [], shown = 0, token = 0, matchedNames = new Map();
+let gramMapPromise = null;
+const recordCache = new Map(), hashCache = new Map(), nameShardCache = new Map();
+const MAX_NAME_CACHE = 24, NAME_WORKERS = 10;
 const PAGE_SIZE = 20;
 function create(tag, text, className) { const el = document.createElement(tag); if(text !== undefined) el.textContent = String(text); if(className) el.className = className; return el; }
 function fmt(n) { return Number(n).toLocaleString('en-US'); }
@@ -21,23 +23,88 @@ function urlFor(c, path) {
 async function json(path) { const resp = await fetch(root + path); if(!resp.ok) throw new Error(`Failed to load ${path} (HTTP ${resp.status})`); return await resp.json(); }
 async function record(id) { const chunk = Math.floor(id/manifest.record_chunk); if(!recordCache.has(chunk)) recordCache.set(chunk,json('records/'+String(chunk).padStart(4,'0')+'.json')); return (await recordCache.get(chunk))[id%manifest.record_chunk]; }
 async function lookup(mode, hash) { const key = mode+':'+hash.substring(0,2); if(!hashCache.has(key)) hashCache.set(key, json(mode+'/'+hash.slice(0,2)+'.json').catch(e=>{if(String(e).includes('404')) return {}; throw e;})); return (await hashCache.get(key))[hash]; }
-async function loadNames() {
- if(names) return names;
- if(!pendingNames) pendingNames = (async () => {
-   if(typeof DecompressionStream === 'undefined') throw new Error('Filename search requires a browser supporting DecompressionStream (recent Chrome, Firefox or Edge).');
-   const out=[];
-   for(let i=0;i<manifest.names_chunks;i++) {
-     status(`Loading filename catalog… ${i+1} / ${manifest.names_chunks}`);
-     const url=root+'names/'+String(i).padStart(3,'0')+'.json.gz';
-     const r=await fetch(url); if(!r.ok) throw new Error(`Failed to load filename catalog (${r.status})`);
-     const decoded = r.headers.get('Content-Encoding') === 'gzip' ? await r.text() : await new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).text();
-     const list=JSON.parse(decoded);
-     out.push(...list);
-   }
-   return out;
- })();
- try { names=await pendingNames; } catch(e) { pendingNames=null; throw e; }
- return names;
+async function gzJson(path) {
+  const r = await fetch(root + path);
+  if (!r.ok) throw new Error(`Failed to load ${path} (HTTP ${r.status})`);
+  // A CDN can serve .gz with or without Content-Encoding: gzip. In the
+  // former case the browser may already decompress the response bytes.
+  const bytes = await r.arrayBuffer();
+  const view = new Uint8Array(bytes);
+  let text;
+  if (view.length >= 2 && view[0] === 0x1f && view[1] === 0x8b) {
+    if (!('DecompressionStream' in window)) throw new Error('Filename search requires a browser supporting gzip DecompressionStream.');
+    text = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  } else {
+    text = new TextDecoder().decode(bytes);
+  }
+  return JSON.parse(text);
+}
+async function loadGramMap() {
+  if (manifest.name_index_version !== 2 || !manifest.names_grams)
+    throw new Error('Filename index is outdated. Rebuild site data with the updated build_site.py.');
+  if (!gramMapPromise) gramMapPromise = gzJson(manifest.names_grams).catch(e => { gramMapPromise = null; throw e; });
+  return gramMapPromise;
+}
+function candidateShards(query, grams) {
+  const chars = Array.from(query);
+  const length = chars.length >= 3 ? 3 : 2;
+  const table = grams[String(length)];
+  let mask = (1n << BigInt(manifest.names_chunks)) - 1n;
+  for (let i = 0; i <= chars.length-length; i++) {
+    const hex = table[chars.slice(i,i+length).join('')];
+    if (!hex) return [];
+    mask &= BigInt('0x' + hex);
+    if (mask === 0n) return [];
+  }
+  const shards = [];
+  for (let i = 0; i < manifest.names_chunks; i++)
+    if ((mask & (1n << BigInt(i))) !== 0n) shards.push(i);
+  return shards;
+}
+async function loadNameShard(shard) {
+  if (!nameShardCache.has(shard)) {
+    const promise = gzJson('names/' + String(shard).padStart(3,'0') + '.json.gz').catch(e => {
+      nameShardCache.delete(shard); throw e;
+    });
+    nameShardCache.set(shard, promise);
+    // Limit retained lists; in-flight requests still complete normally.
+    while (nameShardCache.size > MAX_NAME_CACHE) nameShardCache.delete(nameShardCache.keys().next().value);
+  } else {
+    const promise = nameShardCache.get(shard);
+    nameShardCache.delete(shard);
+    nameShardCache.set(shard, promise);
+  }
+  return await nameShardCache.get(shard);
+}
+async function searchFilenames(query, current) {
+  status('Loading filename search map…');
+  const grams = await loadGramMap();
+  if (current !== token) return [];
+  const shards = candidateShards(query, grams);
+  if (!shards.length) return [];
+  status(`Searching ${shards.length} relevant filename shard${shards.length===1?'':'s'}…`);
+  const found = new Array(shards.length);
+  let next = 0, completed = 0;
+  const workers = Array.from({length:Math.min(NAME_WORKERS,shards.length)}, async () => {
+    while (true) {
+      if (current !== token) return;
+      const i = next++;
+      if (i >= shards.length) return;
+      const list = await loadNameShard(shards[i]);
+      if (current !== token) return;
+      found[i] = list.filter(([name]) => name.includes(query));
+      completed++;
+      status(`Searching filenames… ${completed}/${shards.length} shards`);
+    }
+  });
+  await Promise.all(workers);
+  if (current !== token) return [];
+  const unique = new Set();
+  for (const matches of found) for (const [name,id] of matches) {
+    unique.add(id);
+    if (!matchedNames.has(id)) matchedNames.set(id,name);
+  }
+  return Array.from(unique);
 }
 function copyButton(text,label='Copy') { const b=create('button', label,'copy'); b.type='button'; b.addEventListener('click', async()=>{try{await navigator.clipboard.writeText(text); b.textContent='Copied'; setTimeout(()=>b.textContent=label,1300)}catch(e){b.textContent='Copy failed'}});return b; }
 function hashLine(label,hash) { const row=create('div',undefined,'hashline'); row.append(create('span',label),create('code',hash),copyButton(hash)); return row; }
@@ -55,7 +122,8 @@ function renderResult(rec, matchName) {
    const foot=create('div',undefined,'source-line');
    const link=create('a','Open JAR in Internet Archive ↗'); link.href=urlFor(c,path);link.target='_blank';link.rel='noopener noreferrer';
    foot.append(link,copyButton(path,'Copy path'), create('span','CRC32 '+crc,'small'));
-   item.append(foot);list.append(item);
+   item.append(foot, create('span','Internet Archive can take a minute or longer to prepare this JAR; HTTP 504 means their server is busy. Retry later.','source-delay'));
+   list.append(item);
  }
  card.append(list);return card;
 }
@@ -78,14 +146,8 @@ async function runSearch() {
  try {
    let ids=[];
    if(mode==='name') {
-     if(term.length<2) throw new Error('Please enter at least 2 characters for filename searches.');
-     const entries=await loadNames();
-     if(current!==token) return;
-     status('Searching filenames…');
-     const searched=term.toLocaleLowerCase();
-     const unique=new Set();
-     for(const [name,id] of entries) if(name.includes(searched)) { unique.add(id); if(!matchedNames.has(id)) matchedNames.set(id,name); }
-     ids=Array.from(unique);
+     if(Array.from(term).length<2) throw new Error('Please enter at least 2 characters for filename searches.');
+     ids = await searchFilenames(term.toLocaleLowerCase(), current);
    } else {
      const valid=mode==='sha1' ? /^[0-9a-f]{40}$/i : /^[0-9a-f]{64}$/i;
      if(!valid.test(term)) throw new Error(`Enter a complete ${mode==='sha1'?'40-character SHA-1':'64-character SHA-256'} hash.`);
@@ -104,7 +166,7 @@ async function init() {
  document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('click',()=>{
    mode=btn.dataset.mode; document.querySelectorAll('[data-mode]').forEach(b=>{b.classList.toggle('active',b===btn);b.setAttribute('aria-pressed',b===btn?'true':'false')});
    $('query').placeholder=mode==='name'?'Game title or filename…':mode==='sha1'?'40-character SHA-1 hash…':'64-character SHA-256 hash…';
-   $('hint').textContent=mode==='name'?'Case-insensitive filename search. The first filename search loads a compressed catalog.':`Exact ${mode.toUpperCase()} lookup loads only a small hash index.`;
+   $('hint').textContent=mode==='name'?'Case-insensitive substring search. Downloads only filename shards relevant to your query.':`Exact ${mode.toUpperCase()} lookup loads only a small hash index.`;
    $('query').focus();
  }));
  $('search-form').addEventListener('submit', e=>{e.preventDefault(); runSearch()});

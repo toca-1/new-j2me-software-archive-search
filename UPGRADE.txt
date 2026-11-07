@@ -1,0 +1,40 @@
+New J2ME Software Archive Search — filename-speed + download-warning update
+
+Includes source files only. The large data/ folder is NOT bundled; generate it
+from your previously verified jarchive-combined-verified.csv.
+
+1) Unzip this package into the VirtualBox shared folder, resulting in:
+   /media/sf_share/new-j2me-site-v3/
+
+2) In Ubuntu, regenerate site data (no 7z extraction and no hashing):
+   python3 /media/sf_share/new-j2me-site-v3/build_site.py \
+     --input ~/Downloads/jarchive-combined-verified.csv \
+     --out /media/sf_share/new-j2me-site-v3 \
+     --expected-count 816215
+
+   Confirm: 816,215 rows, 620,287 unique hashes.
+   Confirm the new file exists: data/names/grams.json.gz
+
+3) Optional local test:
+   cd /media/sf_share/new-j2me-site-v3
+   python3 -m http.server 8000
+   Open http://localhost:8000/ in the Ubuntu browser.
+   Search Coca-Cola FM; try SHA-1 and SHA-256 lookup too.
+
+4) In Windows, open the GitHub Desktop clone of
+   toca-1/new-j2me-software-archive-search.
+   DELETE the old assets/ and data/ directories (not .git/).
+   COPY ALL CONTENTS of share/new-j2me-site-v3/ into the clone root.
+   Keep .git/ and verify index.html is at the root, not in a nested folder.
+   Commit and Push origin in GitHub Desktop.
+
+5) Hard-refresh your live GitHub Pages site. If the browser says the
+   filename index is outdated, data/ and assets/app.js are out of sync:
+   verify that data/manifest.json contains "name_index_version":2.
+
+Notes:
+- For short/common terms, many shards may still be necessary. Targeted
+  searching mainly speeds up more distinctive filename substrings.
+- Internet Archive itself serves the JAR files. HTTP 504 (busy server)
+  is beyond the website's control. Retry later.
+- No data or files are silently uploaded: the zip is a local source update.

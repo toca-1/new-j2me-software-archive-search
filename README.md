@@ -21,7 +21,7 @@ python3 build_site.py \
 
 `data/` is created locally. Commit the website files and generated `data/` to your GitHub Pages repository, selecting **main** / **root** in Settings → Pages. Build does not rehash or extract JAR files. It groups matching contents by SHA-256, keeping *both* original archive paths. The archive source is represented in each result.
 
-The static site uses 1024-entry record chunks, 256 SHA-1 prefix index files, 256 SHA-256 prefix index files, and compressed filename shards. Filename lookup loads compressed filename shards on first use; exact hash lookups retrieve a small prefix index and record chunk. `DecompressionStream('gzip')` is used in modern browsers for filename lookup. Serve through a local HTTP server for testing, rather than opening `index.html` as a local file:
+The static site uses 1024-entry record chunks and SHA-1/SHA-256 prefix indexes. Filename search builds alphabetically sorted compressed shards plus a 2-gram/3-gram-to-shard bitmap. The browser intersects grams from the query and downloads only candidate name shards, in parallel. Exact hash lookups still retrieve only a small prefix index and record chunk. `DecompressionStream('gzip')` is used in modern browsers for filename lookup. Serve through a local HTTP server for testing, rather than opening `index.html` as a local file:
 
 ```sh
 python3 -m http.server 8000
@@ -31,7 +31,7 @@ Open http://localhost:8000/ to test.
 
 ## Download links and limitations
 
-Each result has a link for the corresponding member of the Internet Archive 7z file using the `archive.org/download/96x65pixels_j2me/<archive>/<member>` pattern. **Verify at least one real link from each collection before announcing single-file downloading.** The Internet Archive archive viewer may be rate-limited or unavailable; archived 7z files are solid archives, so member extraction on the server may have costs or delays. The website does not mirror JAR files or serve malicious code directly.
+Each result has a link for the corresponding member of the Internet Archive 7z file using the `archive.org/download/96x65pixels_j2me/<archive>/<member>` pattern. **Verify at least one real link from each collection before announcing single-file downloading.** Internet Archive may require tens of seconds or several minutes to retrieve a member of these large solid 7z archives, and sometimes returns HTTP 504 when busy. The search website cannot speed up Archive.org or guarantee availability; retry later if necessary. The link encoder escapes embedded slashes as %2F, matching Internet Archive’s own archive member links. The website does not mirror JAR files or serve malicious code directly.
 
 This is a complete *file-content* index of the two JARchive v11 collections; only ordinary file entries were indexed (not directory rows). Each source path is preserved. Search currently matches original filenames, not all directory path segments or manifest titles. A file-tree explorer and manifest-based title search can be added later.
 
@@ -39,6 +39,6 @@ This is a complete *file-content* index of the two JARchive v11 collections; onl
 
 Keep a backup of `jarchive-combined-verified.csv` and its summary JSON. Host a `.csv.gz` copy in a GitHub Release or Internet Archive item and link to it from the website. Avoid placing a very large raw CSV in normal Git history. Scripts and website source can be licensed separately from archived JAR contents. Cite and credit the original archive author and sources.
 
-## AI Disclaimer
+## Filename index v3 upgrade
 
-tbd
+After updating `build_site.py` and `assets/app.js`, you **must regenerate `data/`** from your original verified CSV. The new browser script requires `name_index_version: 2` and `data/names/grams.json.gz`; the old 25 filename shards are not compatible. Rebuilding does not extract archives or recalculate hashes. The original verified CSV is not modified. The site displays a prominent download-delay warning and a reminder with each result link.

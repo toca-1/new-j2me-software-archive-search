@@ -13,7 +13,7 @@ SHA1 = re.compile(r"[0-9a-f]{40}\Z")
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 EXPECTED = 816215
 CHUNK = 1024
-NAMES_CHUNK = 32768
+TARGET_NAME_SHARDS = 128
 COLLS = {"JARchiveLite v11": 0, "JARchive v11": 1}
 FILES = {0: "JARchiveLite_v11.7z", 1: "JARchive_v11.7z"}
 FIELDS = ["collection", "filename", "archive_path", "size_bytes", "crc32", "sha1", "sha256", "archive_file"]
@@ -133,22 +133,47 @@ def main():
             if prefix is not None:
                 dump_json(data / field / f"{prefix}.json", bucket)
             print(f"Created {field.upper()} lookup shards", flush=True)
-        # Names include all original names, even for shared SHA-256 contents.
-        rows, nameno, nidx = [], 0, 0
-        for name, ident in db.execute("SELECT e.filename,l.id FROM entries e JOIN lookup l ON e.sha256=l.sha256"):
-            rows.append([name.casefold(), ident])
-            nameno += 1
-            if len(rows) >= NAMES_CHUNK:
-                dump_gz(data / "names" / f"{nidx:03d}.json.gz", rows)
-                nidx += 1
-                rows = []
-        if rows:
-            dump_gz(data / "names" / f"{nidx:03d}.json.gz", rows)
+        # Filename search: alphabetically sorted small shards, with an exact
+        # 2-gram/3-gram -> shard bitmap. Any matching filename must occur in
+        # every gram's bitmap, so intersecting bitmaps cannot omit matches.
+        # Only candidate shards are downloaded by the browser.
+        print("Building targeted filename search index...", flush=True)
+        name_rows = [(filename.casefold(), ident) for filename, ident in
+                     db.execute("SELECT e.filename,l.id FROM entries e JOIN lookup l ON e.sha256=l.sha256")]
+        name_rows.sort(key=lambda r: (r[0], r[1]))
+        import math
+        shard_size = max(1, math.ceil(len(name_rows) / TARGET_NAME_SHARDS))
+        gram_masks = {2: {}, 3: {}}
+        nidx = 0
+        for offset in range(0, len(name_rows), shard_size):
+            shard = name_rows[offset:offset+shard_size]
+            dump_gz(data / "names" / f"{nidx:03d}.json.gz", shard)
+            bit = 1 << nidx
+            # Each name is processed once; repeated ngrams in a name need not
+            # add duplicate work, and each gram is only recorded once/shard.
+            for name, _ in shard:
+                chars = list(name)
+                for gramlen in (2, 3):
+                    if len(chars) < gramlen: continue
+                    gm = gram_masks[gramlen]
+                    for gram in set(''.join(chars[i:i+gramlen]) for i in range(len(chars)-gramlen+1)):
+                        gm[gram] = gm.get(gram, 0) | bit
             nidx += 1
+            if nidx % 32 == 0:
+                print(f"Indexed {nidx} filename shards...", flush=True)
+        del name_rows
+        # Hex-encoded bitmap values are compact, portable and exact; the
+        # gzip-compressed map is fetched once per browser session.
+        dump_gz(data / "names" / "grams.json.gz", {
+            "2": {g: format(bits, "x") for g, bits in gram_masks[2].items()},
+            "3": {g: format(bits, "x") for g, bits in gram_masks[3].items()}
+        })
+        print(f"Created {nidx} name shards, {len(gram_masks[2]):,} bigrams and {len(gram_masks[3]):,} trigrams", flush=True)
         manifest = {"archive":"96x65pixels_j2me", "total_rows":total,
                     "unique_files":next_id, "lite_rows":counts[0], "full_rows":counts[1],
                     "shared_files":source_masks[3], "lite_only":source_masks[1], "full_only":source_masks[2],
-                    "record_chunk": CHUNK, "names_chunks": nidx, "name_chunk": NAMES_CHUNK,
+                    "record_chunk": CHUNK, "names_chunks": nidx, "name_index_version": 2,
+                    "names_grams": "names/grams.json.gz",
                     "schema":["sha256","sha1","size","sources"],
                     "source_schema":["collection_code","filename","archive_path","crc32"],
                     "collections":["JARchiveLite v11", "JARchive v11"]}
