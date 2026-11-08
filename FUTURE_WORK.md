@@ -28,7 +28,7 @@
 - [ ] **Review licensing and attribution.** Keep the independent-project disclaimer, credit TwoSpacesSG and source collections, and review rights before choosing a license for code or derived datasets.
 - [ ] **Keep the static site efficient.** Monitor initial search speed, memory use, generated file count and GitHub Pages deployment reliability as the index evolves.
 - [ ] **Local archival housekeeping.** Back up verified CSVs, summaries, scripts and source archives before cleaning the Ubuntu VM, shared folder and working directories.
-- [ ] **Investigate archive coverage questions.** If useful, check whether the separate [October 2025 dump](https://archive.org/details/2s_j2me_20251025) is already represented in v11; do not assume it is or expand this site's scope without evidence.
+- [ ] **Investigate archive coverage questions.** Compare the list of archives mentioned underneath ["New" J2ME](https://archive.org/details/96x65pixels_j2me) with the links in the "Known sources of valuable files (good or bad dumps)" sections of this [JAR integrity guide](https://lpcwiki.miraheze.org/wiki/JAR_integrity_guide) and maybe extend the search index to more sites/sources.
 
 ## Suggestions
 
