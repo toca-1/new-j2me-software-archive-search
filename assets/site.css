@@ -111,3 +111,25 @@
 #more {
   border-color: #49595e;
 }
+
+/* OS-specific fallback download command buttons */
+.fallback-copy-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.fallback-copy-label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+.fallback-copy-group .fallback-copy {
+  width: auto;
+  text-align: center;
+}
+@media (max-width: 650px) {
+  .fallback-copy-group { width: 100%; }
+  .fallback-copy-label { flex-basis: 100%; }
+  .fallback-copy-group .fallback-copy { flex: 1 1 120px; }
+}

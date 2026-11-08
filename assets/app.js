@@ -186,33 +186,46 @@ function fallbackDownloadAction(sha256) {
   const wrapper = elem('div', undefined, 'fallback-download');
   const actions = elem('div', undefined, 'fallback-actions');
 
-  // The help button is green; the always-visible copy action is neutral grey.
   const helpButton = elem('button', 'Direct download not working? ▾', 'fallback-help-toggle');
   helpButton.type = 'button';
   const panelId = `download-help-${sha256}`;
   helpButton.setAttribute('aria-controls', panelId);
   helpButton.setAttribute('aria-expanded', 'false');
 
-  const copy = elem('button', 'Copy download command', 'fallback-copy');
-  copy.type = 'button';
+  // Both commands are available without expanding the help panel.
+  const linuxCommand = `python3 jarchive_download.py ${sha256}`;
+  const windowsCommand = `py -3 .\\jarchive_download.py ${sha256}`;
+  const copyGroup = elem('div', undefined, 'fallback-copy-group');
+  copyGroup.append(elem('span', 'Copy download command:', 'fallback-copy-label'));
   const feedback = elem('span', '', 'sr-only');
   feedback.setAttribute('role', 'status');
-  let reset;
-  copy.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(`python3 jarchive_download.py ${sha256}`);
-      copy.textContent = 'Command copied!';
-      feedback.textContent = 'Download command copied to clipboard.';
-    } catch {
-      copy.textContent = 'Copy failed';
-      feedback.textContent = 'Clipboard unavailable. Expand the help section to copy the command manually.';
-    }
-    clearTimeout(reset);
-    reset = setTimeout(() => {
-      copy.textContent = 'Copy download command';
-      feedback.textContent = '';
-    }, 2000);
-  });
+
+  function commandCopyButton(label, command) {
+    const button = elem('button', label, 'fallback-copy');
+    button.type = 'button';
+    button.setAttribute('aria-label', `Copy ${label} download command`);
+    let reset;
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(command);
+        button.textContent = 'Copied!';
+        feedback.textContent = `${label} download command copied to clipboard.`;
+      } catch {
+        button.textContent = 'Copy failed';
+        feedback.textContent = 'Clipboard unavailable. Expand the help section to copy the command manually.';
+      }
+      clearTimeout(reset);
+      reset = setTimeout(() => {
+        button.textContent = label;
+        feedback.textContent = '';
+      }, 2000);
+    });
+    return button;
+  }
+  copyGroup.append(
+    commandCopyButton('Windows', windowsCommand),
+    commandCopyButton('Linux/macOS', linuxCommand)
+  );
 
   const panel = elem('div', undefined, 'fallback-help-panel');
   panel.id = panelId;
@@ -224,42 +237,39 @@ function fallbackDownloadAction(sha256) {
     panel.hidden = !opening;
   });
 
-  const explanation = elem('p', "Internet Archive's direct links can time out or return HTTP 504. " +
-    'The checksum-verified Python downloader can often retrieve the same JAR by fetching only the needed ' +
-    'compressed data, reusing completed transfers and verifying the result. Downloads can take several ' +
-    "minutes and still require Internet Archive's storage servers to be available.");
+  const explanation = elem('p', "Internet Archive's downloads can time out and return HTTP error 504. " +
+    'For these cases you can use the provided Python download script. Downloading files this way can ' +
+    "take several minutes and, of course, still require the Internet Archive's servers to be available.");
 
   const requirements = elem('p');
-  requirements.append(document.createTextNode('Requires Python 3.9+, curl and the '));
+  requirements.append(document.createTextNode('This method requires Python 3.9+, curl and the '));
   const scriptLink = elem('a', 'jarchive_download.py script');
-  scriptLink.href = 'https://raw.githubusercontent.com/toca-1/new-j2me-software-archive-search/main/jarchive_download.py';
-  scriptLink.target = '_blank';
-  scriptLink.rel = 'noopener noreferrer';
-  requirements.append(scriptLink, document.createTextNode('. Save it to a folder and run this command from the same folder:'));
+  // A same-origin link allows Firefox to honor the download attribute.
+  scriptLink.href = './jarchive_download.py';
+  scriptLink.download = 'jarchive_download.py';
+  requirements.append(scriptLink,
+    document.createTextNode('. Save it to a folder and — on Linux or macOS — run this command from the same folder:'));
 
-  const command = elem('pre');
-  command.append(elem('code', `python3 jarchive_download.py ${sha256}`));
-
-  const windows = elem('p');
-  windows.append(document.createTextNode('On Windows, use '),
-    elem('code', `py -3 .\\jarchive_download.py ${sha256}`),
-    document.createTextNode('. If interrupted, run the same command again to reuse cached ranges. ' +
-      'The JAR is saved only after verification.'));
+  const linuxExample = elem('pre');
+  linuxExample.append(elem('code', linuxCommand));
+  const windowsIntro = elem('p', 'On Windows, use:');
+  const windowsExample = elem('pre');
+  windowsExample.append(elem('code', windowsCommand));
 
   const links = elem('p', undefined, 'fallback-help-links');
   const guide = elem('a', 'Full setup guide');
   guide.href = 'https://github.com/toca-1/new-j2me-software-archive-search/blob/main/DOWNLOADER.md';
   guide.target = '_blank';
   guide.rel = 'noopener noreferrer';
-  links.append(guide);
+  links.append(document.createTextNode('For further questions refer to the '),
+    guide, document.createTextNode('.'));
 
-  panel.append(elem('h4', 'Alternative terminal download'), explanation, requirements,
-    command, windows, links);
-  actions.append(helpButton, copy);
+  panel.append(elem('h4', 'Alternative download using the terminal'), explanation,
+    requirements, linuxExample, windowsIntro, windowsExample, links);
+  actions.append(helpButton, copyGroup);
   wrapper.append(actions, feedback, panel);
   return wrapper;
 }
-
 function renderResult(id, record) {
   // [sha256, sha1, byteSize, sources, [title,vendor,version,cldc,midp]]
   const [sha256, sha1, bytes, sources, quick] = record;

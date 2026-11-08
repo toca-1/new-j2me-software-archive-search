@@ -1,8 +1,7 @@
 # Important
 
 - [ ] Proofread & check DOWNLOADER.md
-- [ ] Check archive_download.py command line output
-- [ ] Use new version of website and see what can be improved in terms of usability/clarity; reduce visual clutter
+- [ ] Check jarchive_download.py command line output
 
 # Potential improvements
 
