@@ -26,8 +26,3 @@
 
 - [ ] **Fuller provenance display.** Optionally reveal more than the currently published first two original source locations per manifest, with care for database size, usability, and potentially sensitive historical paths.
 - [ ] **Metadata quality tools.** Identify conflicting or incomplete manifest fields; allow users to distinguish archive-supplied metadata from verified checksums and inferred game associations.
-- [ ] **Better title.** Put a title which describes more specifically what it is about rather than a generic title
-
-## Suggestions
-
-Feature requests, corrections, and documented download problems are welcome via the [GitHub repository](https://github.com/toca-1/new-j2me-software-archive-search). Include an exact filename or checksum when reporting an issue with a particular build.
