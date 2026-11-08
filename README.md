@@ -1,6 +1,14 @@
 # Searching the New J2ME Software Archive
 
-[This website](https://toca-1.github.io/new-j2me-software-archive-search/) is an independent searchable index for [TwoSpacesSG's **New J2ME Software Archive**](https://archive.org/details/96x65pixels_j2me), covering JARchive v11 and JARchiveLite v11. This project is neither affiliated with, nor endorsed or maintained by the archive's creators or the Internet Archive itself; the search tool and indexing workflow are independently produced. 
+[This website](https://toca-1.github.io/new-j2me-software-archive-search/) is an independent searchable index for [TwoSpacesSG's **New J2ME Software Archive**](https://archive.org/details/96x65pixels_j2me), covering JARchive v11 and JARchiveLite v11.
+
+## Downloads and third-party content
+
+This project is independently developed and is not affiliated with or endorsed by TwoSpacesSG, the archive contributors, or the Internet Archive. An optional Python downloader retrieves portions of the original archives from the Internet Archive and reconstructs individual JAR files locally on the user's computer.
+
+**This project does not host or bundle the archived JAR files.**
+
+The project's software license applies only to its original code, including the search tool, indexing scripts, and downloader. It does not grant rights to archived software, archive-derived datasets, or other third-party content. Archived files remain subject to their respective rights holders, and availability through the Internet Archive does not imply that they are freely licensed. Users are responsible for ensuring their downloads and use comply with applicable laws.
 
 ## Search features
 
