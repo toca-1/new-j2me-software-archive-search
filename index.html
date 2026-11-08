@@ -17,10 +17,20 @@
       <form id="search-form"><label for="query" class="sr-only">Search query</label><input id="query" type="search" spellcheck="false" autocomplete="off" placeholder="Filename, game title or vendor…" required><button type="submit">Search <span aria-hidden="true">↗</span></button></form>
       <p class="hint" id="hint">Search filenames, game titles and vendors (case-insensitive).</p>
       <p class="hint provenance">Files are hosted by Internet Archive. Original collection source paths are historical provenance and are not necessarily downloadable links.</p></section>
-    <aside class="download-notice" aria-label="Internet Archive download availability">
+        <aside class="download-notice" aria-label="Internet Archive download availability">
       <div class="notice-mark" aria-hidden="true">ⓘ</div>
-      <div><strong>JAR downloads may take a while or temporarily fail.</strong>
-        <p>Files are served by Internet Archive, not this website. Opening a file inside a large 7z collection may take tens of seconds or several minutes. If Internet Archive displays “Sorry, we're kinda busy” (HTTP 504), try refreshing later. Search and checksums here remain available even when their download servers are busy.</p>
+      <div class="download-notice-content">
+        <strong>Having trouble downloading a JAR?</strong>
+        <p>Internet Archive's direct 7z member links can be slow or return HTTP 504. There is an alternative that retrieves only the needed compressed archive ranges, verifies the recovered JAR, and resumes interrupted downloads. It still depends on Internet Archive's storage being available.</p>
+        <details class="download-alternative">
+          <summary>Show the alternative download method (SHA-1 / SHA-256)</summary>
+          <div class="download-alternative-body">
+            <p>Requires <strong>Python 3.9+</strong> and the <strong>curl</strong> command. Copy a SHA-1 or SHA-256 checksum from your search result.</p>
+            <p><a href="https://raw.githubusercontent.com/toca-1/new-j2me-software-archive-search/main/jarchive_download.py">Download jarchive_download.py</a> · <a href="https://github.com/toca-1/new-j2me-software-archive-search/blob/main/DOWNLOADER.md">Full setup guide and options</a></p>
+            <pre><code>python3 jarchive_download.py YOUR_SHA1_OR_SHA256</code></pre>
+            <p>On Windows, use <code>py -3 .\jarchive_download.py YOUR_SHA1_OR_SHA256</code>. The file is saved only after checksum and ZIP checks pass. If a request fails, rerun the same command to reuse cached ranges.</p>
+          </div>
+        </details>
       </div>
     </aside>
     <section class="results-section" aria-label="Search results"><div class="result-heading"><h2>Results</h2><span id="status" role="status" aria-live="polite">Enter a search to begin</span></div><div id="results" class="results"></div><button id="more" type="button" hidden>Show more results</button></section>

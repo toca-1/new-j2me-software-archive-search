@@ -1,0 +1,148 @@
+# JARchive verified JAR downloader
+
+Recover individual JAR files from **JARchive v11** and **JARchiveLite v11** using their **SHA-1 or SHA-256 checksum**, including when Internet Archive's normal individual-file link times out with HTTP 504.
+
+The Python script downloads only portions of the original solid-compressed 7z archive over HTTP Range, starts decompression at an indexed independent LZMA2 restart, and saves the JAR **only if the content matches the verified index**. It does not bundle or redistribute the games, and cannot guarantee retrieval when Internet Archive's storage servers are unavailable.
+
+## Quick start
+
+**Requirements:** Python **3.9 or newer**, the `curl` command on your PATH, and an internet connection. No `pip install`, downloaded 7z archives, or local index files are needed. Standard Python installations on Linux and macOS generally include the `lzma` module; check with `python3 -c 'import lzma'` if in doubt.
+
+1. Download [`jarchive_download.py`](https://raw.githubusercontent.com/toca-1/new-j2me-software-archive-search/main/jarchive_download.py) and put it in a folder where you want to save JARs. On Linux/macOS, you can use:
+
+   ```bash
+   curl -fL -o jarchive_download.py \
+     https://raw.githubusercontent.com/toca-1/new-j2me-software-archive-search/main/jarchive_download.py
+   ```
+
+   On Windows, download the file in your browser, or run the same command in PowerShell with `curl.exe` rather than the PowerShell `curl` alias.
+
+2. On the [archive search site](https://toca-1.github.io/new-j2me-software-archive-search/), search for the game and **copy its SHA-1 or SHA-256**.
+
+3. From the folder containing the script, run:
+
+   ```bash
+   python3 jarchive_download.py YOUR_SHA1_OR_SHA256
+   ```
+
+   On Windows, the equivalent is usually:
+
+   ```powershell
+   py -3 .\jarchive_download.py YOUR_SHA1_OR_SHA256
+   ```
+
+   For example, this SHA-1 retrieves the verified 803.6 KiB Crash Bandicoot build:
+
+   ```bash
+   python3 jarchive_download.py 714a033bcfb641bcf717e54f290a02352b7945fa \
+     --output crash-bandicoot.jar
+   ```
+
+   Or use the SHA-256 of freeSnake:
+
+   ```bash
+   python3 jarchive_download.py c4c8adbef851434dc2474e8697b1d4143df961e6f01ee0911a44fb6324c918cd \
+     --output freesnake.jar
+   ```
+
+By default the output is `<SHA-256>.jar` in your current working directory. The script **never overwrites an existing output file**. Pass `--output PATH` to choose the destination.
+
+## How it works
+
+- It fetches the small `retrieval/v1/manifest.json` and the required gzip-compressed SHA lookup shard(s) from GitHub Pages (one SHA-256 shard, or one SHA-1 plus one SHA-256 shard).
+- It selects the archive copy requiring the least decompression. If a hash has both Full and Lite sources, it can try the other source if the first fails.
+- It locates the actual Internet Archive storage servers from the item's metadata, and uses bounded HTTP byte-range requests. The original 7z member extraction endpoint is not used.
+- Successful **complete** HTTP ranges are cached under `.jarchive-cache/`; rerunning the same command resumes from those cached ranges instead of starting again. A request that fails partway through a range must fetch that range again.
+- The displayed percentage is **decoded/uncompressed progress**, not the exact percentage of compressed bytes downloaded. A compressed transfer upper bound is printed, but the actual transfer may be much smaller.
+- Before saving, the recovered JAR must pass its expected file size, CRC32, SHA-256 and ZIP internal integrity checks. When a SHA-1 was supplied, that is verified as well.
+
+### Examples
+
+Preview which archive source would be used (downloads only small index metadata, not archive data):
+
+```bash
+python3 jarchive_download.py 714a033bcfb641bcf717e54f290a02352b7945fa --dry-run
+```
+
+Use a custom filename, or force the archive source:
+
+```bash
+python3 jarchive_download.py YOUR_HASH --output my-game.jar
+python3 jarchive_download.py YOUR_HASH --source full
+python3 jarchive_download.py YOUR_HASH --source lite
+```
+
+Allow more time for slow or inconsistent connections:
+
+```bash
+python3 jarchive_download.py YOUR_HASH --request-timeout 90 --stall-limit 240
+```
+
+Resume after Ctrl+C or a temporary failure: **run the exact same command again**, with the same cache directory and chunk size.
+
+Use the already downloaded index files when offline from GitHub Pages (Internet Archive is **still required** unless all needed archive ranges are cached):
+
+```bash
+python3 jarchive_download.py YOUR_HASH --index-offline
+```
+
+Use a complete local retrieval index or a custom index server:
+
+```bash
+python3 jarchive_download.py YOUR_HASH --index /path/to/jarchive-retrieval-v1
+python3 jarchive_download.py YOUR_HASH --index-url https://example.org/retrieval/v1
+```
+
+**Note:** If `jarchive-retrieval-v1/manifest.json` exists in your current directory, the script prefers that local index unless you explicitly provide `--index-url`.
+
+## Full command-line options
+
+Run `python3 jarchive_download.py --help` for the options supported by your exact script version.
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `hash` | required | SHA-1 (40 hex digits) or SHA-256 (64 hex digits); hexadecimal case is ignored |
+| `--output PATH` | `<SHA-256>.jar` | Destination; does not overwrite existing files |
+| `--dry-run` | off | Show sources without downloading JAR ranges; remote index may still be fetched |
+| `--source {auto,lite,full}` | `auto` | Choose an archive copy; auto ranks by bytes to decompress and tries fallbacks |
+| `--index PATH` | automatic | Use a local index directory; incompatible with `--index-url` |
+| `--index-url URL` | project Pages URL | Explicit remote index location, even when a local index exists |
+| `--index-offline` | off | No remote index requests; previously cached index resources required |
+| `--index-fetch-timeout SECONDS` | `20` | Hard timeout for each remote index request |
+| `--cache-dir PATH` | `.jarchive-cache` | Save reusable index resources and validated complete compressed ranges |
+| `--no-cache` | off | Disable archive range caching; does **not** disable remote index caching |
+| `--base-url URL` | IA archive download base | Use another archive download base; IA storage discovery only applies to the default URL |
+| `--no-direct` | off | Skip IA storage-node discovery and use the configured base URL only |
+| `--metadata-timeout SECONDS` | `7` | Timeout for Internet Archive metadata discovery |
+| `--request-timeout SECONDS` | `45` | Hard limit for one byte-range request |
+| `--connect-timeout SECONDS` | `5` | Connection timeout for byte-range requests |
+| `--stall-limit SECONDS` | `120` | Allow this long without a completed new range before failing |
+| `--route-passes N` | `2` | Maximum passes across available download routes per range (1–5) |
+| `--time-limit SECONDS` | `0` (off) | Optional total transfer time limit; disabled by default |
+| `--chunk-kib N` | `1024` | Compressed bytes per request, in KiB (maximum 4096) |
+| `--max-download-mib N` | `512` | Hard cap on compressed bytes processed **per source**, including cached bytes |
+| `--max-jar-mib N` | `128` | Maximum uncompressed JAR size |
+
+When choosing `--chunk-kib`, smaller chunks can reduce wasted data on a failed request, but increase request overhead; **keep the same value between resumed attempts** to maximize cache reuse.
+
+## Errors and troubleshooting
+
+- **HTTP 500 / 504 / range timeout:** Internet Archive may be overloaded. The downloader tries known direct storage servers and the normal route, but it is not a mirror. Retry the same command later; complete cached ranges are preserved.
+- **`No successful HTTP range within the stall/time limit`:** Try `--request-timeout 90 --stall-limit 240` if the connection is slow but usable.
+- **`Output exists (will not overwrite)`:** Use a new `--output` filename or explicitly remove/rename the existing file after inspecting it.
+- **`SHA-1 not found`, `SHA-256 not found`:** Verify you copied the full 40- or 64-digit hash of an indexed file, not its CRC32 or an unrelated hash.
+- **Index HTTP 404:** Verify [retrieval/v1/manifest.json](https://toca-1.github.io/new-j2me-software-archive-search/retrieval/v1/manifest.json) loads; Pages deployments may take a little time after pushes.
+- **Missing cached index in `--index-offline` mode:** Perform the lookup once while online (or use `--index PATH`).
+- **Missing `curl`:** Install curl and make sure the executable is on PATH. Windows users should use the `curl.exe` executable, not the PowerShell alias.
+- **Missing `lzma` module:** Use a Python build with `lzma`/liblzma support.
+- **Damaged or stale cached data:** The script automatically rejects ranges whose local checksum does not match. If in doubt, retry with `--no-cache` or delete `.jarchive-cache/` (this discards resumable progress).
+- **Download cap exceeded:** Review the planned compressed upper bound and only increase `--max-download-mib` if you are comfortable with the additional data transfer.
+
+## Privacy, trust and rights
+
+- The downloader sends archive range requests to the **Internet Archive**, and index lookups to the public project's **GitHub Pages** site. These services can see the requests and IP address; the requested hash prefix is part of the index shard URL.
+- Index metadata and individual archive JARs come from third-party resources. Integrity checks confirm the file matches the **published** hash; they cannot make untrusted game software safe to execute. Use an appropriate sandbox/emulator for unknown software.
+- No original JARs are hosted in this repository. Rights to archived software remain with their respective rights holders.
+- This is an independently built community tool, not an official Internet Archive feature.
+
+See [ATTRIBUTION.md](ATTRIBUTION.md) for technical references and attribution notes.

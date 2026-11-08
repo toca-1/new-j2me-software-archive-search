@@ -19,6 +19,18 @@ The project's software license applies only to its original code and documentati
 
 The site uses standard browser gzip decompression, so a modern browser is required.
 
+## Verified JAR downloads (HTTP 504 alternative)
+
+Internet Archive's individual JAR links for large solid-compressed 7z archives can sometimes return HTTP 504. The optional **[standalone verified downloader](DOWNLOADER.md)** uses the published `retrieval/v1/` SHA-1/SHA-256 lookup shards and HTTP byte-range requests to reconstruct a JAR locally, then checks its CRC32, SHA-256, and internal ZIP integrity. The alternative still relies on Internet Archive's storage servers, so recovery is not guaranteed during outages.
+
+Copy a game's SHA-1 or SHA-256 from the website, download [`jarchive_download.py`](jarchive_download.py), and run:
+
+```bash
+python3 jarchive_download.py YOUR_SHA1_OR_SHA256
+```
+
+See **[DOWNLOADER.md](DOWNLOADER.md)** for system requirements, the complete option reference, resume behavior, limitations, and troubleshooting, and **[ATTRIBUTION.md](ATTRIBUTION.md)** for technical credits and third-party-source notes. No JAR content is hosted here.
+
 ## Download the complete index
 
 The complete verified CSV index is available in the [index-v1 GitHub Release](https://github.com/toca-1/new-j2me-software-archive-search/releases/tag/index-v1). It contains 816,215 archived file entries representing 620,287 unique file contents across JARchive v11 and JARchiveLite v11. The release also includes a SHA-256 checksum and verification summary. No JAR files are redistributed.

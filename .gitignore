@@ -2,3 +2,7 @@
 *.csv
 *.csv.gz
 __pycache__/
+*.jar
+*.7z
+*.part
+.jarchive-cache/

@@ -46,3 +46,16 @@
   outline-offset: 3px;
   border-radius: 3px;
 }
+
+/* JARchive resumable downloader quick-start */
+.download-notice .download-notice-content {min-width:0; flex:1}
+.download-alternative {margin-top:12px}
+.download-alternative summary {cursor:pointer; color:var(--accent); font-size:13px; font-weight:650; width:fit-content; padding:5px 0}
+.download-alternative summary:hover {text-decoration:underline}
+.download-alternative summary:focus-visible {outline:2px solid var(--accent); outline-offset:4px; border-radius:3px}
+.download-alternative-body {margin-top:9px; border-top:1px solid var(--edge); padding-top:9px}
+.download-alternative-body a {color:var(--accent); text-underline-offset:3px}
+.download-alternative-body a:focus-visible {outline:2px solid var(--accent); outline-offset:2px}
+.download-alternative-body pre {max-width:100%; overflow-x:auto; padding:12px; border-radius:8px; border:1px solid var(--edge); background:#10191b; color:var(--text); font-size:12px; line-height:1.5}
+.download-alternative-body code {font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.download-alternative-body p code {overflow-wrap:anywhere}
