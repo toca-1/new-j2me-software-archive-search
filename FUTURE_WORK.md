@@ -1,5 +1,12 @@
 # Potential improvements
 
+## Preservation, documentation and maintenance
+
+- [ ] **Document reproducibility.** Publish or refine the indexing, extraction, hashing and metadata-join methodology, including the overlong Linux filename handled by archive streaming.
+- [ ] **Investigate archive coverage questions.** Compare the list of archives mentioned underneath ["New" J2ME](https://archive.org/details/96x65pixels_j2me) with the links in the "Known sources of valuable files (good or bad dumps)" sections of this [JAR integrity guide](https://lpcwiki.miraheze.org/wiki/JAR_integrity_guide) and maybe extend the search index to more sites/sources; although many of the missing sites or files could be bad dumps and were excluded on purpose?
+- [ ] **Review dataset rights and attribution (optional).** The project's original code is MIT-licensed, and the README includes an independent-project disclaimer and credits the source archive. Revisit the rights and redistribution conditions of archive-derived datasets if considering a separate dataset license in the future.
+- [ ] **Windows-friendly retrieval / extraction.** Document an alternative way to retrieve specific JARs on Windows, including an offline method for people who already have either 7z file.
+
 ## Search and browsing
 
 - [ ] **Virtual archive explorer.** Browse the original JARchive Full and Lite directory structures with folders, file sizes, checksums, and links to archive members.
@@ -11,22 +18,9 @@
 
 ## Metadata and presentation
 
-- [ ] **Further visual redesign.** Refine typography, spacing, result-card layout, accessibility and mobile presentation in response to user feedback.
 - [ ] **Fuller provenance display.** Optionally reveal more than the currently published first two original source locations per manifest, with care for database size, usability, and potentially sensitive historical paths.
 - [ ] **Metadata quality tools.** Identify conflicting or incomplete manifest fields; allow users to distinguish archive-supplied metadata from verified checksums and inferred game associations.
 - [ ] **Better title.** Put a title which describes more specifically what it is about rather than a generic title
-
-## Downloads and offline use
-
-- [ ] **More resilient retrieval instructions.** Offer useful fallbacks when Internet Archive's per-JAR archive viewer is slow, returns a zero-byte response, or fails with HTTP 504. These failures may occur on Internet Archive's side and are not necessarily caused by the search website.
-- [ ] **Windows-friendly retrieval / extraction.** Document an alternative way to retrieve specific JARs on Windows, including an offline method for people who already have either 7z file.
-- [ ] **Edge-case download testing.** Test filenames containing Unicode, `#`, `%`, slashes inside archive paths, and other punctuation against Internet Archive's generated member links.
-
-## Preservation, documentation and maintenance
-
-- [ ] **Document reproducibility.** Publish or refine the indexing, extraction, hashing and metadata-join methodology, including the overlong Linux filename handled by archive streaming.
-- [ ] **Review licensing and attribution.** Keep the independent-project disclaimer, credit TwoSpacesSG and source collections, and review rights before choosing a license for code or derived datasets.
-- [ ] **Investigate archive coverage questions.** Compare the list of archives mentioned underneath ["New" J2ME](https://archive.org/details/96x65pixels_j2me) with the links in the "Known sources of valuable files (good or bad dumps)" sections of this [JAR integrity guide](https://lpcwiki.miraheze.org/wiki/JAR_integrity_guide) and maybe extend the search index to more sites/sources; although many of the missing sites or files could be bad dumps and were excluded on purpose?
 
 ## Suggestions
 
