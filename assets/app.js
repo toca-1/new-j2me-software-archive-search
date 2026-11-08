@@ -184,39 +184,79 @@ function showDetails(target, detailRows) {
 // action per search result. Copying this command does NOT initiate a download.
 function fallbackDownloadAction(sha256) {
   const wrapper = elem('div', undefined, 'fallback-download');
-  const button = elem('button', 'Fallback: copy download command', 'fallback-copy');
-  button.type = 'button';
+  const actions = elem('div', undefined, 'fallback-actions');
+
+  // The help button is green; the always-visible copy action is neutral grey.
+  const helpButton = elem('button', 'Direct download not working? ▾', 'fallback-help-toggle');
+  helpButton.type = 'button';
+  const panelId = `download-help-${sha256}`;
+  helpButton.setAttribute('aria-controls', panelId);
+  helpButton.setAttribute('aria-expanded', 'false');
+
+  const copy = elem('button', 'Copy download command', 'fallback-copy');
+  copy.type = 'button';
   const feedback = elem('span', '', 'sr-only');
   feedback.setAttribute('role', 'status');
   let reset;
-  button.addEventListener('click', async () => {
+  copy.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(`python3 jarchive_download.py ${sha256}`);
-      button.textContent = 'Command copied!';
-      feedback.textContent = 'Alternative download command copied to clipboard.';
+      copy.textContent = 'Command copied!';
+      feedback.textContent = 'Download command copied to clipboard.';
     } catch {
-      button.textContent = 'Copy failed';
-      feedback.textContent = 'Clipboard unavailable; copy the SHA-256 above and use the setup guide.';
+      copy.textContent = 'Copy failed';
+      feedback.textContent = 'Clipboard unavailable. Expand the help section to copy the command manually.';
     }
     clearTimeout(reset);
     reset = setTimeout(() => {
-      button.textContent = 'Fallback: copy download command';
+      copy.textContent = 'Copy download command';
       feedback.textContent = '';
     }, 2000);
   });
-  const hint = elem('p', undefined, 'fallback-hint');
-  hint.append(document.createTextNode('Requires the Python downloader ('));
-  const scriptLink = elem('a', 'jarchive_download.py');
+
+  const panel = elem('div', undefined, 'fallback-help-panel');
+  panel.id = panelId;
+  panel.hidden = true;
+  helpButton.addEventListener('click', () => {
+    const opening = helpButton.getAttribute('aria-expanded') !== 'true';
+    helpButton.setAttribute('aria-expanded', String(opening));
+    helpButton.textContent = `Direct download not working? ${opening ? '▴' : '▾'}`;
+    panel.hidden = !opening;
+  });
+
+  const explanation = elem('p', "Internet Archive's direct links can time out or return HTTP 504. " +
+    'The checksum-verified Python downloader can often retrieve the same JAR by fetching only the needed ' +
+    'compressed data, reusing completed transfers and verifying the result. Downloads can take several ' +
+    "minutes and still require Internet Archive's storage servers to be available.");
+
+  const requirements = elem('p');
+  requirements.append(document.createTextNode('Requires Python 3.9+, curl and the '));
+  const scriptLink = elem('a', 'jarchive_download.py script');
   scriptLink.href = 'https://raw.githubusercontent.com/toca-1/new-j2me-software-archive-search/main/jarchive_download.py';
   scriptLink.target = '_blank';
   scriptLink.rel = 'noopener noreferrer';
-  hint.append(scriptLink, document.createTextNode(') and curl. '));
-  const guide = elem('a', 'Setup guide');
+  requirements.append(scriptLink, document.createTextNode('. Save it to a folder and run this command from the same folder:'));
+
+  const command = elem('pre');
+  command.append(elem('code', `python3 jarchive_download.py ${sha256}`));
+
+  const windows = elem('p');
+  windows.append(document.createTextNode('On Windows, use '),
+    elem('code', `py -3 .\\jarchive_download.py ${sha256}`),
+    document.createTextNode('. If interrupted, run the same command again to reuse cached ranges. ' +
+      'The JAR is saved only after verification.'));
+
+  const links = elem('p', undefined, 'fallback-help-links');
+  const guide = elem('a', 'Full setup guide');
   guide.href = 'https://github.com/toca-1/new-j2me-software-archive-search/blob/main/DOWNLOADER.md';
   guide.target = '_blank';
   guide.rel = 'noopener noreferrer';
-  hint.append(guide);
-  wrapper.append(button, feedback, hint);
+  links.append(guide);
+
+  panel.append(elem('h4', 'Alternative terminal download'), explanation, requirements,
+    command, windows, links);
+  actions.append(helpButton, copy);
+  wrapper.append(actions, feedback, panel);
   return wrapper;
 }
 
@@ -296,6 +336,7 @@ async function renderMore(current) {
   button.textContent = `Show more (${fmt(active.length - shown)} remaining)`;
 }
 async function runSearch() {
+  document.querySelector('.results-section').hidden = false;
   const current = ++generation;
   const term = $('query').value.trim();
   $('results').replaceChildren(); $('more').hidden = true; labelsForMatches = new Map();

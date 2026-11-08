@@ -17,23 +17,7 @@
       <form id="search-form"><label for="query" class="sr-only">Search query</label><input id="query" type="search" spellcheck="false" autocomplete="off" placeholder="Filename, game title or vendor…" required><button type="submit">Search <span aria-hidden="true">↗</span></button></form>
       <p class="hint"><span id="hint">Case-insensitive text search.</span> Files are hosted by Internet Archive.</p>
       </section>
-            <aside class="download-notice" aria-label="Alternative JAR download method">
-      <div class="notice-mark" aria-hidden="true">ⓘ</div>
-      <div class="download-notice-content">
-        <strong>Direct JAR download not working?</strong>
-        <p>Internet Archive's direct links sometimes time out or return HTTP 504. The <a href="https://github.com/toca-1/new-j2me-software-archive-search/blob/main/DOWNLOADER.md">checksum-verified Python downloader</a> can often recover the same JAR when the direct download fails. It retrieves only the needed compressed data, resumes interrupted transfers, and checks the recovered file. <strong>Downloads can take several minutes</strong>, depending on the file and connection speed. It still requires Internet Archive's storage servers to be available.</p>
-        <p class="download-help-links"><a href="https://github.com/toca-1/new-j2me-software-archive-search/blob/main/DOWNLOADER.md">How to use the alternative downloader</a> · <a href="https://raw.githubusercontent.com/toca-1/new-j2me-software-archive-search/main/jarchive_download.py">Download jarchive_download.py</a></p>
-        <details class="download-alternative">
-          <summary>Quick start: alternative download method (SHA-1 / SHA-256)</summary>
-          <div class="download-alternative-body">
-            <p>Requires the Python downloader (<strong>jarchive_download.py</strong>), <strong>Python 3.9+</strong> and <strong>curl</strong>. Save the script to a folder, copy a SHA-1 or SHA-256 checksum from a search result, and run this command from the same folder:</p>
-            <pre><code>python3 jarchive_download.py YOUR_SHA1_OR_SHA256</code></pre>
-            <p>On Windows, use <code>py -3 .\jarchive_download.py YOUR_SHA1_OR_SHA256</code>. You can also use each result's “Fallback: copy download command” action. Re-run a failed download to reuse cached ranges; the JAR is only saved after verification.</p>
-          </div>
-        </details>
-      </div>
-    </aside>
-    <section class="results-section" aria-label="Search results"><div class="result-heading"><h2>Results</h2><span id="status" role="status" aria-live="polite">Enter a search to begin</span></div><div id="results" class="results"></div><button id="more" type="button" hidden>Show more results</button></section>
+<section class="results-section" aria-label="Search results" hidden><div class="result-heading"><h2>Results</h2><span id="status" role="status" aria-live="polite"></span></div><div id="results" class="results"></div><button id="more" type="button" hidden>Show more results</button></section>
 
   </main>
   <footer><span>Unofficial community index · not affiliated with the archive's maintainers</span></footer>
