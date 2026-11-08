@@ -180,6 +180,46 @@ function showDetails(target, detailRows) {
     target.append(section);
   }
 }
+// A verified JAR can have multiple archive sources, but needs only one fallback
+// action per search result. Copying this command does NOT initiate a download.
+function fallbackDownloadAction(sha256) {
+  const wrapper = elem('div', undefined, 'fallback-download');
+  const button = elem('button', 'Fallback: copy download command', 'fallback-copy');
+  button.type = 'button';
+  const feedback = elem('span', '', 'sr-only');
+  feedback.setAttribute('role', 'status');
+  let reset;
+  button.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(`python3 jarchive_download.py ${sha256}`);
+      button.textContent = 'Command copied!';
+      feedback.textContent = 'Alternative download command copied to clipboard.';
+    } catch {
+      button.textContent = 'Copy failed';
+      feedback.textContent = 'Clipboard unavailable; copy the SHA-256 above and use the setup guide.';
+    }
+    clearTimeout(reset);
+    reset = setTimeout(() => {
+      button.textContent = 'Fallback: copy download command';
+      feedback.textContent = '';
+    }, 2000);
+  });
+  const hint = elem('p', undefined, 'fallback-hint');
+  hint.append(document.createTextNode('Requires the Python downloader ('));
+  const scriptLink = elem('a', 'jarchive_download.py');
+  scriptLink.href = 'https://raw.githubusercontent.com/toca-1/new-j2me-software-archive-search/main/jarchive_download.py';
+  scriptLink.target = '_blank';
+  scriptLink.rel = 'noopener noreferrer';
+  hint.append(scriptLink, document.createTextNode(') and curl. '));
+  const guide = elem('a', 'Setup guide');
+  guide.href = 'https://github.com/toca-1/new-j2me-software-archive-search/blob/main/DOWNLOADER.md';
+  guide.target = '_blank';
+  guide.rel = 'noopener noreferrer';
+  hint.append(guide);
+  wrapper.append(button, feedback, hint);
+  return wrapper;
+}
+
 function renderResult(id, record) {
   // [sha256, sha1, byteSize, sources, [title,vendor,version,cldc,midp]]
   const [sha256, sha1, bytes, sources, quick] = record;
@@ -215,13 +255,13 @@ function renderResult(id, record) {
     fullPath.append(elem('strong', path.slice(slash + 1), 'path-filename'));
 
     const actions = elem('div', undefined, 'source-line');
-    const link = elem('a', 'Download JAR from the Internet Archive', 'jar-download-link');
+    const link = elem('a', 'Direct download (Internet Archive)', 'jar-download-link');
     link.href = urlFor(coll, path); link.target = '_blank'; link.rel = 'noopener noreferrer';
     actions.append(link);
     section.append(top, fullPath, actions);
     list.append(section);
   }
-  card.append(list);
+  card.append(list, fallbackDownloadAction(sha256));
   const more = elem('button', 'Show manifest & original sources', 'metadata-toggle');
   more.type = 'button'; more.setAttribute('aria-expanded', 'false');
   const body = elem('div', undefined, 'metadata-body'); body.hidden = true;

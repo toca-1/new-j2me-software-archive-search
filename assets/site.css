@@ -59,3 +59,15 @@
 .download-alternative-body pre {max-width:100%; overflow-x:auto; padding:12px; border-radius:8px; border:1px solid var(--edge); background:#10191b; color:var(--text); font-size:12px; line-height:1.5}
 .download-alternative-body code {font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
 .download-alternative-body p code {overflow-wrap:anywhere}
+
+/* Per-result verified JAR fallback action */
+.fallback-download{margin-top:15px;padding-top:15px;border-top:1px solid var(--edge)}
+.fallback-copy{max-width:100%;padding:11px 15px;background:var(--accent-d);border:1px solid #467b6b;border-radius:9px;color:#c9f8e5;font:inherit;font-size:13px;font-weight:650;cursor:pointer;line-height:1.4;text-align:left}
+.fallback-copy:hover{background:#1b5345;border-color:var(--accent);color:#fff}
+.fallback-copy:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.fallback-hint{margin:9px 0 0;font-size:12px;line-height:1.6;color:var(--muted)}
+.fallback-hint a,.download-notice .download-help-links a,.download-notice .download-notice-content>p a{color:var(--accent);text-underline-offset:3px}
+.fallback-hint a:hover,.download-notice .download-notice-content>p a:hover{color:#aaf3d6}
+.download-notice .download-help-links{margin-top:11px}
+.download-notice .download-notice-content>p strong{font-size:inherit}
+@media(max-width:650px){.fallback-copy{width:100%;text-align:center}.fallback-download{margin-top:13px}}

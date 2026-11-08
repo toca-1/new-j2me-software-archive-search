@@ -2,33 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101718"><meta name="description" content="Search JARchive v11 and JARchiveLite v11 by filename, MIDlet title, vendor, SHA-1, or SHA-256, with verified hashes, manifest metadata, and archive links.">
-  <title>New J2ME Software Archive Search Index</title>
+  <meta name="theme-color" content="#101718"><meta name="description" content="Search J2ME games, apps and exact JAR builds in the New J2ME Software Archive by filename, title, vendor, SHA-1 or SHA-256. Includes verified checksums and an alternative JAR downloader.">
+  <title>J2ME Games &amp; Apps Archive Search | New J2ME Software Archive</title>
   <link rel="stylesheet" href="assets/site.css"><script defer src="assets/app.js"></script>
 </head>
 <body>
 <div class="shell">
   <header class="topbar"><a class="brand" href="./"><span class="brand-icon">J<span>2</span></span><span>J2ME <strong>Archive Search</strong></span></a><nav><a href="https://github.com/toca-1/new-j2me-software-archive-search" target="_blank" rel="noopener noreferrer">Source code ↗</a><a href="https://archive.org/details/96x65pixels_j2me" target="_blank" rel="noopener noreferrer">Original archive ↗</a></nav></header>
   <main>
-    <section class="hero"><h1>Find the <em>exact build.</em></h1><p>Search TwoSpacesSG's New J2ME Software Archive by filename, game title, vendor, or verified checksum. Explore each build's manifest and available source history.</p>
+    <section class="hero"><h1>Search J2ME games, apps &amp; <em>exact JAR builds.</em></h1><p>Find files from the New J2ME Software Archive by game title, filename, vendor, SHA-1 or SHA-256. Explore verified checksums, individual builds and their archive sources.</p>
       <div class="stats" id="stats"><div><strong id="unique-count">…</strong><span>Unique files</span></div><div><strong id="entries-count">…</strong><span>Archived file entries</span></div><div><strong id="shared-count">…</strong><span>In both collections</span></div></div></section>
     <section class="search" aria-label="Search archive"><div class="search-top"><h2>Search the archive</h2><span>JARchive v11 + JARchiveLite v11</span></div>
       <div class="modes" role="group" aria-label="Search field"><button class="active" type="button" data-mode="name" aria-pressed="true">Name / title</button><button type="button" data-mode="sha1" aria-pressed="false">SHA-1</button><button type="button" data-mode="sha256" aria-pressed="false">SHA-256</button></div>
       <form id="search-form"><label for="query" class="sr-only">Search query</label><input id="query" type="search" spellcheck="false" autocomplete="off" placeholder="Filename, game title or vendor…" required><button type="submit">Search <span aria-hidden="true">↗</span></button></form>
       <p class="hint" id="hint">Search filenames, game titles and vendors (case-insensitive).</p>
       <p class="hint provenance">Files are hosted by Internet Archive. Original collection source paths are historical provenance and are not necessarily downloadable links.</p></section>
-        <aside class="download-notice" aria-label="Internet Archive download availability">
+            <aside class="download-notice" aria-label="Alternative JAR download method">
       <div class="notice-mark" aria-hidden="true">ⓘ</div>
       <div class="download-notice-content">
-        <strong>Having trouble downloading a JAR?</strong>
-        <p>Internet Archive's direct 7z member links can be slow or return HTTP 504. There is an alternative that retrieves only the needed compressed archive ranges, verifies the recovered JAR, and resumes interrupted downloads. It still depends on Internet Archive's storage being available.</p>
+        <strong>Direct JAR download not working?</strong>
+        <p>Internet Archive's direct links sometimes time out or return HTTP 504. The <a href="https://github.com/toca-1/new-j2me-software-archive-search/blob/main/DOWNLOADER.md">checksum-verified Python downloader</a> can often recover the same JAR when the direct download fails. It retrieves only the needed compressed data, resumes interrupted transfers, and checks the recovered file. <strong>Downloads can take several minutes</strong>, depending on the file and connection speed. It still requires Internet Archive's storage servers to be available.</p>
+        <p class="download-help-links"><a href="https://github.com/toca-1/new-j2me-software-archive-search/blob/main/DOWNLOADER.md">How to use the alternative downloader</a> · <a href="https://raw.githubusercontent.com/toca-1/new-j2me-software-archive-search/main/jarchive_download.py">Download jarchive_download.py</a></p>
         <details class="download-alternative">
-          <summary>Show the alternative download method (SHA-1 / SHA-256)</summary>
+          <summary>Quick start: alternative download method (SHA-1 / SHA-256)</summary>
           <div class="download-alternative-body">
-            <p>Requires <strong>Python 3.9+</strong> and the <strong>curl</strong> command. Copy a SHA-1 or SHA-256 checksum from your search result.</p>
-            <p><a href="https://raw.githubusercontent.com/toca-1/new-j2me-software-archive-search/main/jarchive_download.py">Download jarchive_download.py</a> · <a href="https://github.com/toca-1/new-j2me-software-archive-search/blob/main/DOWNLOADER.md">Full setup guide and options</a></p>
+            <p>Requires the Python downloader (<strong>jarchive_download.py</strong>), <strong>Python 3.9+</strong> and <strong>curl</strong>. Save the script to a folder, copy a SHA-1 or SHA-256 checksum from a search result, and run this command from the same folder:</p>
             <pre><code>python3 jarchive_download.py YOUR_SHA1_OR_SHA256</code></pre>
-            <p>On Windows, use <code>py -3 .\jarchive_download.py YOUR_SHA1_OR_SHA256</code>. The file is saved only after checksum and ZIP checks pass. If a request fails, rerun the same command to reuse cached ranges.</p>
+            <p>On Windows, use <code>py -3 .\jarchive_download.py YOUR_SHA1_OR_SHA256</code>. You can also use each result's “Fallback: copy download command” action. Re-run a failed download to reuse cached ranges; the JAR is only saved after verification.</p>
           </div>
         </details>
       </div>
