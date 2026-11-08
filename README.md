@@ -8,7 +8,7 @@ This project is independently developed and is not affiliated with or endorsed b
 
 **This project does not host or bundle the archived JAR files.**
 
-The project's software license applies only to its original code, including the search tool, indexing scripts, and downloader. It does not grant rights to archived software, archive-derived datasets, or other third-party content. Archived files remain subject to their respective rights holders, and availability through the Internet Archive does not imply that they are freely licensed. Users are responsible for ensuring their downloads and use comply with applicable laws.
+The project's software license applies only to its original code and documentation, except where otherwise noted. It does not grant rights to archived software, archive-derived datasets, or other third-party content. Archived files remain subject to their respective rights holders, and availability through the Internet Archive does not imply that they are freely licensed. Users are responsible for ensuring their downloads and use comply with applicable laws.
 
 ## Search features
 
