@@ -3,7 +3,7 @@
 ## Preservation, documentation and maintenance
 
 - [ ] **Document reproducibility.** Publish or refine the indexing, extraction, hashing and metadata-join methodology, including the overlong Linux filename handled by archive streaming
-- [ ] **Investigate archive coverage questions.** Compare the list of archives mentioned underneath ["New" J2ME](https://archive.org/details/96x65pixels_j2me) with the links in the "Known sources of valuable files (good or bad dumps)" sections of this [JAR integrity guide](https://lpcwiki.miraheze.org/wiki/JAR_integrity_guide) and maybe extend the search index to more sites/sources; although many of the missing sites or files could be bad dumps and were excluded on purpose?
+- [ ] **Investigate archive coverage questions.** Investigate newer or updated J2ME collections for file contents absent from JARchive v11 and Lite v11
 
 ## Search and browsing
 
