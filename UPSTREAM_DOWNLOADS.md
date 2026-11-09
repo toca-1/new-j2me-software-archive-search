@@ -27,3 +27,12 @@ not committed (the repository's `.gitignore` excludes CSV files).
 The separate optional terminal downloader is still available if browser links
 return a timeout or HTTP 504. Other upstream collections can be added later,
 with separate hash comparisons and ZIP-member URL tests.
+
+<!-- upstream-collection:waptrick -->
+## Waptrick mapping
+
+- Internet Archive item: https://archive.org/details/dump_waptrick_240x320_128x160
+- 7 ZIP files, with **10,255 SHA-256-matched JARs** added as alternative download sources.
+- A single ZIP member is selected per unique hash in this collection; the generated CSVs are not committed.
+- Regenerate with `tools/add_upstream_zip_collection.py` and the matching scanner-produced CSV. Other sources remain intact.
+- Member links use Internet Archive's ZIP-member URLs, which may occasionally time out.
