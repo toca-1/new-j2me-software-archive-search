@@ -4,7 +4,7 @@ Use a python script to recover individual JAR files from the Internet archive us
 
 ## Quick start
 
-**Requirements:** Python 3.9 or newer and the `curl` command on your path. No downloaded archives or local index files are needed.
+**Requirements:** Python 3.9 or newer and the `curl` command on your path. No downloaded archives or local index files are needed. For any issues that arise, first check the [Errors and Troubleshooting section](https://github.com/toca-1/new-j2me-software-archive-search/blob/main/DOWNLOADER.md#errors-and-troubleshooting) down below.
 
 1. Download [`jarchive_download.py`](https://toca-1.github.io/new-j2me-software-archive-search/jarchive_download.py).
 2. Open the terminal/command line/PowerShell in the same folder where your `jarchive_download.py` sits
@@ -101,13 +101,13 @@ When choosing `--chunk-kib`, smaller chunks can reduce wasted data on a failed r
 
 ## Errors and troubleshooting
 
+- **Python not installed** / **Missing `lzma` module** / **Missing curl** or : Use a Python build with `lzma`/liblzma support. On Linux/macOS, run `sudo apt update && sudo apt install -y python3 curl`, on Windows run `winget install --id Python.Python.3.14 -e`, and on macOS run `brew install python` (if Homebrew is missing, install it first: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)
 - **HTTP 500 / 504 / range timeout:** Internet Archive may be overloaded. The downloader tries known direct storage servers and the normal route
 - **`No successful HTTP range within the stall/time limit`:** Try `--request-timeout 90 --stall-limit 240` if the connection is slow but usable
 - **`Output exists (will not overwrite)`:** Use a new `--output` filename or explicitly remove/rename the existing file after inspecting it
 - **`SHA-1 not found`, `SHA-256 not found`:** Verify you copied the full 40- or 64-digit hash of an indexed file, not its CRC32 or an unrelated hash
 - **Index HTTP 404:** Verify [retrieval/v1/manifest.json](https://toca-1.github.io/new-j2me-software-archive-search/retrieval/v1/manifest.json) loads
 - **Missing cached index in `--index-offline` mode:** Perform the lookup once while online (or use `--index PATH`)
-- **Missing `lzma` module** or **Missing curl** or **Python not installed**: Use a Python build with `lzma`/liblzma support. On Linux/macOS, run `sudo apt update && sudo apt install -y python3 curl`, on Windows run `winget install --id Python.Python.3.14 -e`, and on macOS run `brew install python` (if Homebrew is missing, install it first: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)
 - **Damaged or stale cached data:** The script automatically rejects ranges whose local checksum does not match. If in doubt, retry with `--no-cache` or delete `.jarchive-cache/` (this discards resumable progress)
 - **Download cap exceeded:** Review the planned compressed upper bound and only increase `--max-download-mib` if you are comfortable with the additional data transfer
 
