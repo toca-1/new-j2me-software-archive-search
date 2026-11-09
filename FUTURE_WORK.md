@@ -1,7 +1,5 @@
 # Important
 
-- [ ] Proofread & check DOWNLOADER.md
-- [ ] Check jarchive_download.py command line output
 - [ ] Check and adjust font sizes on the site
 - [ ] Reword README
 
