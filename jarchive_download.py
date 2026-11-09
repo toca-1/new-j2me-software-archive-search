@@ -387,14 +387,15 @@ def curl_range(url: str, *, start: int, count: int, archive_bytes: int,
 
 def fetch_range(routes: list[dict], *, start: int, count: int, archive_bytes: int,
                 deadline: float, request_timeout: float, connect_timeout: float,
-                route_passes: int) -> bytes:
+                route_passes: int, verbose: bool = False) -> bytes:
     """Try multiple IA routes, with hard per-request and no-progress deadlines."""
     last_errors = []
     for cycle in range(route_passes):
         for route in list(routes):
             remaining = deadline - time.monotonic()
             if remaining < 0.5:
-                raise RetrievalError("No successful HTTP range within the stall/time limit")
+                raise RetrievalError("No successful HTTP range within the stall/time limit for range "
+                                     f"{start:,}-{start+count-1:,}: " + "; ".join(last_errors))
             timeout = min(remaining, request_timeout)
             url = route["base"] + "/" + urllib.parse.quote(route["archive_name"])
             try:
@@ -408,11 +409,26 @@ def fetch_range(routes: list[dict], *, start: int, count: int, archive_bytes: in
                 return data
             except RetrievalError as exc:
                 last_errors.append(f"{route['name']}: {exc}")
-                print(f"  Range {start:,}-{start+count-1:,} failed via {route['name']}: {exc}", flush=True)
+                if verbose:
+                    print(f"  Range {start:,}-{start+count-1:,} failed via {route['name']}: {exc}", flush=True)
+                else:
+                    message = str(exc)
+                    lower = message.lower()
+                    if "resolving timed out" in lower or "could not resolve" in lower:
+                        reason = "DNS lookup failed or timed out"
+                    elif "ssl connection timeout" in lower:
+                        reason = "SSL connection timed out"
+                    elif "timeout" in lower or "timed out" in lower:
+                        reason = "Request timed out"
+                    elif message.startswith("HTTP "):
+                        reason = message.split(" (", 1)[0].split(":", 1)[0]
+                    else:
+                        reason = "Request failed"
+                    print(f"  {reason} via {route['name']}; trying another route or retrying...", flush=True)
         if cycle + 1 < route_passes:
             time.sleep(min(0.6, max(0, deadline - time.monotonic())))
     raise RetrievalError("All storage routes failed for range "
-                         f"{start:,}-{start+count-1:,}: " + "; ".join(last_errors[-len(routes):]))
+                         f"{start:,}-{start+count-1:,}: " + "; ".join(last_errors))
 
 
 class RangeCache:
@@ -499,7 +515,7 @@ def extract_one(source: dict, sha256: str, *, expected_sha1: str | None,
                 routes: list[dict], absolute_deadline: float | None,
                 stall_limit: float, request_timeout: float,
                 connect_timeout: float, route_passes: int, cache_dir: Path,
-                use_cache: bool):
+                use_cache: bool, verbose: bool = False):
     before, size = source["before"], source["size"]
     if size > max_jar_mib * MIB:
         raise RetrievalError(f"JAR size {size:,} exceeds --max-jar-mib {max_jar_mib}")
@@ -520,12 +536,12 @@ def extract_one(source: dict, sha256: str, *, expected_sha1: str | None,
     start_time = report_at
     last_progress = start_time
     limit = max_download_mib * MIB
-    print(f"  Required decoded span: {needed_uncompressed/MIB:.1f} MiB "
-          f"(progress % measures decompression, not exact HTTP bytes).", flush=True)
+    print(f"  Required decoded span: {needed_uncompressed/MIB:.1f} MiB", flush=True)
     print(f"  Compressed transfer upper bound: "
           f"{source['compressed_upper_bound']/MIB:.1f} MiB (next reset or block end).", flush=True)
-    print(f"  Request size: {chunk_kib} KiB; per-request timeout: {request_timeout:g}s; "
-          f"stall limit: {stall_limit:g}s", flush=True)
+    if verbose:
+        print(f"  Request size: {chunk_kib} KiB; per-request timeout: {request_timeout:g}s; "
+              f"stall limit: {stall_limit:g}s", flush=True)
     while uncompressed_at < end:
         if decoder.eof:
             raise RetrievalError("LZMA2 stream ended before requested JAR")
@@ -549,7 +565,8 @@ def extract_one(source: dict, sha256: str, *, expected_sha1: str | None,
                 chunk = fetch_range(routes, start=compressed_at, count=count,
                                     archive_bytes=source["archive_bytes"], deadline=deadline,
                                     request_timeout=request_timeout,
-                                    connect_timeout=connect_timeout, route_passes=route_passes)
+                                    connect_timeout=connect_timeout, route_passes=route_passes,
+                                    verbose=verbose)
                 network_bytes += len(chunk)
                 last_progress = time.monotonic()
                 try:
@@ -582,9 +599,9 @@ def extract_one(source: dict, sha256: str, *, expected_sha1: str | None,
             print(f"  Decoded {percent:5.1f}% | "
                   f"{min(needed_uncompressed, max(0, uncompressed_at-source['reset_uncompressed']))/MIB:.1f}/"
                   f"{needed_uncompressed/MIB:.1f} MiB | "
-                  f"new HTTP {network_bytes/MIB:.1f} MiB | "
-                  f"cache {cached_bytes/MIB:.1f} MiB | "
-                  f"{now-start_time:.0f}s elapsed", flush=True)
+                  f"downloaded {network_bytes/MIB:.1f} MiB | "
+                  f"cached {cached_bytes/MIB:.1f} MiB | "
+                  f"{now-start_time:.0f}s", flush=True)
             report_at = now
     result = bytes(output)
     if len(result) != size:
@@ -660,6 +677,8 @@ def main(argv=None):
     parser.add_argument("--cache-dir", type=Path, default=Path(".jarchive-cache"),
                         help="Where to keep verified-complete HTTP range chunks for resume")
     parser.add_argument("--no-cache", action="store_true", help="Disable reading/writing resumed ranges")
+    parser.add_argument("--verbose", action="store_true",
+                        help="Show source offsets, request settings and full errors for each route attempt")
     args = parser.parse_args(argv)
 
     supplied = args.hash.lower()
@@ -713,9 +732,12 @@ def main(argv=None):
         print(f"SHA-256: {sha256}")
     print(f"Available sources: {len(sources)}")
     for n, source in enumerate(sources, 1):
-        print(f"  {n}. {source['archive_name']} block {source['block_number']} "
-              f"| JAR {source['size']:,} bytes | skip {source['skip']:,} bytes "
-              f"| archive restart {source['reset_absolute']:,} "
+        details = (f" block {source['block_number']}" if args.verbose else "")
+        details += f" | JAR {source['size']:,} bytes"
+        if args.verbose:
+            details += (f" | skip {source['skip']:,} bytes"
+                        f" | archive restart {source['reset_absolute']:,}")
+        print(f"  {n}. {source['archive_name']}{details} "
               f"| compressed upper bound {source['compressed_upper_bound']/MIB:.1f} MiB")
     if args.dry_run:
         print("Dry run: no archive ranges downloaded (remote index lookup may use HTTP).")
@@ -741,16 +763,24 @@ def main(argv=None):
                 chunk_kib=args.chunk_kib, routes=routes, absolute_deadline=absolute_deadline,
                 stall_limit=args.stall_limit, request_timeout=args.request_timeout,
                 connect_timeout=args.connect_timeout, route_passes=args.route_passes,
-                cache_dir=args.cache_dir, use_cache=not args.no_cache)
+                cache_dir=args.cache_dir, use_cache=not args.no_cache, verbose=args.verbose)
             publish_verified_jar(output, result)
-            print(f"PASS: saved verified JAR to {output}")
             print(f"New successfully downloaded range bytes: {transferred:,} ({transferred/MIB:.2f} MiB)")
             print(f"Verified cached range bytes reused: {reused:,} ({reused/MIB:.2f} MiB)")
             print(f"SHA-256 verified: {sha256}")
             if expected_sha1:
                 print(f"SHA-1 verified: {expected_sha1}")
+            print("\n" + "-" * 72)
+            print(f"PASS: saved verified JAR to\n{output}")
+            print("-" * 72, flush=True)
             return 0
         except RetrievalError as exc:
+            if not args.verbose:
+                print(f"  Failed source details: block {source['block_number']} | "
+                      f"skip {source['skip']:,} bytes | archive restart {source['reset_absolute']:,}",
+                      file=sys.stderr, flush=True)
+                print(f"  Request size: {args.chunk_kib} KiB; per-request timeout: {args.request_timeout:g}s; "
+                      f"stall limit: {args.stall_limit:g}s", file=sys.stderr, flush=True)
             print(f"  Source failed: {exc}", file=sys.stderr, flush=True)
             errors.append(f"{source['archive_name']}: {exc}")
     raise RetrievalError("No verified JAR could be recovered. The archive storage may be "
