@@ -1,8 +1,3 @@
-# Important
-
-- [ ] Check and adjust font sizes on the site
-- [ ] Reword README
-
 # Potential improvements
 
 ## Preservation, documentation and maintenance
