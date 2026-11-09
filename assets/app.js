@@ -237,22 +237,22 @@ function fallbackDownloadAction(sha256) {
     panel.hidden = !opening;
   });
 
-  const explanation = elem('p', "Internet Archive's downloads can time out and return HTTP error 504. " +
-    'For these cases you can use the provided Python download script. Downloading files this way can ' +
-    "take several minutes and, of course, still require the Internet Archive's servers to be available.");
-
-  const requirements = elem('p');
-  requirements.append(document.createTextNode('This method requires Python 3.9+, curl and the '));
-  const scriptLink = elem('a', 'jarchive_download.py script');
+  const explanation = elem('p', 'Downloads from the Internet Archive can time out and return HTTP error 504. ' +
+    'For these cases you can use the following download script: ');
+  const scriptLink = elem('a', 'jarchive_download.py');
   // A same-origin link allows Firefox to honor the download attribute.
   scriptLink.href = './jarchive_download.py';
   scriptLink.download = 'jarchive_download.py';
-  requirements.append(scriptLink,
-    document.createTextNode('. Save it to a folder and — on Linux or macOS — run this command from the same folder:'));
+  explanation.append(scriptLink, document.createTextNode('. Note that, while reliable, downloads using this method ' +
+    "can take several minutes and still require the Internet Archive's servers to be available."));
 
+  const requirements = elem('p', 'This method requires Python 3.9+ and curl. ' +
+    'Run the following command from the same folder where jarchive_download.py is saved:');
+
+  const linuxIntro = elem('p', 'On Linux & macOS:');
   const linuxExample = elem('pre');
   linuxExample.append(elem('code', linuxCommand));
-  const windowsIntro = elem('p', 'On Windows, use:');
+  const windowsIntro = elem('p', 'On Windows:');
   const windowsExample = elem('pre');
   windowsExample.append(elem('code', windowsCommand));
 
@@ -265,7 +265,7 @@ function fallbackDownloadAction(sha256) {
     guide, document.createTextNode('.'));
 
   panel.append(elem('h4', 'Alternative download using the terminal'), explanation,
-    requirements, linuxExample, windowsIntro, windowsExample, links);
+    requirements, linuxIntro, linuxExample, windowsIntro, windowsExample, links);
   actions.append(helpButton, copyGroup);
   wrapper.append(actions, feedback, panel);
   return wrapper;
