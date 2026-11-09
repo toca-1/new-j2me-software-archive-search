@@ -11,6 +11,7 @@
 
 - [ ] **Investigate archive coverage questions.** Investigate newer or updated J2ME collections for file contents absent from JARchive v11 and Lite v11
 - [ ] **Document reproducibility.** Publish or refine the indexing, extraction, hashing and metadata-join methodology, including the overlong Linux filename handled by archive streaming
+- [ ] **Diversify downloads.** Scrap the upstream archives of "New", and -- once done -- list them all (in the readme?) to document which sources this site is unifying
 
 ## Metadata and presentation
 
