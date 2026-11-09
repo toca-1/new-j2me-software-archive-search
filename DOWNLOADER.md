@@ -1,53 +1,31 @@
-# JARchive verified JAR downloader
+# JAR downloader
 
-Recover individual JAR files from **JARchive v11** and **JARchiveLite v11** using their **SHA-1 or SHA-256 checksum**, including when Internet Archive's normal individual-file link times out with HTTP 504.
-
-The Python script downloads only portions of the original solid-compressed 7z archive over HTTP Range, starts decompression at an indexed independent LZMA2 restart, and saves the JAR **only if the content matches the verified index**. It does not bundle or redistribute the games, and cannot guarantee retrieval when Internet Archive's storage servers are unavailable.
+Use a python script to recover individual JAR files from the Internet archive using their SHA-1 or SHA-256 checksum.
 
 ## Quick start
 
-**Requirements:** Python **3.9 or newer**, the `curl` command on your PATH, and an internet connection. No `pip install`, downloaded 7z archives, or local index files are needed. Standard Python installations on Linux and macOS generally include the `lzma` module; check with `python3 -c 'import lzma'` if in doubt.
+**Requirements:** Python 3.9 or newer and the `curl` command on your path. No downloaded archives or local index files are needed. Standard Python installations on Linux and macOS generally include the `lzma` module; check with `python3 -c 'import lzma'` if in doubt.
 
-1. Download [`jarchive_download.py`](https://raw.githubusercontent.com/toca-1/new-j2me-software-archive-search/main/jarchive_download.py) and put it in a folder where you want to save JARs. On Linux/macOS, you can use:
+1. Download [`jarchive_download.py`](https://toca-1.github.io/new-j2me-software-archive-search/jarchive_download.py).
+2. Open the terminal/command line/PowerShell in the same folder where your `jarchive_download.py` sits
+3. On the [archive search site](https://toca-1.github.io/new-j2me-software-archive-search/), at the bottom of the box of the game you're interested in you'll see "Copy download command" followed by two buttons: "Windows" and "Linux/macOS". Simply clicking the button corresponding to your operating system copies the command that you need to run in the terminal.
 
-   ```bash
-   curl -fL -o jarchive_download.py \
-     https://raw.githubusercontent.com/toca-1/new-j2me-software-archive-search/main/jarchive_download.py
-   ```
+Alternatively:
 
-   On Windows, download the file in your browser, or run the same command in PowerShell with `curl.exe` rather than the PowerShell `curl` alias.
-
-2. On the [archive search site](https://toca-1.github.io/new-j2me-software-archive-search/), search for the game and **copy its SHA-1 or SHA-256**.
-
+2. On the [archive search site](https://toca-1.github.io/new-j2me-software-archive-search/), search for the game and copy its SHA-1 or SHA-256.
 3. From the folder containing the script, run:
-
    ```bash
    python3 jarchive_download.py YOUR_SHA1_OR_SHA256
    ```
-
-   On Windows, the equivalent is usually:
-
+   on Linux/macOS, or
    ```powershell
    py -3 .\jarchive_download.py YOUR_SHA1_OR_SHA256
    ```
-
-   For example, this SHA-1 retrieves the verified 803.6 KiB Crash Bandicoot build:
-
-   ```bash
-   python3 jarchive_download.py 714a033bcfb641bcf717e54f290a02352b7945fa \
-     --output crash-bandicoot.jar
-   ```
-
-   Or use the SHA-256 of freeSnake:
-
-   ```bash
-   python3 jarchive_download.py c4c8adbef851434dc2474e8697b1d4143df961e6f01ee0911a44fb6324c918cd \
-     --output freesnake.jar
-   ```
-
-By default the output is `<SHA-256>.jar` in your current working directory. The script **never overwrites an existing output file**. Pass `--output PATH` to choose the destination.
+   on Windows. By default the output is `<SHA-256>.jar` in your current working directory. The script never overwrites an existing output file. Pass `--output PATH/FILENAME` to choose the destination or give the downloaded file another name.
 
 ## How it works
+
+The script downloads only portions of the original solid-compressed 7z archive over HTTP Range, starts decompression at an indexed independent LZMA2 restart, and saves the JAR **only if the content matches the verified index**. It does not bundle or redistribute the games, and cannot guarantee retrieval when Internet Archive's storage servers are unavailable.
 
 - It fetches the small `retrieval/v1/manifest.json` and the required gzip-compressed SHA lookup shard(s) from GitHub Pages (one SHA-256 shard, or one SHA-1 plus one SHA-256 shard).
 - It selects the archive copy requiring the least decompression. If a hash has both Full and Lite sources, it can try the other source if the first fails.
