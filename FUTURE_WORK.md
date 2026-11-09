@@ -3,7 +3,7 @@
 ## Search and browsing
 
 - [ ] **Related builds and versions.** Group different JARs belonging to the same game or app by `MIDlet-Name`, vendor, and other manifest fields. Preserve the distinction between exact hash matches and inferred relationships; allow users to inspect individual variants
-- [ ] **Archive-path search and collection filters.** Search paths as well as filenames and metadata
+- [ ] **Archive-path search.** Search paths as well as filenames and metadata
 - [ ] **Better navigation for large result sets.** Improve handling of very broad queries
 - [ ] **Games-only filtering.** Let users filter probable games from utilities and other apps without removing anything from the preservation index. Classification would need to be labeled as best-effort
 - [ ] **Virtual archive explorer.** Browse the original JARchive Full and Lite directory structures with folders, file sizes, checksums, and links to archive members
