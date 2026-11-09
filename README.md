@@ -13,7 +13,7 @@ The project's software license applies only to its original code and documentati
 ## Search features
 
 - Case-insensitive substring search of original filenames, MIDlet names, and vendors
-- Exact lookup by SHA-1 or SHA-256 checksum
+- Exact lookup by CRC32, SHA-1, or SHA-256 checksum
 - MIDlet name, vendor, version, CLDC, and MIDP information where available
 - Direct download links to individual JAR files on the Internet Archive
 - Expandable manifest details and historical original-source locations
