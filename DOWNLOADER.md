@@ -96,6 +96,7 @@ Run `python3 jarchive_download.py --help` for the options supported by your exac
 | `--chunk-kib N` | `1024` | Compressed bytes per request, in KiB (maximum 4096) |
 | `--max-download-mib N` | `512` | Hard cap on compressed bytes processed per source, including cached bytes |
 | `--max-jar-mib N` | `128` | Maximum uncompressed JAR size |
+| `--verbose` | off | Show source offsets, request settings, and full errors for each route attempt; full failure diagnostics appear automatically if a source fails |
 
 When choosing `--chunk-kib`, smaller chunks can reduce wasted data on a failed request, but increase request overhead; **keep the same value between resumed attempts** to maximize cache reuse.
 
