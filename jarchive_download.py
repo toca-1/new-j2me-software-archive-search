@@ -34,6 +34,7 @@ MAX_INDEX_JSON_BYTES = 32 * MIB
 
 
 class RetrievalError(RuntimeError):
+    pass
 
 
 def require_curl():
