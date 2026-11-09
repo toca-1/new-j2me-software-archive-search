@@ -4,7 +4,7 @@ Use a python script to recover individual JAR files from the Internet archive us
 
 ## Quick start
 
-**Requirements:** Python 3.9 or newer and the `curl` command on your path. No downloaded archives or local index files are needed. For any issues that arise, first check the [Errors and Troubleshooting section](https://github.com/toca-1/new-j2me-software-archive-search/blob/main/DOWNLOADER.md#errors-and-troubleshooting) down below.
+**Requirements:** Python 3.9 or newer and the `curl` command on your path. For any issues that arise, first check the [Errors and Troubleshooting section](https://github.com/toca-1/new-j2me-software-archive-search/blob/main/DOWNLOADER.md#errors-and-troubleshooting) down below.
 
 1. Download [`jarchive_download.py`](https://toca-1.github.io/new-j2me-software-archive-search/jarchive_download.py).
 2. Open the terminal/command line/PowerShell in the same folder where your `jarchive_download.py` sits
@@ -102,7 +102,10 @@ When choosing `--chunk-kib`, smaller chunks can reduce wasted data on a failed r
 
 ## Errors and troubleshooting
 
-- **Python not installed** / **Missing `lzma` module** / **Missing curl** or : Use a Python build with `lzma`/liblzma support. On Linux/macOS, run `sudo apt update && sudo apt install -y python3 curl`, on Windows run `winget install --id Python.Python.3.14 -e`, and on macOS run `brew install python` (if Homebrew is missing, install it first: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)
+- **Python not installed** / **Missing `lzma` module** / **Missing curl** or : Use a Python build with `lzma`/liblzma support.
+    - On *Linux*, run `sudo apt update && sudo apt install -y python3 curl`
+    - On *Windows* run `winget install --id Python.Python.3.14 -e` and restart PowerShell
+    - On *macOS* run `brew install python` (if Homebrew is missing, install it first: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)
 - **HTTP 500 / 504 / range timeout:** Internet Archive may be overloaded. The downloader tries known direct storage servers and the normal route
 - **`No successful HTTP range within the stall/time limit`:** Try `--request-timeout 90 --stall-limit 240` if the connection is slow but usable
 - **`Output exists (will not overwrite)`:** Use a new `--output` filename or explicitly remove/rename the existing file after inspecting it
