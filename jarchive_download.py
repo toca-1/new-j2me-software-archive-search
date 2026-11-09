@@ -1,23 +1,4 @@
 #!/usr/bin/env python3
-"""Verified JARchive v11 downloader, by SHA-256 or SHA-1 (Python 3.9+).
-
-Requires curl on PATH. Uses a local retrieval index when available, or lazily
-fetches manifest.json and one SHA-256/SHA-1 shard from GitHub Pages.
-SHA-1 searches need the sha1/ sidecar created by jarchive_sha1_build.py.
-
-The download uses bounded HTTP byte-range requests, trying IA's live d1/d2
-storage servers and canonical archive.org route; it NEVER uses the 7z member
-extraction endpoint. No large local .7z archives are required.
-
-Examples:
-  python3 jarchive_download.py 4209a128a3f6ec3e2b60b72f76971f8d66366f505ae5e6b686a96620bd71d1bd
-  python3 jarchive_download.py 714a033bcfb641bcf717e54f290a02352b7945fa
-  python3 jarchive_download.py <hash> --dry-run
-  python3 jarchive_download.py <hash> --index-url https://example.com/retrieval/v1
-  python3 jarchive_download.py <hash> --index-offline --dry-run
-  python3 jarchive_download.py <hash> --output game.jar
-  python3 jarchive_download.py <hash> --stall-limit 180 --request-timeout 60
-"""
 from __future__ import annotations
 
 import argparse
@@ -53,7 +34,6 @@ MAX_INDEX_JSON_BYTES = 32 * MIB
 
 
 class RetrievalError(RuntimeError):
-    """A request, index entry, or extraction failed safely."""
 
 
 def require_curl():
@@ -64,7 +44,6 @@ def require_curl():
 
 
 def _validate_index_resource(raw: bytes, relative_name: str) -> None:
-    """Validate complete JSON/gzip before caching a downloaded index resource."""
     try:
         if len(raw) > MAX_INDEX_BYTES:
             raise ValueError("index resource exceeds 8 MiB")
@@ -107,7 +86,6 @@ def _validate_index_resource(raw: bytes, relative_name: str) -> None:
 
 
 def _curl_index_resource(url: str, *, timeout: float) -> bytes:
-    """Fetch one small metadata file using a hard wall-clock deadline."""
     require_curl()
     with tempfile.TemporaryDirectory(prefix="jarchive-index-") as temp:
         out = Path(temp) / "body"
@@ -133,7 +111,6 @@ def _curl_index_resource(url: str, *, timeout: float) -> bytes:
 
 
 class RemoteIndex:
-    """Fetch at most the requested manifest/digest shards, with verified local cache."""
     def __init__(self, url: str, cache_dir: Path, *, offline: bool, timeout: float):
         parts = urllib.parse.urlsplit(url.rstrip("/"))
         if (not parts.netloc or parts.username or parts.password or parts.query or parts.fragment
@@ -196,7 +173,6 @@ class RemoteIndex:
 
 
 def resolve_hash(root: Path, supplied: str) -> tuple[str, str | None]:
-    """Resolve optional SHA-1 sidecar; return (canonical SHA-256, requested SHA-1)."""
     supplied = supplied.lower()
     if SHA256_RE.fullmatch(supplied):
         return supplied, None
@@ -279,7 +255,6 @@ def load_sources(root: Path, sha: str):
 
 
 def curl_metadata(timeout_seconds: float) -> dict | None:
-    """Read fresh IA storage location, bounded independently of socket timeouts."""
     if timeout_seconds < 1:
         return None
     url = f"https://archive.org/metadata/{ITEM}"
@@ -299,7 +274,6 @@ def curl_metadata(timeout_seconds: float) -> dict | None:
 
 
 def discover_routes(base_url: str, metadata: dict | None, use_direct: bool = True) -> list[dict]:
-    """Only accept IA-owned storage hostnames and a validated item directory."""
     result = []
     if use_direct and base_url.rstrip("/") == DEFAULT_BASE_URL and isinstance(metadata, dict):
         directory = metadata.get("dir")
@@ -319,7 +293,6 @@ def discover_routes(base_url: str, metadata: dict | None, use_direct: bool = Tru
 
 
 def _final_response_headers(raw: bytes) -> dict:
-    """Extract the last HTTP response, not proxy/redirect headers."""
     text = raw.decode("latin-1")
     blocks = re.split(r"\r?\n\r?\n", text)
     response = None
@@ -337,7 +310,6 @@ def _final_response_headers(raw: bytes) -> dict:
 
 def curl_range(url: str, *, start: int, count: int, archive_bytes: int,
                timeout_seconds: float, connect_timeout: float) -> bytes:
-    """One completely bounded HTTP request with strict 206/Content-Range checks."""
     end = start + count - 1
     if not (0 <= start <= end < archive_bytes):
         raise RetrievalError("Range exceeds archive bounds")
@@ -388,7 +360,6 @@ def curl_range(url: str, *, start: int, count: int, archive_bytes: int,
 def fetch_range(routes: list[dict], *, start: int, count: int, archive_bytes: int,
                 deadline: float, request_timeout: float, connect_timeout: float,
                 route_passes: int, verbose: bool = False) -> bytes:
-    """Try multiple IA routes, with hard per-request and no-progress deadlines."""
     last_errors = []
     for cycle in range(route_passes):
         for route in list(routes):
@@ -432,12 +403,6 @@ def fetch_range(routes: list[dict], *, start: int, count: int, archive_bytes: in
 
 
 class RangeCache:
-    """Durable, per-source storage of independently validated HTTP 206 ranges.
-
-    A range becomes reusable only after both its exact-size bytes and local
-    SHA-256 sidecar have been atomically written. The cache is namespaced by
-    the expected JAR digest *and* archive identity/offset parameters.
-    """
     def __init__(self, base: Path, source: dict, sha256: str, enabled: bool):
         self.enabled = enabled
         if not enabled:
@@ -538,7 +503,7 @@ def extract_one(source: dict, sha256: str, *, expected_sha1: str | None,
     limit = max_download_mib * MIB
     print(f"  Required decoded span: {needed_uncompressed/MIB:.1f} MiB", flush=True)
     print(f"  Compressed transfer upper bound: "
-          f"{source['compressed_upper_bound']/MIB:.1f} MiB (next reset or block end).", flush=True)
+          f"{source['compressed_upper_bound']/MIB:.1f} MiB", flush=True)
     if verbose:
         print(f"  Request size: {chunk_kib} KiB; per-request timeout: {request_timeout:g}s; "
               f"stall limit: {stall_limit:g}s", flush=True)
@@ -626,7 +591,6 @@ def extract_one(source: dict, sha256: str, *, expected_sha1: str | None,
 
 
 def publish_verified_jar(output: Path, content: bytes) -> None:
-    """Publish only a complete verified JAR, never a partially written output."""
     output.parent.mkdir(parents=True, exist_ok=True)
     fd, temp_name = tempfile.mkstemp(prefix=f".{output.name}.", suffix=".part",
                                      dir=output.parent)
