@@ -107,8 +107,7 @@ When choosing `--chunk-kib`, smaller chunks can reduce wasted data on a failed r
 - **`SHA-1 not found`, `SHA-256 not found`:** Verify you copied the full 40- or 64-digit hash of an indexed file, not its CRC32 or an unrelated hash
 - **Index HTTP 404:** Verify [retrieval/v1/manifest.json](https://toca-1.github.io/new-j2me-software-archive-search/retrieval/v1/manifest.json) loads
 - **Missing cached index in `--index-offline` mode:** Perform the lookup once while online (or use `--index PATH`)
-- **Missing `curl`:** Install curl and make sure the executable is on PATH. Windows users should use the `curl.exe` executable, not the PowerShell alias
-- **Missing `lzma` module:** Use a Python build with `lzma`/liblzma support
+- **Missing `lzma` module** or **Missing curl** or **Python not installed**: Use a Python build with `lzma`/liblzma support. On Linux/macOS, run `sudo apt update && sudo apt install -y python3 curl`, on Windows run `winget install --id Python.Python.3.14 -e`, and on macOS run `brew install python` (if Homebrew is missing, install it first: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)
 - **Damaged or stale cached data:** The script automatically rejects ranges whose local checksum does not match. If in doubt, retry with `--no-cache` or delete `.jarchive-cache/` (this discards resumable progress)
 - **Download cap exceeded:** Review the planned compressed upper bound and only increase `--max-download-mib` if you are comfortable with the additional data transfer
 
