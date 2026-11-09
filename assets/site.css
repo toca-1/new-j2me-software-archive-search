@@ -133,3 +133,21 @@
   .fallback-copy-label { flex-basis: 100%; }
   .fallback-copy-group .fallback-copy { flex: 1 1 120px; }
 }
+
+/* Refinement and sorting apply to every match in the original search. */
+.result-tools{margin:20px 0;padding:18px;border:1px solid var(--edge);border-radius:12px;background:var(--panel)}
+.result-tools[hidden]{display:none}
+.refine-form{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.refine-form label{flex-basis:100%;font-size:15px;font-weight:600}
+.refine-form input{flex:1 1 240px;width:auto;font-size:16px;padding:12px 14px}
+.refine-form>button{padding:12px 18px;font-size:15px}
+.refine-form>.refine-clear{background:var(--panel2);color:var(--text);border:1px solid var(--edge);font-weight:500}
+.result-sort-label{display:inline-block;margin:16px 10px 0 0;font-size:15px}
+#result-sort{max-width:100%;padding:10px 12px;background:var(--panel2);color:var(--text);border:1px solid var(--edge);border-radius:8px;font:inherit;font-size:15px}
+.result-tools .small{margin:12px 0 0;line-height:1.5}
+.result-tools button:focus-visible,#result-sort:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.result-tools :disabled{opacity:.6}
+@media(max-width:650px){.refine-form{align-items:stretch}.refine-form input{flex-basis:auto;width:100%}.refine-form>button{width:100%}.result-sort-label{display:block;margin-bottom:8px}#result-sort{width:100%}}
+
+/* CRC32 mode fits narrow screens without squeezing the labels. */
+.modes{max-width:100%;flex-wrap:wrap}

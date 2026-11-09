@@ -68,6 +68,13 @@ async function detailsById(id) {
   const rows = await memoized(detailsCache, chunk, () => readGzipJson(`details/${String(chunk).padStart(4, '0')}.json.gz`), 6);
   return rows[id % manifest.record_chunk];
 }
+// Exact CRC32 lookup can return multiple distinct file contents.
+async function crc32Lookup(crc) {
+  const key = crc.toLowerCase();
+  const bucket = await memoized(hashesCache, 'crc32:' + key[0],
+    () => readGzipJson(`crc32/${key[0]}.json.gz`), 12);
+  return bucket[key] || [];
+}
 async function exactHashLookup(mode, hash) {
   const prefix = hash[0];
   const bucket = await memoized(hashesCache, mode + ':' + prefix,
@@ -333,21 +340,141 @@ function renderResult(id, record) {
   card.append(more, body);
   return card;
 }
-async function renderMore(current) {
-  if (current !== generation) return;
-  const button = $('more'); button.disabled = true;
-  const ids = active.slice(shown, Math.min(shown + PAGE, active.length));
-  const results = await Promise.all(ids.map(recordById));
-  if (current !== generation) return;
-  results.forEach((rec, i) => $('results').append(renderResult(ids[i], rec)));
-  shown += ids.length;
-  button.hidden = shown >= active.length;
-  button.disabled = false;
-  button.textContent = `Show more (${fmt(active.length - shown)} remaining)`;
+// Search within all original matches, with metadata loaded only on demand.
+let originalResults = null, resultViewVersion = 0, moreLoadingVersion = null;
+function resultTitle(id, record) {
+  const match = labelsForMatches.get(id);
+  return record[4][0] || (match && match[1] === 0 ? match[0] : record[3][0][1]);
 }
+function setResultControlsBusy(busy) {
+  document.querySelectorAll('#result-tools input, #result-tools button, #result-tools select')
+    .forEach(control => { control.disabled = busy; });
+}
+function resetResultTools() {
+  originalResults = null; resultViewVersion++;
+  $('result-tools').hidden = true;
+  $('refine-query').value = ''; $('result-sort').value = 'default';
+}
+function installResultTools() {
+  const tools = elem('div', undefined, 'result-tools');
+  tools.id = 'result-tools'; tools.hidden = true;
+  const form = elem('form', undefined, 'refine-form');
+  const label = elem('label', 'Search within results'); label.htmlFor = 'refine-query';
+  const input = elem('input');
+  input.id = 'refine-query'; input.type = 'search'; input.autocomplete = 'off';
+  input.placeholder = 'Refine these results…'; 
+  const apply = elem('button', 'Refine'); apply.type = 'submit';
+  const clear = elem('button', 'Clear refinement', 'refine-clear'); clear.type = 'button';
+  form.append(label, input, apply, clear);
+  const sortLabel = elem('label', 'Sort results', 'result-sort-label'); sortLabel.htmlFor = 'result-sort';
+  const sort = elem('select'); sort.id = 'result-sort';
+  for (const [value, text] of [['default', 'Default order'], ['title-asc', 'Title A–Z'],
+    ['title-desc', 'Title Z–A'], ['size-asc', 'Size: smallest first'], ['size-desc', 'Size: largest first']]) {
+    const option = elem('option', text); option.value = value; sort.append(option);
+  }
+   
+  tools.append(form, sortLabel, sort);
+  document.querySelector('.result-heading').after(tools);
+  form.addEventListener('submit', event => { event.preventDefault(); applyResultTools(); });
+  clear.addEventListener('click', () => { input.value = ''; applyResultTools(); });
+  input.addEventListener('search', () => { if (!input.value) applyResultTools(); });
+  sort.addEventListener('change', () => applyResultTools());
+}
+async function prepareResultSummaries(state, current) {
+  if (state.ready) return;
+  const groups = new Map();
+  for (const id of state.ids) {
+    if (state.summaries.has(id)) continue;
+    const chunk = Math.floor(id / manifest.record_chunk);
+    if (!groups.has(chunk)) groups.set(chunk, []);
+    groups.get(chunk).push(id);
+  }
+  const batches = [...groups]; let next = 0, completed = state.summaries.size;
+  const worker = async () => {
+    while (current === generation && originalResults === state) {
+      const index = next++;
+      if (index >= batches.length) return;
+      const [chunk, ids] = batches[index];
+      const rows = await memoized(recordsCache, chunk,
+        () => readGzipJson(`records/${String(chunk).padStart(4, '0')}.json.gz`), 12);
+      if (current !== generation || originalResults !== state) return;
+      for (const id of ids) {
+        const record = rows[id % manifest.record_chunk], title = resultTitle(id, record);
+        const fields = [title, ...record[4], ...record[3].map(source => source[1])]
+          .map(value => String(value || '').toLowerCase());
+        state.summaries.set(id, {title, bytes: record[2], fields});
+      }
+      completed += ids.length;
+      status(`Preparing refinement and sorting… ${fmt(completed)}/${fmt(state.ids.length)}`);
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+  };
+  const outcomes = await Promise.allSettled(Array.from({length: Math.min(2, batches.length)}, worker));
+  const failed = outcomes.find(outcome => outcome.status === 'rejected');
+  if (failed) throw failed.reason;
+  if (current === generation && originalResults === state) state.ready = true;
+}
+function selectResultIds(state, query, order) {
+  const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  let ids = words.length ? state.ids.filter(id => words.every(word =>
+    state.summaries.get(id).fields.some(field => field.includes(word)))) : [...state.ids];
+  if (order !== 'default') {
+    const collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
+    ids.sort((a, b) => {
+      const x = state.summaries.get(a), y = state.summaries.get(b);
+      const difference = order.startsWith('size-') ? x.bytes - y.bytes : collator.compare(x.title, y.title);
+      return order.endsWith('desc') ? -difference : difference;
+    });
+  }
+  return ids;
+}
+async function applyResultTools() {
+  const state = originalResults;
+  if (!state || state.busy) return;
+  const current = generation;
+  const query = $('refine-query').value.trim(), order = $('result-sort').value;
+  state.busy = true; setResultControlsBusy(true); $('more').disabled = true;
+  try {
+    if (query || order !== 'default') await prepareResultSummaries(state, current);
+    if (current !== generation || originalResults !== state) return;
+    active = selectResultIds(state, query, order); shown = 0; resultViewVersion++;
+    $('results').replaceChildren(); $('more').hidden = true;
+    status(query ? `${fmt(active.length)} of ${fmt(state.ids.length)} results` :
+      `${fmt(active.length)} unique matching file${active.length === 1 ? '' : 's'}`);
+    if (active.length) await renderMore(current);
+    else $('results').append(elem('div', 'No results match this refinement. Clear it or try different words.', 'empty'));
+  } catch (error) {
+    if (current === generation && originalResults === state) {
+      status('Could not refine or sort results: ' + error.message + '. Please try again.'); console.error(error);
+    }
+  } finally {
+    state.busy = false;
+    if (current === generation && originalResults === state) {
+      setResultControlsBusy(false); $('more').disabled = false;
+    }
+  }
+}
+async function renderMore(current) {
+  const view = resultViewVersion;
+  if (current !== generation || moreLoadingVersion === view) return;
+  const button = $('more'); button.disabled = true; moreLoadingVersion = view;
+  try {
+    const ids = active.slice(shown, Math.min(shown + PAGE, active.length));
+    const results = await Promise.all(ids.map(recordById));
+    if (current !== generation || view !== resultViewVersion) return;
+    results.forEach((rec, i) => $('results').append(renderResult(ids[i], rec)));
+    shown += ids.length; button.hidden = shown >= active.length;
+    button.textContent = `Show more (${fmt(active.length - shown)} remaining)`;
+  } finally {
+    if (moreLoadingVersion === view) moreLoadingVersion = null;
+    if (current === generation && view === resultViewVersion) button.disabled = Boolean(originalResults && originalResults.busy);
+  }
+}
+
 async function runSearch() {
   document.querySelector('.results-section').hidden = false;
   const current = ++generation;
+  resetResultTools();
   const term = $('query').value.trim();
   $('results').replaceChildren(); $('more').hidden = true; labelsForMatches = new Map();
   if (!manifest) { status('Index not loaded'); return; }
@@ -358,6 +485,10 @@ async function runSearch() {
     if (searchMode === 'name') {
       if (Array.from(term).length < 2) throw new Error('Enter at least 2 characters for name searches.');
       ids = await searchNames(term.toLowerCase(), current);
+    } else if (searchMode === 'crc32') {
+      if (!/^[0-9a-f]{8}$/i.test(term)) throw new Error('Enter exactly 8 hexadecimal digits for CRC32.');
+      status('Looking up CRC32…');
+      ids = await crc32Lookup(term);
     } else {
       const re = searchMode === 'sha1' ? /^[0-9a-f]{40}$/i : /^[0-9a-f]{64}$/i;
       if (!re.test(term)) throw new Error(`Enter an exact ${searchMode.toUpperCase()} checksum.`);
@@ -366,6 +497,9 @@ async function runSearch() {
     }
     if (current !== generation) return;
     active = ids; shown = 0;
+    originalResults = {ids: [...ids], summaries: new Map(), ready: false, busy: false};
+    $('result-tools').hidden = ids.length === 0;
+    setResultControlsBusy(false);
     if (!ids.length) {
       status('0 matching files'); $('results').append(elem('div', 'No matching files found.', 'empty')); return;
     }
@@ -379,6 +513,7 @@ async function runSearch() {
   }
 }
 async function init() {
+  installResultTools();
   document.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', () => {
     searchMode = button.dataset.mode;
     document.querySelectorAll('[data-mode]').forEach(b => {
@@ -386,9 +521,11 @@ async function init() {
       b.setAttribute('aria-pressed', b === button ? 'true' : 'false');
     });
     $('query').placeholder = searchMode === 'name' ? 'Filename, game title or vendor…' :
+      searchMode === 'crc32' ? '8-character CRC32…' :
       searchMode === 'sha1' ? '40-character SHA-1…' : '64-character SHA-256…';
     $('hint').textContent = searchMode === 'name' ?
       'Search filenames, game titles and vendors (case-insensitive).' :
+      searchMode === 'crc32' ? 'Enter all 8 hexadecimal digits.' :
       `Enter the complete ${searchMode.toUpperCase()} hash to find an exact match.`;
     $('query').focus();
   }));

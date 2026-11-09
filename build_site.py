@@ -260,6 +260,19 @@ def main():
                     write_gzip(next_data / field / f"{prefix}.json.gz", items)
                 print(f"Created 16 compressed {field.upper()} prefix buckets", flush=True)
 
+            # Exact CRC32 lookup, retaining all distinct matching content IDs.
+            crc_cursor = db.execute("SELECT DISTINCT lower(e.crc), l.id FROM entries e "
+                                    "JOIN lookup l ON e.sha256=l.sha256 ORDER BY lower(e.crc), l.id")
+            crc_row = next(crc_cursor, None)
+            for crc_prefix in "0123456789abcdef":
+                crc_items = {}
+                while crc_row is not None and crc_row[0][0] == crc_prefix:
+                    crc_value, crc_id = crc_row
+                    crc_items.setdefault(crc_value, []).append(crc_id)
+                    crc_row = next(crc_cursor, None)
+                write_gzip(next_data / "crc32" / f"{crc_prefix}.json.gz", crc_items)
+            print("Created 16 compressed CRC32 prefix buckets", flush=True)
+
             # Query-selective 2/3-gram index: maps exact substrings to a shard
             # bitmap. A shard must contain ALL grams of a query to qualify.
             # Avoid loading millions of search rows into Python memory.
