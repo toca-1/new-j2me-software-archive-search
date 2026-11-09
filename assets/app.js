@@ -12,6 +12,9 @@ let searchGramPromise = null;
 let labelsForMatches = new Map();
 const recordsCache = new Map(), detailsCache = new Map(), hashesCache = new Map(), namesCache = new Map();
 
+const upstreamShardCache = new Map();
+let upstreamSourcesPromise = null;
+
 function elem(tag, text, cls) {
   const e = document.createElement(tag);
   if (text !== undefined) e.textContent = String(text);
@@ -277,6 +280,79 @@ function fallbackDownloadAction(sha256) {
   wrapper.append(actions, feedback, panel);
   return wrapper;
 }
+// BEGIN compact download list (v2)
+// A numbered download button and a separate disclosure for the internal path.
+// All text is added as text nodes, not interpreted as HTML.
+function downloadSourceRow(number, archive, memberPath, url) {
+  const row = elem('div', undefined, 'download-row');
+  const link = elem('a', String(number), 'download-number');
+  link.href = url;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.title = `Download from ${archive}`;
+  link.setAttribute('aria-label', `Download link ${number}: ${archive}`);
+
+  const archiveLabel = elem('span', archive, 'download-archive');
+  const pathBox = elem('details', undefined, 'download-path');
+  const summary = elem('summary', undefined, 'download-path-summary');
+  summary.append(elem('span', 'File path', 'download-filename'));
+  const expanded = elem('div', undefined, 'download-path-full');
+  expanded.append(elem('code', memberPath));
+  pathBox.append(summary, expanded);
+  row.append(link, archiveLabel, pathBox);
+  return row;
+}
+// END compact download list (v2)
+
+// BEGIN upstream direct download sources (v1)
+// Lookups are isolated from the main search index. Only shards required for
+// displayed results are fetched; missing matches do not alter search results.
+async function upstreamSourceCatalog() {
+  if (!upstreamSourcesPromise) {
+    upstreamSourcesPromise = readJson('upstream/sources.json').catch(error => {
+      upstreamSourcesPromise = null;
+      throw error;
+    });
+  }
+  return upstreamSourcesPromise;
+}
+function upstreamMemberUrl(base, path) {
+  // Archive.org ZIP member URLs keep '/' between path components. Encode all
+  // reserved characters within components, including '#' and '?'.
+  const encoded = path.split('/').map(segment =>
+    encodeURIComponent(segment).replace(/[!'()*]/g,
+      ch => '%' + ch.charCodeAt(0).toString(16).toUpperCase())).join('/');
+  return base + encoded;
+}
+async function upstreamMatchesFor(sha256) {
+  const catalog = await upstreamSourceCatalog();
+  if (catalog.version !== 1 || !Array.isArray(catalog.sources))
+    throw new Error('Unsupported upstream source catalog');
+  const bucket = await memoized(upstreamShardCache, sha256[0],
+    () => readGzipJson(`upstream/${sha256[0]}.json.gz`), 16);
+  return (bucket[sha256] || []).map(([sourceIndex, memberPath]) => {
+    const source = catalog.sources[sourceIndex];
+    if (!source || typeof memberPath !== 'string') return null;
+    return {label: source.label, path: memberPath,
+      url: upstreamMemberUrl(source.base_url, memberPath)};
+  }).filter(Boolean);
+}
+async function appendUpstreamDownloads(sha256, list) {
+  try {
+    const matches = await upstreamMatchesFor(sha256);
+    if (!list.isConnected) return; // The search results could have changed.
+    for (const match of matches) {
+      list.append(downloadSourceRow(list.childElementCount + 1,
+        match.label, match.path, match.url));
+    }
+  } catch (error) {
+    // Optional upstream URLs must not affect primary links or CLI fallback.
+    console.warn('Optional upstream download links unavailable:', error);
+  }
+}
+
+// END upstream direct download sources (v1)
+
 function renderResult(id, record) {
   // [sha256, sha1, byteSize, sources, [title,vendor,version,cldc,midp]]
   const [sha256, sha1, bytes, sources, quick] = record;
@@ -295,30 +371,24 @@ function renderResult(id, record) {
     card.append(summary);
   }
   card.append(hashRow('SHA-1', sha1), hashRow('SHA-256', sha256));
-  const list = elem('div', undefined, 'sources');
-  for (const [coll, name, path, crc] of sources) {
-    const section = elem('div', undefined, 'source');
-    const top = elem('div', undefined, 'source-line source-head');
-    top.append(elem('span', coll === 0 ? 'JARchiveLite' : 'JARchive Full', 'pill'));
-    const checksum = elem('span', undefined, 'source-crc');
-    checksum.append(document.createTextNode('CRC32 '), elem('code', crc));
-    top.append(checksum);
-
-    // Keep the exact archive path as selectable plain text. Its last path
-    // component is bold, without adding Markdown markers or duplicate labels.
-    const fullPath = elem('div', undefined, 'path');
-    const slash = path.lastIndexOf('/');
-    if (slash >= 0) fullPath.append(document.createTextNode(path.slice(0, slash + 1)));
-    fullPath.append(elem('strong', path.slice(slash + 1), 'path-filename'));
-
-    const actions = elem('div', undefined, 'source-line');
-    const link = elem('a', 'Direct download (Internet Archive)', 'jar-download-link');
-    link.href = urlFor(coll, path); link.target = '_blank'; link.rel = 'noopener noreferrer';
-    actions.append(link);
-    section.append(top, fullPath, actions);
-    list.append(section);
+  // Archive-source CRC32s belong to the same file-content hash, so show one
+  // shared checksum. Flag inconsistent source metadata instead of hiding it.
+  const crcValues = [...new Set(sources.map(source => String(source[3] || '').toUpperCase()).filter(Boolean))];
+  if (crcValues.length === 1) {
+    card.append(hashRow('CRC32', crcValues[0]));
+  } else if (crcValues.length > 1) {
+    card.append(elem('p', `Conflicting source CRC32 values: ${crcValues.join(', ')}`, 'crc-warning'));
   }
-  card.append(list, fallbackDownloadAction(sha256));
+  const downloadSection = elem('section', undefined, 'download-section');
+  downloadSection.append(elem('h4', 'Download links (Internet Archive)', 'download-heading'));
+  const list = elem('div', undefined, 'download-list');
+  for (const [coll, , path] of sources) {
+    list.append(downloadSourceRow(list.childElementCount + 1,
+      coll === 0 ? 'JARchive Lite' : 'JARchive Full', path, urlFor(coll, path)));
+  }
+  downloadSection.append(list);
+  card.append(downloadSection, fallbackDownloadAction(sha256));
+  appendUpstreamDownloads(sha256, list);
   const more = elem('button', 'Show manifest & original sources', 'metadata-toggle');
   more.type = 'button'; more.setAttribute('aria-expanded', 'false');
   const body = elem('div', undefined, 'metadata-body'); body.hidden = true;

@@ -151,3 +151,40 @@
 
 /* CRC32 mode fits narrow screens without squeezing the labels. */
 .modes{max-width:100%;flex-wrap:wrap}
+
+/* BEGIN compact download list (v2) */
+.download-section { margin-top:20px; border-top:1px solid var(--edge); padding-top:16px; }
+.download-heading { margin:0 0 12px; font-size:16px; line-height:1.45; font-weight:650; color:var(--text); }
+.download-list { display:grid; gap:9px; }
+.download-row { display:grid; grid-template-columns:44px max-content minmax(0,1fr); gap:10px;
+  align-items:start; border:1px solid var(--edge); border-radius:9px; padding:10px;
+  background:#10191c; min-width:0; }
+.download-number { display:flex; align-items:center; justify-content:center; min-height:37px;
+  border:1px solid #9a7b43; background:#3c301d; color:#f4d599; text-decoration:none;
+  border-radius:7px; font-size:15px; font-weight:750; }
+.download-number:hover { background:#574123; border-color:var(--accent); color:#fff; }
+.download-number:focus-visible, .download-path summary:focus-visible {
+  outline:2px solid var(--accent); outline-offset:3px; }
+.download-archive { display:flex; align-items:center; min-height:37px; padding:6px 11px;
+  border:1px solid #42545a; border-radius:7px; color:#d0d9dc; background:#233036;
+  white-space:nowrap; font-size:14px; line-height:1.35; }
+.download-path { min-width:0; border:1px solid #405357; border-radius:7px;
+  background:#172226; color:var(--text); }
+.download-path summary { min-height:35px; padding:7px 11px; cursor:pointer;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  font-size:14px; line-height:1.5; }
+.download-path summary:hover { background:#203137; border-radius:6px; }
+.download-filename { font-style:normal; }
+.download-path[open] summary { white-space:normal; overflow-wrap:anywhere;
+  border-bottom:1px solid #405357; }
+.download-path-full { padding:10px 11px; color:var(--muted); }
+.download-path-full code { font-size:13px; line-height:1.6; white-space:pre-wrap;
+  overflow-wrap:anywhere; word-break:break-word; user-select:text; }
+.crc-warning { color:var(--muted); font-size:13px; }
+@media (max-width:650px) {
+  .download-row { grid-template-columns:44px minmax(0,1fr); gap:8px; }
+  .download-number { grid-row:1 / span 2; }
+  .download-archive { grid-column:2; width:fit-content; max-width:100%; white-space:normal; }
+  .download-path { grid-column:2; }
+}
+/* END compact download list (v2) */
