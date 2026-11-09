@@ -14,4 +14,4 @@
 
 ## Rights and distribution
 
-The license of this project's script does not grant permission to copy or redistribute archived games or to relicense external decoder implementations. Before announcing a reusable open-source software license for this repository, choose an explicit license and review the final source tree for any code actually copied from outside projects. The acknowledgments above are just accurate descriptions of the inspected standalone downloader.
+The license of this project's script does not grant permission to copy or redistribute archived games or to relicense external decoder implementations. The acknowledgments above describe the standalone downloader’s implementation and technical references.
