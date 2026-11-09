@@ -6,3 +6,6 @@ __pycache__/
 *.7z
 *.part
 .jarchive-cache/
+
+# Track unmatched upstream JAR inventories
+!missing_files/*.csv
