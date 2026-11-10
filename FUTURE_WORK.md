@@ -6,6 +6,7 @@
 - [ ] **Archive-path search.** Search paths as well as filenames and metadata
 - [ ] **Better navigation for large result sets.** Improve handling of very broad queries
 - [ ] **Virtual archive explorer.** Browse the original JARchive Full and Lite directory structures with folders, file sizes, checksums, and links to archive members
+- [ ] **Speed up the search.**
 
 ## Preservation, documentation and maintenance
 
