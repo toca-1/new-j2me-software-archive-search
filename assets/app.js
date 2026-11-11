@@ -268,7 +268,7 @@ function fallbackDownloadAction(sha256) {
 
   const links = elem('p', undefined, 'fallback-help-links');
   const guide = elem('a', 'Full setup guide');
-  guide.href = 'https://github.com/toca-1/new-j2me-software-archive-search/blob/main/DOWNLOADER.md';
+  guide.href = 'https://github.com/toca-1/new-j2me-software-archive-search/blob/main/docs/DOWNLOADER.md';
   guide.target = '_blank';
   guide.rel = 'noopener noreferrer';
   links.append(document.createTextNode('For further questions refer to the '),
