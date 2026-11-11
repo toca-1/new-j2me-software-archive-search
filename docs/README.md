@@ -1,6 +1,6 @@
 # New J2ME Software Archive Search
 
-[Search J2ME games, apps, and exact JAR builds](https://toca-1.github.io/new-j2me-software-archive-search/) filename, title, vendor, SHA-1, or SHA-256. A current browser with JavaScript enabled is required. This independent index covers the [TwoSpacesSG's **New J2ME Software Archive**](https://archive.org/details/96x65pixels_j2me) as well as its upstream sources -- all listed in [`SOURCES.MD`](https://github.com/toca-1/new-j2me-software-archive-search/blob/main/SOURCES.md) -- that are listed in the archive's description.
+[Search J2ME games, apps, and exact JAR builds](https://toca-1.github.io/new-j2me-software-archive-search/) filename, title, vendor, SHA-1, or SHA-256. A current browser with JavaScript enabled is required. This independent index covers the [TwoSpacesSG's **New J2ME Software Archive**](https://archive.org/details/96x65pixels_j2me) as well as its upstream sources -- all listed in [`SOURCES.MD`](SOURCES.md) -- that are listed in the archive's description.
 
 ## Downloads, third-party content, and licensing
 
