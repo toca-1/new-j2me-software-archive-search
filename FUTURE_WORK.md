@@ -6,7 +6,7 @@
 - [ ] **Archive-path search.** Search paths as well as filenames and metadata
 - [ ] **Better navigation for large result sets.** Improve handling of very broad queries
 - [ ] **Virtual archive explorer.** Browse the original JARchive Full and Lite directory structures with folders, file sizes, checksums, and links to archive members
-- [ ] **Speed up the search.**
+- [ ] **Speed up the search.** (Somehow??)
 
 ## Preservation, documentation and maintenance
 
@@ -17,3 +17,4 @@
 ## Metadata and presentation
 
 - [ ] **Metadata quality tools.** Identify conflicting or incomplete manifest fields, as well as fields that could still be added (e.g.,  screen resolution / device compatibility)
+- [ ] **Add different languages.** Probably via a little dropdown in the top right which lets users change from English (default) to whatever they like? Or should language be a part of the url?
