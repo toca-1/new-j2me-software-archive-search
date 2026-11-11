@@ -22,3 +22,23 @@ This document records which Internet Archive collections and which files within 
 3. Compare byte-content hashes only
 4. For supported sources, test at least one individual Internet Archive archive-member URL by downloading the JAR and checking its SHA-256 before adding source mappings
 5. Add links for matching hashes to `data/upstream/`. These mappings are separate from the searchable JARchive records
+
+## Missing-file investigation
+
+Files whose SHA-256 values are absent from the original JARchive index are recorded separately in `missing_files/`; the consolidated inventory is: [`missing_files/all_unmatched_deduplicated.csv`](missing_files/all_unmatched_deduplicated.csv). It contains one row per distinct SHA-256 and retains recorded source information and locations. The `source_archives` and `locations_json` columns allow the same file content to be associated with multiple upstream collections without counting it as multiple distinct files.
+
+### Deduplicated results
+
+As of November 11, 2026:
+
+| Metric | Count |
+| --- | ---: |
+| Distinct SHA-256 values absent from the base index | 134,110 |
+| Distinct recorded source locations | 210,152 |
+| Missing hashes present in two or more upstream collections | 25,618 |
+| Missing hashes with at least one candidate download URL | 59,734 |
+| Missing hashes without a recorded candidate URL | 74,376 |
+| Missing hashes associated with at least one `.jar` filename | 134,042 |
+| Missing hashes without a `.jar` filename | 68 |
+
+These results were obtained by comparing the available unmatched inventories against the 620,287 distinct SHA-256 values in the verified base index.
