@@ -5,13 +5,14 @@ on:
   push:
     branches: ["main"]
     paths-ignore:
-      - "README.md"
-      - "DOWNLOADER.md"
-      - "SOURCES.md"
-      - "FUTURE_WORK.md"
-      - "ATTRIBUTION.md"
+      - "docs/README.md"
+      - "docs/DOWNLOADER.md"
+      - "docs/SOURCES.md"
+      - "docs/FUTURE_WORK.md"
+      - "docs/ATTRIBUTION.md"
       - "LICENSE"
       - "missing_files/**"
+      - "jarchive_download.py"
 
   # Allows you to run this workflow manually from the Actions tab.
   workflow_dispatch:
