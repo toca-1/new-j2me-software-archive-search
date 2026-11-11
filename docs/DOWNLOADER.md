@@ -4,9 +4,9 @@ Use a python script to recover individual JAR files from the Internet archive us
 
 ## Quick start
 
-**Requirements:** Python 3.9 or newer and the `curl` command on your path. For any issues that arise, first check the [Errors and Troubleshooting section](https://github.com/toca-1/new-j2me-software-archive-search/blob/main/DOWNLOADER.md#errors-and-troubleshooting) down below.
+**Requirements:** Python 3.9 or newer and the `curl` command on your path. For any issues that arise, first check the [Errors and Troubleshooting section](DOWNLOADER.md#errors-and-troubleshooting) down below.
 
-1. Download [`jarchive_download.py`](https://toca-1.github.io/new-j2me-software-archive-search/jarchive_download.py).
+1. Download [`jarchive_download.py`](../jarchive_download.py).
 2. Open the terminal/command line/PowerShell in the same folder where your `jarchive_download.py` sits
 3. On the [archive search site](https://toca-1.github.io/new-j2me-software-archive-search/), at the bottom of the box of the game you're interested in you'll see "Copy download command" followed by two buttons: "Windows" and "Linux/macOS". Simply clicking the button corresponding to your operating system copies the command that you need to run in the terminal.
 
