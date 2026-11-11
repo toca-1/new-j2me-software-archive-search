@@ -3,7 +3,7 @@
 This document records which Internet Archive collections and which files within them have been examined for the [New J2ME Software Archive Search](https://toca-1.github.io/new-j2me-software-archive-search/). It distinguishes the site's original indexed collection from additional sources used for alternative downloads or for investigating missing JARs. Beware that the project has not re-scraped the original websites and no new JARs were added to the index. It has downloaded existing preservation archives, inspected or hashed their contents, and compared SHA-256 values against the published JARchive index. The New archive's description identifies ten historical upstream collections:
 
 | Historical upstream collection | Processing performed for this project |
-| --- | --- | --- |
+| --- | --- |
 | [Opera Mini](https://archive.org/details/opera-mini-j2me-archive) | Everything scanned |
 | [Waptrick](https://archive.org/details/dump_waptrick_240x320_128x160) | Everything scanned |
 | [Waper.ru](https://archive.org/details/waper_ru_death) | Everything scanned |
