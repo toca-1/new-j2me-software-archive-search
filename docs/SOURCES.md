@@ -11,7 +11,7 @@ This document records which Internet Archive collections and which files within 
 | [7723.cn](https://archive.org/details/7723_cn_dump) | Everything scanned |
 | [Phoneky / DownloadWAP](https://archive.org/details/phoneky_dump) | Phoneky-J2ME-MissingFromNewDump.7z, Phoneky-J2ME-Apps.7z, Phoneky-J2ME-Games.7z |
 | [Unified J2ME Archive (2019)](https://archive.org/details/j2me-archive-unified-2019-09) | Publisher-provided SHA-256 catalogue compared, JARs not extracted for independent hashing because no direct download links |
-| [J2ME Software Archives — May 2020](https://archive.org/details/J2MEarchivesMay2020) | J2ME-Archives-May-2020-Sites-x16.7z, ...-x17.7z, and ...-x20.7z through ...-x23.7z |
+| [J2ME Software Archives - May 2020](https://archive.org/details/J2MEarchivesMay2020) | J2ME-Archives-May-2020-Sites-x16.7z, ...-x17.7z, and ...-x20.7z through ...-x23.7z |
 | [Ovi Store Panic (2015)](https://archive.org/details/2015_ovi_store_panic) | Not processed; downloads unavailable |
 | [Ovi Store Panic 2 (2015)](https://archive.org/details/2015_ovi_store_panic_2) | Not processed; downloads unavailable |
 
