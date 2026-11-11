@@ -25,7 +25,7 @@ This document records which Internet Archive collections and which files within 
 
 ## Missing-file investigation
 
-Files whose SHA-256 values are absent from the original JARchive index are recorded separately in `missing_files/`; the consolidated inventory is: [`missing_files/all_unmatched_deduplicated.csv`](missing_files/all_unmatched_deduplicated.csv). It contains one row per distinct SHA-256 and retains recorded source information and locations. The `source_archives` and `locations_json` columns allow the same file content to be associated with multiple upstream collections without counting it as multiple distinct files.
+Files whose SHA-256 values are absent from the original JARchive index are recorded separately in `missing_files/`; the consolidated inventory is: [`missing_files/all_unmatched_deduplicated.csv`](../missing_files/all_unmatched_deduplicated.csv). It contains one row per distinct SHA-256 and retains recorded source information and locations. The `source_archives` and `locations_json` columns allow the same file content to be associated with multiple upstream collections without counting it as multiple distinct files.
 
 ### Deduplicated results
 
