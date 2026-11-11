@@ -4,4 +4,7 @@ This directory tracks potential gaps identified by hashing JARs in upstream coll
 
 ## Inventories
 
-Columns of the present csv files: `sha256`, `zip_file`, `zip_member`, `size_bytes`, and `member_url`. The URLs are candidate links to members inside the original ZIPs and thus not hosted on this repository. 
+- `all_unmatched_deduplicated.csv` (main inventory): 134,110 distinct SHA-256 hashes, with all recorded source archives and file locations preserved in `source_archives` and `locations_json`.
+- `*_unmatched.csv`: Original per-source inventories retained for reference. Column names and available metadata vary by source.
+
+The consolidated inventory also records file sizes where known and whether a candidate direct-download URL exists. For detailed archive coverage and methodology, see [SOURCES.md](../docs/SOURCES.md).
