@@ -4,24 +4,24 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101718"><meta name="description" content="Search J2ME games, apps and exact JAR builds in the New J2ME Software Archive by filename, title, vendor, SHA-1 or SHA-256. Includes verified checksums and an alternative JAR downloader.">
   <title>J2ME Games &amp; Apps Archive Search</title>
-  <link rel="stylesheet" href="assets/site.css"><script defer src="assets/app.js"></script>
+  <link rel="stylesheet" href="assets/site.css"><script defer src="assets/i18n.js"></script><script defer src="assets/app.js"></script>
   <meta name="google-site-verification" content="hmUcMdVu_pZ0UopzfXlKN3TwEPL4aV5bofLrxHOxEOM" />
 </head>
 <body>
 <div class="shell">
-  <header class="topbar"><a class="brand" href="./"><span class="brand-icon">J<span>2</span></span></a><nav><a href="https://github.com/toca-1/new-j2me-software-archive-search" target="_blank" rel="noopener noreferrer">Source code ↗</a></nav></header>
+  <header class="topbar"><a class="brand" href="./"><span class="brand-icon">J<span>2</span></span></a><nav><a href="https://github.com/toca-1/new-j2me-software-archive-search" target="_blank" rel="noopener noreferrer"><span data-i18n="sourceCode">Source code</span> ↗</a><label class="language-picker" for="language-select"><span class="language-globe" aria-hidden="true">🌐</span><span class="sr-only" data-i18n="languageLabel">Select language</span><select id="language-select" aria-label="Select language"><option value="en">English</option><option value="de">Deutsch</option><option value="es">Español</option><option value="pt-BR">Português (Brasil)</option><option value="ru">Русский</option><option value="id">Bahasa Indonesia</option><option value="zh-CN">简体中文</option></select></label></nav></header>
   <main>
-    <section class="hero"><h1>Search the <em>J2ME archive</em></h1>
-      <p>Search <span id="unique-count">620,287</span> unique games and app files by title, filename, vendor, or exact hash.</p>
+    <section class="hero"><h1><span data-i18n="heroLead">Search the</span> <em data-i18n="heroHighlight">J2ME archive</em></h1>
+      <p><span data-i18n="heroPrefix">Search</span> <span id="unique-count">620,287</span> <span data-i18n="heroSuffix">unique games and app files by title, filename, vendor, or exact hash.</span></p>
     </section>
-    <section class="search" aria-label="Search archive">
-      <div class="modes" role="group" aria-label="Search field"><button class="active" type="button" data-mode="name" aria-pressed="true">Text</button><button type="button" data-mode="crc32" aria-pressed="false">CRC32</button><button type="button" data-mode="sha1" aria-pressed="false">SHA-1</button><button type="button" data-mode="sha256" aria-pressed="false">SHA-256</button></div>
-      <form id="search-form"><label for="query" class="sr-only">Search query</label><input id="query" type="search" spellcheck="false" autocomplete="off" placeholder="Filename, game title or vendor…" required><button type="submit">Search <span aria-hidden="true">↗</span></button></form>
-      <p class="hint"><span id="hint">Case-insensitive text search.</span> Files are hosted by Internet Archive.</p>
+    <section class="search" aria-label="Search archive" data-i18n-aria-label="searchSection">
+      <div class="modes" role="group" aria-label="Search field" data-i18n-aria-label="searchField"><button class="active" type="button" data-mode="name" aria-pressed="true" data-i18n="textMode">Text</button><button type="button" data-mode="crc32" aria-pressed="false">CRC32</button><button type="button" data-mode="sha1" aria-pressed="false">SHA-1</button><button type="button" data-mode="sha256" aria-pressed="false">SHA-256</button></div>
+      <form id="search-form"><label for="query" class="sr-only" data-i18n="queryLabel">Search query</label><input id="query" type="search" spellcheck="false" autocomplete="off" placeholder="Filename, game title or vendor…" data-i18n-placeholder="queryPlaceholder" required><button type="submit"><span data-i18n="searchButton">Search</span> <span aria-hidden="true">↗</span></button></form>
+      <p class="hint"><span id="hint" data-i18n="hintInitial">Case-insensitive text search.</span> <span data-i18n="hostNotice">Files are hosted by Internet Archive.</span></p>
       </section>
-<section class="results-section" aria-label="Search results" hidden><div class="result-heading"><h2>Results</h2><span id="status" role="status" aria-live="polite"></span></div><div id="results" class="results"></div><button id="more" type="button" hidden>Show more results</button></section>
+<section class="results-section" aria-label="Search results" data-i18n-aria-label="resultsSection" hidden><div class="result-heading"><h2 data-i18n="resultsHeading">Results</h2><span id="status" role="status" aria-live="polite"></span></div><div id="results" class="results"></div><button id="more" type="button" hidden data-i18n="moreResults">Show more results</button></section>
 
   </main>
-  <footer><span>Unofficial community index · not affiliated with the archive's maintainers</span></footer>
+  <footer><span data-i18n="footer">Unofficial community index · not affiliated with the archive's maintainers</span></footer>
 </div>
 </body></html>

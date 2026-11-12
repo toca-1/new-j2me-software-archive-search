@@ -2,6 +2,8 @@
 // New J2ME Software Archive Search v4: no external JS dependencies.
 const $ = id => document.getElementById(id);
 const ROOT = './data/';
+const I18N = window.J2ME_I18N;
+const t = (key, vars) => I18N.t(key, vars);
 const IA = 'https://archive.org/download/96x65pixels_j2me/';
 const ARCHIVES = ['JARchiveLite_v11.7z', 'JARchive_v11.7z'];
 const PAGE = 20;
@@ -21,7 +23,7 @@ function elem(tag, text, cls) {
   if (cls) e.className = cls;
   return e;
 }
-function fmt(x) { return Number(x).toLocaleString('en-US'); }
+function fmt(x) { return Number(x).toLocaleString(I18N.numberLocale()); }
 function size(x) { return x < 1024 ? `${fmt(x)} B` : x < 1048576 ? `${(x / 1024).toFixed(1)} KiB` : `${(x / 1048576).toFixed(2)} MiB`; }
 function status(text) { $('status').textContent = text; }
 function urlFor(collection, archivePath) {
@@ -31,18 +33,18 @@ function urlFor(collection, archivePath) {
 }
 async function readJson(path) {
   const response = await fetch(ROOT + path);
-  if (!response.ok) throw new Error(`Unable to load ${path} (HTTP ${response.status})`);
+  if (!response.ok) throw new Error(t('loadFailed', {path, status: response.status}));
   return response.json();
 }
 async function readGzipJson(path) {
   const response = await fetch(ROOT + path);
-  if (!response.ok) throw new Error(`Unable to load ${path} (HTTP ${response.status})`);
+  if (!response.ok) throw new Error(t('loadFailed', {path, status: response.status}));
   // Some hosts serve .gz with Content-Encoding, others as raw gzip bytes.
   const raw = new Uint8Array(await response.arrayBuffer());
   let text;
   if (raw.length > 1 && raw[0] === 31 && raw[1] === 139) {
     if (!('DecompressionStream' in window)) {
-      throw new Error('This site requires a current browser with gzip DecompressionStream support.');
+      throw new Error(t('gzipRequired'));
     }
     text = await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
   } else {
@@ -112,12 +114,12 @@ function nameShard(i) {
     () => readGzipJson(`names/${String(i).padStart(3, '0')}.json.gz`), MAX_CACHED_SEARCH_SHARDS);
 }
 async function searchNames(query, current) {
-  status('Loading filename/title search index…');
+  status(t('loadingIndex'));
   const grams = await gramMap();
   if (current !== generation) return [];
   const candidates = candidateNameShards(query, grams);
   if (candidates.length === 0) return [];
-  status(`Searching ${candidates.length} relevant index shards…`);
+  status(t('searchingShards', {count: fmt(candidates.length)}));
   const found = new Array(candidates.length);
   let next = 0, completed = 0;
   const workers = Array.from({length: Math.min(WORKERS, candidates.length)}, async () => {
@@ -127,7 +129,7 @@ async function searchNames(query, current) {
       const list = await nameShard(candidates[index]);
       if (current !== generation) return;
       found[index] = list.filter(([label]) => label.includes(query));
-      status(`Searching titles and filenames… ${++completed}/${candidates.length}`);
+      status(t('searchingNames', {done: fmt(++completed), total: fmt(candidates.length)}));
     }
   });
   await Promise.all(workers);
@@ -140,11 +142,11 @@ async function searchNames(query, current) {
   }
   return [...ids];
 }
-function copyButton(value, label = 'Copy') {
+function copyButton(value, label = t('copy')) {
   const b = elem('button', label, 'copy'); b.type = 'button';
   b.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(value); b.textContent = 'Copied'; }
-    catch { b.textContent = 'Copy failed'; }
+    try { await navigator.clipboard.writeText(value); b.textContent = t('copied'); }
+    catch { b.textContent = t('copyFailed'); }
     setTimeout(() => { b.textContent = label; }, 1600);
   });
   return b;
@@ -163,30 +165,30 @@ function infoField(parent, title, value) {
 function showDetails(target, detailRows) {
   target.replaceChildren();
   if (!detailRows || !detailRows.length) {
-    target.append(elem('p', 'No additional manifest details are available.')); return;
+    target.append(elem('p', t('noDetails'))); return;
   }
   for (const [collection, raw, paths, allPathCount] of detailRows) {
     const section = elem('section', undefined, 'detail-group');
-    section.append(elem('h4', collection === 0 ? 'JARchiveLite manifest' : 'JARchive Full manifest'));
+    section.append(elem('h4', collection === 0 ? t('manifestLite') : t('manifestFull')));
     const fields = elem('dl', undefined, 'manifest-grid');
     for (const [key, value] of Object.entries(raw)) {
       if (key === 'paths') continue;
       fields.append(elem('dt', key), elem('dd', value));
     }
     section.append(fields);
-    const h = elem('h5', `Original source locations (${fmt(allPathCount)})`);
+    const h = elem('h5', t('originalLocations', {count: fmt(allPathCount)}));
     section.append(h);
     if (paths.length) {
       const list = elem('div', undefined, 'original-paths');
       for (const p of paths) {
         const row = elem('div', undefined, 'original-path');
-        row.append(elem('code', p), copyButton(p, 'Copy'));
+        row.append(elem('code', p), copyButton(p));
         list.append(row);
       }
       section.append(list);
     }
     if (allPathCount > paths.length)
-      section.append(elem('p', `Showing ${fmt(paths.length)} of ${fmt(allPathCount)} source locations. The full metadata is retained in the source archive's infofiles.`, 'small'));
+      section.append(elem('p', t('showingLocations', {shown: fmt(paths.length), total: fmt(allPathCount)}), 'small'));
     target.append(section);
   }
 }
@@ -196,7 +198,7 @@ function fallbackDownloadAction(sha256) {
   const wrapper = elem('div', undefined, 'fallback-download');
   const actions = elem('div', undefined, 'fallback-actions');
 
-  const helpButton = elem('button', 'Direct download not working? ▾', 'fallback-help-toggle');
+  const helpButton = elem('button', t('helpToggle') + ' ▾', 'fallback-help-toggle');
   helpButton.type = 'button';
   const panelId = `download-help-${sha256}`;
   helpButton.setAttribute('aria-controls', panelId);
@@ -206,23 +208,23 @@ function fallbackDownloadAction(sha256) {
   const linuxCommand = `python3 jarchive_download.py ${sha256}`;
   const windowsCommand = `py -3 .\\jarchive_download.py ${sha256}`;
   const copyGroup = elem('div', undefined, 'fallback-copy-group');
-  copyGroup.append(elem('span', 'Copy download command:', 'fallback-copy-label'));
+  copyGroup.append(elem('span', t('copyCommand'), 'fallback-copy-label'));
   const feedback = elem('span', '', 'sr-only');
   feedback.setAttribute('role', 'status');
 
   function commandCopyButton(label, command) {
     const button = elem('button', label, 'fallback-copy');
     button.type = 'button';
-    button.setAttribute('aria-label', `Copy ${label} download command`);
+    button.setAttribute('aria-label', t('copyCommandAria', {system: label}));
     let reset;
     button.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(command);
-        button.textContent = 'Copied!';
-        feedback.textContent = `${label} download command copied to clipboard.`;
+        button.textContent = t('copiedBang');
+        feedback.textContent = t('commandCopied', {system: label});
       } catch {
-        button.textContent = 'Copy failed';
-        feedback.textContent = 'Clipboard unavailable. Expand the help section to copy the command manually.';
+        button.textContent = t('copyFailed');
+        feedback.textContent = t('clipboardError');
       }
       clearTimeout(reset);
       reset = setTimeout(() => {
@@ -243,38 +245,35 @@ function fallbackDownloadAction(sha256) {
   helpButton.addEventListener('click', () => {
     const opening = helpButton.getAttribute('aria-expanded') !== 'true';
     helpButton.setAttribute('aria-expanded', String(opening));
-    helpButton.textContent = `Direct download not working? ${opening ? '▴' : '▾'}`;
+    helpButton.textContent = `${t('helpToggle')} ${opening ? '▴' : '▾'}`;
     panel.hidden = !opening;
   });
 
-  const explanation = elem('p', 'Downloads from the Internet Archive can time out and return HTTP error 504. ' +
-    'For these cases you can use the following download script: ');
+  const explanation = elem('p', t('downloadExplanationBefore'));
   const scriptLink = elem('a', 'jarchive_download.py');
   // A same-origin link allows Firefox to honor the download attribute.
   scriptLink.href = './jarchive_download.py';
   scriptLink.download = 'jarchive_download.py';
-  explanation.append(scriptLink, document.createTextNode('. Note that, while reliable, downloads using this method ' +
-    "can take several minutes and still require the Internet Archive's servers to be available."));
+  explanation.append(scriptLink, document.createTextNode(t('downloadExplanationAfter')));
 
-  const requirements = elem('p', 'This method requires Python 3.9+ and curl. ' +
-    'Run the following command from the same folder where jarchive_download.py is saved:');
+  const requirements = elem('p', t('downloadRequirements'));
 
-  const linuxIntro = elem('p', 'On Linux & macOS:');
+  const linuxIntro = elem('p', t('linuxIntro'));
   const linuxExample = elem('pre');
   linuxExample.append(elem('code', linuxCommand));
-  const windowsIntro = elem('p', 'On Windows:');
+  const windowsIntro = elem('p', t('windowsIntro'));
   const windowsExample = elem('pre');
   windowsExample.append(elem('code', windowsCommand));
 
   const links = elem('p', undefined, 'fallback-help-links');
-  const guide = elem('a', 'Full setup guide');
+  const guide = elem('a', t('guide'));
   guide.href = 'https://github.com/toca-1/new-j2me-software-archive-search/blob/main/docs/DOWNLOADER.md';
   guide.target = '_blank';
   guide.rel = 'noopener noreferrer';
-  links.append(document.createTextNode('For further questions refer to the '),
-    guide, document.createTextNode('.'));
+  links.append(document.createTextNode(t('guidePrefix')),
+    guide, document.createTextNode(t('guideSuffix')));
 
-  panel.append(elem('h4', 'Alternative download using the terminal'), explanation,
+  panel.append(elem('h4', t('downloadHelpHeading')), explanation,
     requirements, linuxIntro, linuxExample, windowsIntro, windowsExample, links);
   actions.append(helpButton, copyGroup);
   wrapper.append(actions, feedback, panel);
@@ -289,13 +288,13 @@ function downloadSourceRow(number, archive, memberPath, url) {
   link.href = url;
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
-  link.title = `Download from ${archive}`;
-  link.setAttribute('aria-label', `Download link ${number}: ${archive}`);
+  link.title = t('downloadFrom', {archive});
+  link.setAttribute('aria-label', t('downloadLinkAria', {number, archive}));
 
   const archiveLabel = elem('span', archive, 'download-archive');
   const pathBox = elem('details', undefined, 'download-path');
   const summary = elem('summary', undefined, 'download-path-summary');
-  summary.append(elem('span', 'File path', 'download-filename'));
+  summary.append(elem('span', t('filePath'), 'download-filename'));
   const expanded = elem('div', undefined, 'download-path-full');
   expanded.append(elem('code', memberPath));
   pathBox.append(summary, expanded);
@@ -365,7 +364,7 @@ function renderResult(id, record) {
   if (vendor || version || cldc || midp) {
     const summary = elem('div', undefined, 'midlet-summary');
     if (vendor) summary.append(elem('span', vendor));
-    if (version) summary.append(elem('span', 'Version ' + version));
+    if (version) summary.append(elem('span', t('version', {version})));
     if (cldc) summary.append(elem('span', cldc));
     if (midp) summary.append(elem('span', midp));
     card.append(summary);
@@ -377,10 +376,10 @@ function renderResult(id, record) {
   if (crcValues.length === 1) {
     card.append(hashRow('CRC32', crcValues[0]));
   } else if (crcValues.length > 1) {
-    card.append(elem('p', `Conflicting source CRC32 values: ${crcValues.join(', ')}`, 'crc-warning'));
+    card.append(elem('p', t('conflictingCrc', {values: crcValues.join(', ')}), 'crc-warning'));
   }
   const downloadSection = elem('section', undefined, 'download-section');
-  downloadSection.append(elem('h4', 'Download links (Internet Archive)', 'download-heading'));
+  downloadSection.append(elem('h4', t('downloadLinks'), 'download-heading'));
   const list = elem('div', undefined, 'download-list');
   for (const [coll, , path] of sources) {
     list.append(downloadSourceRow(list.childElementCount + 1,
@@ -389,21 +388,21 @@ function renderResult(id, record) {
   downloadSection.append(list);
   card.append(downloadSection, fallbackDownloadAction(sha256));
   appendUpstreamDownloads(sha256, list);
-  const more = elem('button', 'Show manifest & original sources', 'metadata-toggle');
+  const more = elem('button', t('showMetadata'), 'metadata-toggle');
   more.type = 'button'; more.setAttribute('aria-expanded', 'false');
   const body = elem('div', undefined, 'metadata-body'); body.hidden = true;
   let loaded = false;
   more.addEventListener('click', async () => {
     const open = more.getAttribute('aria-expanded') !== 'true';
     more.setAttribute('aria-expanded', open ? 'true' : 'false');
-    more.textContent = open ? 'Hide manifest & original sources' : 'Show manifest & original sources';
+    more.textContent = open ? t('hideMetadata') : t('showMetadata');
     body.hidden = !open;
     if (open && !loaded) {
-      body.replaceChildren(elem('p', 'Loading metadata…', 'small'));
+      body.replaceChildren(elem('p', t('loadingMetadata'), 'small'));
       try {
         showDetails(body, await detailsById(id)); loaded = true;
       } catch (e) {
-        body.replaceChildren(elem('p', 'Unable to load metadata: ' + e.message, 'small'));
+        body.replaceChildren(elem('p', t('metadataError', {error: e.message}), 'small'));
       }
     }
   });
@@ -429,17 +428,17 @@ function installResultTools() {
   const tools = elem('div', undefined, 'result-tools');
   tools.id = 'result-tools'; tools.hidden = true;
   const form = elem('form', undefined, 'refine-form');
-  const label = elem('label', 'Search within results'); label.htmlFor = 'refine-query';
+  const label = elem('label', t('refineLabel')); label.htmlFor = 'refine-query';
   const input = elem('input');
   input.id = 'refine-query'; input.type = 'search'; input.autocomplete = 'off';
-  input.placeholder = 'Refine these results…'; 
-  const apply = elem('button', 'Refine'); apply.type = 'submit';
-  const clear = elem('button', 'Clear refinement', 'refine-clear'); clear.type = 'button';
+  input.placeholder = t('refinePlaceholder'); 
+  const apply = elem('button', t('refineButton')); apply.type = 'submit';
+  const clear = elem('button', t('refineClear'), 'refine-clear'); clear.type = 'button';
   form.append(label, input, apply, clear);
-  const sortLabel = elem('label', 'Sort results', 'result-sort-label'); sortLabel.htmlFor = 'result-sort';
+  const sortLabel = elem('label', t('sortLabel'), 'result-sort-label'); sortLabel.htmlFor = 'result-sort';
   const sort = elem('select'); sort.id = 'result-sort';
-  for (const [value, text] of [['default', 'Default order'], ['title-asc', 'Title A–Z'],
-    ['title-desc', 'Title Z–A'], ['size-asc', 'Size: smallest first'], ['size-desc', 'Size: largest first']]) {
+  for (const [value, text] of [['default', t('sortDefault')], ['title-asc', t('sortTitleAsc')],
+    ['title-desc', t('sortTitleDesc')], ['size-asc', t('sortSmallFirst')], ['size-desc', t('sortLargeFirst')]]) {
     const option = elem('option', text); option.value = value; sort.append(option);
   }
    
@@ -475,7 +474,7 @@ async function prepareResultSummaries(state, current) {
         state.summaries.set(id, {title, bytes: record[2], fields});
       }
       completed += ids.length;
-      status(`Preparing refinement and sorting… ${fmt(completed)}/${fmt(state.ids.length)}`);
+      status(t('preparingRefine', {done: fmt(completed), total: fmt(state.ids.length)}));
       await new Promise(resolve => setTimeout(resolve, 0));
     }
   };
@@ -489,7 +488,7 @@ function selectResultIds(state, query, order) {
   let ids = words.length ? state.ids.filter(id => words.every(word =>
     state.summaries.get(id).fields.some(field => field.includes(word)))) : [...state.ids];
   if (order !== 'default') {
-    const collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
+    const collator = new Intl.Collator(I18N.numberLocale(), {numeric: true, sensitivity: 'base'});
     ids.sort((a, b) => {
       const x = state.summaries.get(a), y = state.summaries.get(b);
       const difference = order.startsWith('size-') ? x.bytes - y.bytes : collator.compare(x.title, y.title);
@@ -509,13 +508,13 @@ async function applyResultTools() {
     if (current !== generation || originalResults !== state) return;
     active = selectResultIds(state, query, order); shown = 0; resultViewVersion++;
     $('results').replaceChildren(); $('more').hidden = true;
-    status(query ? `${fmt(active.length)} of ${fmt(state.ids.length)} results` :
-      `${fmt(active.length)} unique matching file${active.length === 1 ? '' : 's'}`);
+    status(query ? t('subsetCount', {count: fmt(active.length), total: fmt(state.ids.length)}) :
+      t('matchingFiles', {count: fmt(active.length), pluralCount: active.length}));
     if (active.length) await renderMore(current);
-    else $('results').append(elem('div', 'No results match this refinement. Clear it or try different words.', 'empty'));
+    else $('results').append(elem('div', t('noRefinedResults'), 'empty'));
   } catch (error) {
     if (current === generation && originalResults === state) {
-      status('Could not refine or sort results: ' + error.message + '. Please try again.'); console.error(error);
+      status(t('refineError', {error: error.message})); console.error(error);
     }
   } finally {
     state.busy = false;
@@ -534,7 +533,7 @@ async function renderMore(current) {
     if (current !== generation || view !== resultViewVersion) return;
     results.forEach((rec, i) => $('results').append(renderResult(ids[i], rec)));
     shown += ids.length; button.hidden = shown >= active.length;
-    button.textContent = `Show more (${fmt(active.length - shown)} remaining)`;
+    button.textContent = t('moreRemaining', {count: fmt(active.length - shown)});
   } finally {
     if (moreLoadingVersion === view) moreLoadingVersion = null;
     if (current === generation && view === resultViewVersion) button.disabled = Boolean(originalResults && originalResults.busy);
@@ -547,21 +546,21 @@ async function runSearch() {
   resetResultTools();
   const term = $('query').value.trim();
   $('results').replaceChildren(); $('more').hidden = true; labelsForMatches = new Map();
-  if (!manifest) { status('Index not loaded'); return; }
-  if (!term) { status('Enter a search term'); return; }
+  if (!manifest) { status(t('indexNotLoaded')); return; }
+  if (!term) { status(t('enterSearchTerm')); return; }
   $('search-form').querySelector('button').disabled = true;
   try {
     let ids = [];
     if (searchMode === 'name') {
-      if (Array.from(term).length < 2) throw new Error('Enter at least 2 characters for name searches.');
+      if (Array.from(term).length < 2) throw new Error(t('enterName'));
       ids = await searchNames(term.toLowerCase(), current);
     } else if (searchMode === 'crc32') {
-      if (!/^[0-9a-f]{8}$/i.test(term)) throw new Error('Enter exactly 8 hexadecimal digits for CRC32.');
-      status('Looking up CRC32…');
+      if (!/^[0-9a-f]{8}$/i.test(term)) throw new Error(t('enterCrc'));
+      status(t('lookingUpCrc'));
       ids = await crc32Lookup(term);
     } else {
       const re = searchMode === 'sha1' ? /^[0-9a-f]{40}$/i : /^[0-9a-f]{64}$/i;
-      if (!re.test(term)) throw new Error(`Enter an exact ${searchMode.toUpperCase()} checksum.`);
+      if (!re.test(term)) throw new Error(t('enterExactHash', {hash: searchMode.toUpperCase()}));
       const id = await exactHashLookup(searchMode, term.toLowerCase());
       if (id !== undefined) ids = [id];
     }
@@ -571,18 +570,19 @@ async function runSearch() {
     $('result-tools').hidden = ids.length === 0;
     setResultControlsBusy(false);
     if (!ids.length) {
-      status('0 matching files'); $('results').append(elem('div', 'No matching files found.', 'empty')); return;
+      status(t('zeroMatching')); $('results').append(elem('div', t('noMatchingFiles'), 'empty')); return;
     }
-    status(`${fmt(ids.length)} unique matching file${ids.length === 1 ? '' : 's'}`);
+    status(t('matchingFiles', {count: fmt(ids.length), pluralCount: ids.length}));
     await renderMore(current);
   } catch (e) {
     if (current !== generation) return;
-    status('Search error'); $('results').append(elem('div', e.message, 'empty')); console.error(e);
+    status(t('searchError')); $('results').append(elem('div', e.message, 'empty')); console.error(e);
   } finally {
     if (current === generation) $('search-form').querySelector('button').disabled = false;
   }
 }
 async function init() {
+  await I18N.init();
   installResultTools();
   document.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', () => {
     searchMode = button.dataset.mode;
@@ -590,27 +590,27 @@ async function init() {
       b.classList.toggle('active', b === button);
       b.setAttribute('aria-pressed', b === button ? 'true' : 'false');
     });
-    $('query').placeholder = searchMode === 'name' ? 'Filename, game title or vendor…' :
-      searchMode === 'crc32' ? '8-character CRC32…' :
-      searchMode === 'sha1' ? '40-character SHA-1…' : '64-character SHA-256…';
+    $('query').placeholder = searchMode === 'name' ? t('queryPlaceholder') :
+      searchMode === 'crc32' ? t('queryPlaceholderCrc') :
+      searchMode === 'sha1' ? t('queryPlaceholderSha1') : t('queryPlaceholderSha256');
     $('hint').textContent = searchMode === 'name' ?
-      'Search filenames, game titles and vendors (case-insensitive).' :
-      searchMode === 'crc32' ? 'Enter all 8 hexadecimal digits.' :
-      `Enter the complete ${searchMode.toUpperCase()} hash to find an exact match.`;
+      t('hintName') :
+      searchMode === 'crc32' ? t('hintCrc') :
+      t('hintHash', {hash: searchMode.toUpperCase()});
     $('query').focus();
   }));
   $('search-form').addEventListener('submit', e => { e.preventDefault(); runSearch(); });
   $('more').addEventListener('click', () => renderMore(generation).catch(e => {
-    status('Could not load additional results'); console.error(e);
+    status(t('loadMoreError')); console.error(e);
   }));
   try {
     manifest = await readJson('manifest.json');
-    if (manifest.schema_version !== 4) throw new Error('Site data does not match v4 app.js. Rebuild data with the v4 builder.');
+    if (manifest.schema_version !== 4) throw new Error(t('schemaMismatch'));
     $('unique-count').textContent = fmt(manifest.unique_files);
-    $('entries-count').textContent = fmt(manifest.total_rows);
-    $('shared-count').textContent = fmt(manifest.shared_files);
+    if ($('entries-count')) $('entries-count').textContent = fmt(manifest.total_rows);
+    if ($('shared-count')) $('shared-count').textContent = fmt(manifest.shared_files);
   } catch (e) {
-    status('Search index unavailable'); $('results').replaceChildren(elem('div', e.message, 'empty'));
+    status(t('searchIndexUnavailable')); $('results').replaceChildren(elem('div', e.message, 'empty'));
   }
 }
 init();
