@@ -5,7 +5,6 @@
 - [ ] **Related builds and versions.** Group different JARs belonging to the same game or app by `MIDlet-Name`, vendor, and other manifest fields. Preserve the distinction between exact hash matches and inferred relationships; allow users to inspect individual variants
 - [ ] **Archive-path search.** Search paths as well as filenames and metadata
 - [ ] **Better navigation for large result sets.** Improve handling of very broad queries
-- [ ] **Virtual archive explorer.** Browse the original JARchive Full and Lite directory structures with folders, file sizes, checksums, and links to archive members. **EDIT: This exists!** https://f.nnproject.cc/jarchive/ Check how this site can be used for other points on this list, e.g., more download links, groups related games, etc.
 - [ ] **Speed up the search.** (Somehow??)
 
 ## Preservation, documentation and maintenance
