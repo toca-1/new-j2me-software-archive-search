@@ -17,4 +17,3 @@
 ## Metadata and presentation
 
 - [ ] **Metadata quality tools.** Identify conflicting or incomplete manifest fields, as well as fields that could still be added (e.g.,  screen resolution / device compatibility)
-- [ ] **Add different languages.** Probably via a little dropdown in the top right which lets users change from English (default) to whatever they like? Or should language be a part of the url?
