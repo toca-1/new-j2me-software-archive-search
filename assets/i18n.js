@@ -1,10 +1,25 @@
 // UI translations only. Archive filenames, metadata, and search data remain unchanged.
 'use strict';
 window.J2ME_I18N = (() => {
-  const codes = ['en', 'de', 'es', 'pt-BR', 'ru', 'id', 'zh-CN'];
+  const codes = ['en', 'de', 'es', 'pt-BR', 'ru', 'id', 'zh-CN', 'pl', 'vi', 'fr', 'tr', 'it', 'uk', 'th', 'cs', 'zh-TW', 'ro', 'hi', 'ja', 'ko', 'nl', 'ms'];
   const numberLocales = {
     en: 'en-US', de: 'de-DE', es: 'es-ES', 'pt-BR': 'pt-BR',
-    ru: 'ru-RU', id: 'id-ID', 'zh-CN': 'zh-CN'
+    ru: 'ru-RU', id: 'id-ID', 'zh-CN': 'zh-CN',
+    pl: 'pl-PL',
+    vi: 'vi-VN',
+    fr: 'fr-FR',
+    tr: 'tr-TR',
+    it: 'it-IT',
+    uk: 'uk-UA',
+    th: 'th-TH',
+    cs: 'cs-CZ',
+    'zh-TW': 'zh-TW',
+    ro: 'ro-RO',
+    hi: 'hi-IN',
+    ja: 'ja-JP',
+    ko: 'ko-KR',
+    nl: 'nl-NL',
+    ms: 'ms-MY'
   };
   const urlLanguage = new URLSearchParams(location.search).get('lang');
   let language = 'en';
