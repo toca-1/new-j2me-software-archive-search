@@ -50,6 +50,7 @@
   "version": "Version {version}",
   "conflictingCrc": "Widersprüchliche CRC32-Werte der Quellen: {values}",
   "downloadLinks": "Downloadlinks (Internet Archive)",
+  "downloadLinksOtherMirrors": "Downloadlinks (andere Mirrors)",
   "showMetadata": "Manifest und Originalquellen anzeigen",
   "hideMetadata": "Manifest und Originalquellen ausblenden",
   "loadingMetadata": "Metadaten werden geladen…",

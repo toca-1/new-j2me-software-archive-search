@@ -51,6 +51,7 @@
   "version": "Версія {version}",
   "conflictingCrc": "Суперечливі значення CRC32 джерел: {values}",
   "downloadLinks": "Посилання для завантаження (Internet Archive)",
+  "downloadLinksOtherMirrors": "Посилання для завантаження (інші дзеркала)",
   "showMetadata": "Показати маніфест і початкові джерела",
   "hideMetadata": "Приховати маніфест і початкові джерела",
   "loadingMetadata": "Завантаження метаданих…",

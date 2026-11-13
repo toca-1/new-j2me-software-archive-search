@@ -50,6 +50,7 @@
   "version": "Versão {version}",
   "conflictingCrc": "Valores CRC32 conflitantes das fontes: {values}",
   "downloadLinks": "Links de download (Internet Archive)",
+  "downloadLinksOtherMirrors": "Links de download (outros espelhos)",
   "showMetadata": "Mostrar manifesto e fontes originais",
   "hideMetadata": "Ocultar manifesto e fontes originais",
   "loadingMetadata": "Carregando metadados…",

@@ -51,6 +51,7 @@
   "version": "संस्करण {version}",
   "conflictingCrc": "स्रोतों के CRC32 मान अलग-अलग हैं: {values}",
   "downloadLinks": "डाउनलोड लिंक (Internet Archive)",
+  "downloadLinksOtherMirrors": "डाउनलोड लिंक (अन्य मिरर)",
   "showMetadata": "मैनिफ़ेस्ट और मूल स्रोत दिखाएँ",
   "hideMetadata": "मैनिफ़ेस्ट और मूल स्रोत छिपाएँ",
   "loadingMetadata": "मेटाडेटा लोड हो रहा है…",

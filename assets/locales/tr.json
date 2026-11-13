@@ -51,6 +51,7 @@
   "version": "Sürüm {version}",
   "conflictingCrc": "Çakışan kaynak CRC32 değerleri: {values}",
   "downloadLinks": "İndirme bağlantıları (Internet Archive)",
+  "downloadLinksOtherMirrors": "İndirme bağlantıları (diğer yansılar)",
   "showMetadata": "Manifesti ve özgün kaynakları göster",
   "hideMetadata": "Manifesti ve özgün kaynakları gizle",
   "loadingMetadata": "Üst veriler yükleniyor…",

@@ -369,7 +369,6 @@ function renderResult(id, record) {
     if (midp) summary.append(elem('span', midp));
     card.append(summary);
   }
-  card.append(hashRow('SHA-1', sha1), hashRow('SHA-256', sha256));
   // Archive-source CRC32s belong to the same file-content hash, so show one
   // shared checksum. Flag inconsistent source metadata instead of hiding it.
   const crcValues = [...new Set(sources.map(source => String(source[3] || '').toUpperCase()).filter(Boolean))];
@@ -378,16 +377,39 @@ function renderResult(id, record) {
   } else if (crcValues.length > 1) {
     card.append(elem('p', t('conflictingCrc', {values: crcValues.join(', ')}), 'crc-warning'));
   }
+  card.append(hashRow('SHA-1', sha1), hashRow('SHA-256', sha256));
   const downloadSection = elem('section', undefined, 'download-section');
-  downloadSection.append(elem('h4', t('downloadLinks'), 'download-heading'));
-  const list = elem('div', undefined, 'download-list');
+  const iaList = elem('div', undefined, 'download-list');
+  const mirrorList = elem('div', undefined, 'download-list');
+
   for (const [coll, , path] of sources) {
-    list.append(downloadSourceRow(list.childElementCount + 1,
-      coll === 0 ? 'JARchive Lite' : 'JARchive Full', path, urlFor(coll, path)));
+    iaList.append(downloadSourceRow(iaList.childElementCount + 1,
+      coll === 0 ? 'JARchive Lite' : 'JARchive Full',
+      path, urlFor(coll, path)));
+
+    if (coll === 0) {
+      mirrorList.append(downloadSourceRow(mirrorList.childElementCount + 1,
+        'nnproject (Lite)', path, upstreamMemberUrl(
+          'https://f.nnproject.cc/jarchive/JARchiveLite_v11/', path)));
+    }
   }
-  downloadSection.append(list);
+
+  downloadSection.append(
+    elem('h4', t('downloadLinks'), 'download-heading'),
+    iaList
+  );
+
+  if (mirrorList.childElementCount) {
+    const mirrors = elem('div', undefined, 'download-mirror-group');
+    mirrors.append(
+      elem('h4', t('downloadLinksOtherMirrors'), 'download-heading'),
+      mirrorList
+    );
+    downloadSection.append(mirrors);
+  }
+
   card.append(downloadSection, fallbackDownloadAction(sha256));
-  appendUpstreamDownloads(sha256, list);
+  appendUpstreamDownloads(sha256, iaList);
   const more = elem('button', t('showMetadata'), 'metadata-toggle');
   more.type = 'button'; more.setAttribute('aria-expanded', 'false');
   const body = elem('div', undefined, 'metadata-body'); body.hidden = true;
@@ -406,7 +428,11 @@ function renderResult(id, record) {
       }
     }
   });
-  card.append(more, body);
+  // Place metadata control after the download command buttons.
+  const manifestAction = elem('div', undefined, 'metadata-action');
+  manifestAction.append(more);
+  card.querySelector('.fallback-actions').append(manifestAction);
+  card.append(body);
   return card;
 }
 // Search within all original matches, with metadata loaded only on demand.

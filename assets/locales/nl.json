@@ -51,6 +51,7 @@
   "version": "Versie {version}",
   "conflictingCrc": "Tegenstrijdige CRC32-waarden van bronnen: {values}",
   "downloadLinks": "Downloadlinks (Internet Archive)",
+  "downloadLinksOtherMirrors": "Downloadlinks (andere mirrors)",
   "showMetadata": "Manifest en oorspronkelijke bronnen tonen",
   "hideMetadata": "Manifest en oorspronkelijke bronnen verbergen",
   "loadingMetadata": "Metadata laden…",

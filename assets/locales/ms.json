@@ -51,6 +51,7 @@
   "version": "Versi {version}",
   "conflictingCrc": "Nilai CRC32 sumber yang bercanggah: {values}",
   "downloadLinks": "Pautan muat turun (Internet Archive)",
+  "downloadLinksOtherMirrors": "Pautan muat turun (cermin lain)",
   "showMetadata": "Tunjukkan manifest dan sumber asal",
   "hideMetadata": "Sembunyikan manifest dan sumber asal",
   "loadingMetadata": "Memuatkan metadata…",

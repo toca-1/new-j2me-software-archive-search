@@ -50,6 +50,7 @@
   "version": "Versi {version}",
   "conflictingCrc": "Nilai CRC32 sumber tidak konsisten: {values}",
   "downloadLinks": "Tautan unduh (Internet Archive)",
+  "downloadLinksOtherMirrors": "Tautan unduhan (mirror lain)",
   "showMetadata": "Tampilkan manifes & sumber asli",
   "hideMetadata": "Sembunyikan manifes & sumber asli",
   "loadingMetadata": "Memuat metadata…",

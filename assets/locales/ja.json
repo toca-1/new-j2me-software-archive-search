@@ -51,6 +51,7 @@
   "version": "バージョン {version}",
   "conflictingCrc": "ソース間で CRC32 値が一致しません：{values}",
   "downloadLinks": "ダウンロードリンク（Internet Archive）",
+  "downloadLinksOtherMirrors": "ダウンロードリンク（その他のミラー）",
   "showMetadata": "マニフェストと元のソースを表示",
   "hideMetadata": "マニフェストと元のソースを非表示",
   "loadingMetadata": "メタデータを読み込み中…",

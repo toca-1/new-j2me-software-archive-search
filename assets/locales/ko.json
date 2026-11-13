@@ -51,6 +51,7 @@
   "version": "버전 {version}",
   "conflictingCrc": "출처별 CRC32 값이 일치하지 않음: {values}",
   "downloadLinks": "다운로드 링크 (Internet Archive)",
+  "downloadLinksOtherMirrors": "다운로드 링크 (다른 미러)",
   "showMetadata": "매니페스트와 원본 출처 표시",
   "hideMetadata": "매니페스트와 원본 출처 숨기기",
   "loadingMetadata": "메타데이터 불러오는 중…",

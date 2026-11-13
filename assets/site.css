@@ -187,6 +187,7 @@
   .download-archive { grid-column:2; width:fit-content; max-width:100%; white-space:normal; }
   .download-path { grid-column:2; }
 }
+.download-mirror-group{margin-top:22px}
 /* END compact download list (v2) */
 
 /* Keep the footer at the bottom of short pages, without overlapping results. */
@@ -227,3 +228,37 @@
 @media(max-width:650px){.topbar{gap:10px}.topbar nav{gap:10px}}
 @media(max-width:390px){.topbar nav a{font-size:12px}.language-picker{padding:7px}
   .language-picker select{font-size:13px;max-width:95px}}
+
+
+/* Manifest toggle beside fallback download command controls */
+.fallback-actions .metadata-action {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  padding-left: 14px;
+  border-left: 3px solid #50636b;
+  min-width: 0;
+}
+
+.fallback-actions .metadata-toggle {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* On narrow screens, allow the controls to stack cleanly. */
+@media (max-width: 650px) {
+  .fallback-actions .metadata-action {
+    width: 100%;
+    margin-left: 0;
+    padding: 12px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--edge);
+  }
+
+  .fallback-actions .metadata-toggle {
+    width: 100%;
+    white-space: normal;
+  }
+}

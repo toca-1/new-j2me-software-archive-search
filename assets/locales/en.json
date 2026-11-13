@@ -50,6 +50,7 @@
   "version": "Version {version}",
   "conflictingCrc": "Conflicting source CRC32 values: {values}",
   "downloadLinks": "Download links (Internet Archive)",
+  "downloadLinksOtherMirrors": "Download links (Other mirrors)",
   "showMetadata": "Show manifest & original sources",
   "hideMetadata": "Hide manifest & original sources",
   "loadingMetadata": "Loading metadata…",

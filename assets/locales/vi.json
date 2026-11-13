@@ -51,6 +51,7 @@
   "version": "Phiên bản {version}",
   "conflictingCrc": "Giá trị CRC32 từ các nguồn không khớp: {values}",
   "downloadLinks": "Liên kết tải xuống (Internet Archive)",
+  "downloadLinksOtherMirrors": "Liên kết tải xuống (máy chủ gương khác)",
   "showMetadata": "Hiển thị manifest và nguồn gốc",
   "hideMetadata": "Ẩn manifest và nguồn gốc",
   "loadingMetadata": "Đang tải siêu dữ liệu…",

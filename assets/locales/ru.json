@@ -50,6 +50,7 @@
   "version": "Версия {version}",
   "conflictingCrc": "Противоречивые значения CRC32 в источниках: {values}",
   "downloadLinks": "Ссылки для скачивания (Internet Archive)",
+  "downloadLinksOtherMirrors": "Ссылки для скачивания (другие зеркала)",
   "showMetadata": "Показать манифест и исходные источники",
   "hideMetadata": "Скрыть манифест и исходные источники",
   "loadingMetadata": "Загрузка метаданных…",

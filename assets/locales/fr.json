@@ -51,6 +51,7 @@
   "version": "Version {version}",
   "conflictingCrc": "Valeurs CRC32 contradictoires selon les sources : {values}",
   "downloadLinks": "Liens de téléchargement (Internet Archive)",
+  "downloadLinksOtherMirrors": "Liens de téléchargement (autres miroirs)",
   "showMetadata": "Afficher le manifeste et les sources d’origine",
   "hideMetadata": "Masquer le manifeste et les sources d’origine",
   "loadingMetadata": "Chargement des métadonnées…",

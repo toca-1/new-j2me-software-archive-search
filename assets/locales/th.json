@@ -51,6 +51,7 @@
   "version": "เวอร์ชัน {version}",
   "conflictingCrc": "ค่า CRC32 จากต้นทางไม่ตรงกัน: {values}",
   "downloadLinks": "ลิงก์ดาวน์โหลด (Internet Archive)",
+  "downloadLinksOtherMirrors": "ลิงก์ดาวน์โหลด (มิเรอร์อื่น ๆ)",
   "showMetadata": "แสดง manifest และต้นทางเดิม",
   "hideMetadata": "ซ่อน manifest และต้นทางเดิม",
   "loadingMetadata": "กำลังโหลดข้อมูลเมตา…",

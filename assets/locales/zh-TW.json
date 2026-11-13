@@ -51,6 +51,7 @@
   "version": "版本 {version}",
   "conflictingCrc": "來源 CRC32 值不一致：{values}",
   "downloadLinks": "下載連結（Internet Archive）",
+  "downloadLinksOtherMirrors": "下載連結（其他鏡像站）",
   "showMetadata": "顯示 Manifest 與原始來源",
   "hideMetadata": "隱藏 Manifest 與原始來源",
   "loadingMetadata": "正在載入中繼資料…",

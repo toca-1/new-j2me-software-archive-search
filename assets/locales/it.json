@@ -51,6 +51,7 @@
   "version": "Versione {version}",
   "conflictingCrc": "Valori CRC32 delle fonti in conflitto: {values}",
   "downloadLinks": "Link per il download (Internet Archive)",
+  "downloadLinksOtherMirrors": "Link per il download (altri mirror)",
   "showMetadata": "Mostra manifest e fonti originali",
   "hideMetadata": "Nascondi manifest e fonti originali",
   "loadingMetadata": "Caricamento dei metadati…",

@@ -50,6 +50,7 @@
   "version": "Versión {version}",
   "conflictingCrc": "Valores CRC32 contradictorios de las fuentes: {values}",
   "downloadLinks": "Enlaces de descarga (Internet Archive)",
+  "downloadLinksOtherMirrors": "Enlaces de descarga (otros servidores espejo)",
   "showMetadata": "Mostrar manifiesto y fuentes originales",
   "hideMetadata": "Ocultar manifiesto y fuentes originales",
   "loadingMetadata": "Cargando metadatos…",

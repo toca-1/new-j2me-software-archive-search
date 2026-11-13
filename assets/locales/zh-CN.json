@@ -50,6 +50,7 @@
   "version": "版本 {version}",
   "conflictingCrc": "来源的 CRC32 值不一致：{values}",
   "downloadLinks": "下载链接（Internet Archive）",
+  "downloadLinksOtherMirrors": "下载链接（其他镜像站）",
   "showMetadata": "显示清单和原始来源",
   "hideMetadata": "隐藏清单和原始来源",
   "loadingMetadata": "正在加载元数据…",

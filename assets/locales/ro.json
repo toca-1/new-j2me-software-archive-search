@@ -51,6 +51,7 @@
   "version": "Versiunea {version}",
   "conflictingCrc": "Valori CRC32 contradictorii între surse: {values}",
   "downloadLinks": "Linkuri de descărcare (Internet Archive)",
+  "downloadLinksOtherMirrors": "Linkuri de descărcare (alte oglinzi)",
   "showMetadata": "Afișează manifestul și sursele originale",
   "hideMetadata": "Ascunde manifestul și sursele originale",
   "loadingMetadata": "Se încarcă metadatele…",

@@ -51,6 +51,7 @@
   "version": "Wersja {version}",
   "conflictingCrc": "Sprzeczne wartości CRC32 źródeł: {values}",
   "downloadLinks": "Linki pobierania (Internet Archive)",
+  "downloadLinksOtherMirrors": "Linki do pobrania (inne serwery lustrzane)",
   "showMetadata": "Pokaż manifest i oryginalne źródła",
   "hideMetadata": "Ukryj manifest i oryginalne źródła",
   "loadingMetadata": "Wczytywanie metadanych…",

@@ -51,6 +51,7 @@
   "version": "Verze {version}",
   "conflictingCrc": "Rozporuplné hodnoty CRC32 zdrojů: {values}",
   "downloadLinks": "Odkazy ke stažení (Internet Archive)",
+  "downloadLinksOtherMirrors": "Odkazy ke stažení (další zrcadla)",
   "showMetadata": "Zobrazit manifest a původní zdroje",
   "hideMetadata": "Skrýt manifest a původní zdroje",
   "loadingMetadata": "Načítání metadat…",
