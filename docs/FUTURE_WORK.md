@@ -10,7 +10,6 @@
 ## Preservation, documentation and maintenance
 
 - [ ] **Investigate archive coverage questions.** Investigate newer or updated J2ME collections for file contents absent from the current list
-- [ ] **Investigate unmatched upstream JARs.** Review CSV inventories in `missing_files/`, dedupe them, distinguish missing builds from repacked, modified, or corrupted files, and document findings before considering any additions to the index
 - [ ] **Document reproducibility.** Publish or refine the indexing, extraction, hashing and metadata-join methodology, including the overlong Linux filename handled by archive streaming
 
 ## Metadata and presentation
