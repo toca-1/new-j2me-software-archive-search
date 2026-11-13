@@ -6,6 +6,9 @@ const I18N = window.J2ME_I18N;
 const t = (key, vars) => I18N.t(key, vars);
 const IA = 'https://archive.org/download/96x65pixels_j2me/';
 const ARCHIVES = ['JARchiveLite_v11.7z', 'JARchive_v11.7z'];
+// Full archive paths unavailable on the nnproject mirror.
+const NNPROJECT_FULL_MISSING = new Set([".                                       1/.                                       1 (WORMS) (1.0) (CLDC-1.1, MIDP-2.0) (BootJoker) (7f17fdeefba505d9fe2e5a51e789347e2f5153ec8ab8d32ac9c1c79b99e1c789).jar", "..VIETVTC..nguoi con gai mau lanh/..VIETVTC..nguoi con gai mau lanh (HeroCraft) (1.4.0) (CLDC-1.0, MIDP-2.0) (Main) (01505f772d07305863f419a69179c73e9ebebfdfc754e24d2592ef66c1b72ba3).jar", "ChinhDomTV/ChinhDomTV (nguyendoanchinh.wapsite.meTELEVISION%202G-S40) (1.01) (CLDC-1.0, MIDP-2.0) (GameMidlet) (9ce85ae8fddff39f10c5cea313c7c43d82b88761540c9406915cfb933a4e0f0f).jar", "M_YouTube_ChinhDom/M_YouTube_ChinhDom (m.youtube.comwatchdesktop_uri=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D-yOXycNEoAc&v=-yOXycNEoAc&gl=US) (1.01) (CLDC-1.0, MIDP-2.0) (GameMidlet) (1fa199e30bfadadde6ece841ad54e2e0b6afa13b9332cd9f738ad1aadb939571).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (532b09be357ff5054ba559825912bc6f43de6f8de41fdadeadc9773821e0a727).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (6847ae78ed5a35676f251f370584ccaaebee8a496080580abd5a22292c0ed425).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (ac001c962b1dc5803c34333fbed1f7d86e23b1ca52be7a11d1419a7e89f41381).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (ea019cb412a7cabf0de0a34df8f198c9610505b4750bf3e2b448f79ea172228d).jar"]);
+const NNPROJECT_FULL_OVERRIDES = new Map([]);
 const PAGE = 20;
 const WORKERS = 8;
 const MAX_CACHED_SEARCH_SHARDS = 12;
@@ -391,6 +394,11 @@ function renderResult(id, record) {
       mirrorList.append(downloadSourceRow(mirrorList.childElementCount + 1,
         'nnproject (Lite)', path, upstreamMemberUrl(
           'https://f.nnproject.cc/jarchive/JARchiveLite_v11/', path)));
+    } else if (coll === 1 && !NNPROJECT_FULL_MISSING.has(path)) {
+      const mirrorUrl = NNPROJECT_FULL_OVERRIDES.get(path) || upstreamMemberUrl(
+        'https://f.nnproject.cc/jarchive/JARchive_v11/', path);
+      mirrorList.append(downloadSourceRow(mirrorList.childElementCount + 1,
+        'nnproject (Full)', path, mirrorUrl));
     }
   }
 
