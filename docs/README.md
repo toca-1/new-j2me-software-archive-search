@@ -1,6 +1,6 @@
 # New J2ME Software Archive Search
 
-[Search J2ME games, apps, and exact JAR builds](https://toca-1.github.io/new-j2me-software-archive-search/) filename, title, vendor, SHA-1, or SHA-256. A current browser with JavaScript enabled is required. This independent index covers the [TwoSpacesSG's **New J2ME Software Archive**](https://archive.org/details/96x65pixels_j2me) as well as its upstream sources -- all listed in [`SOURCES.MD`](SOURCES.md) -- that are listed in the archive's description. For an alternative visual exploration of the archive refer to [this website](https://f.nnproject.cc/jarchive/).
+[Search J2ME games, apps, and exact JAR builds](https://toca-1.github.io/new-j2me-software-archive-search/) by filename, title, vendor, or various hashes (CRC32, SHA-1, SHA-256). A current browser with JavaScript enabled is required. This independent index covers [TwoSpacesSG's **New J2ME Software Archive**](https://archive.org/details/96x65pixels_j2me) as well as its upstream sources that are listed in the archive's description, cf. [`SOURCES.MD`](SOURCES.md). For an alternative visual exploration of the archive refer to [this website](https://f.nnproject.cc/jarchive/).
 
 ## Downloads, third-party content, and licensing
 
@@ -21,7 +21,7 @@ The project's software license applies only to its original code and documentati
 
 ## Download an individual JAR
 
-Use the **Direct download (Internet Archive)** link in a search result. Downloads from large solid-compressed archives can time out or return HTTP 504. Expand **Direct download not working?** for an alternative, or follow the instructions in [**DOWNLOADER.md**](DOWNLOADER.md) for setup, all command-line options, caching details, limitations, and troubleshooting.
+Use the "*Direct download (Internet Archive)*" link(s) in a search result. However, beware that downloads from large solid-compressed archives can time out or return HTTP 504. Expand "*Direct download not working?*" for an alternative, or follow the instructions in [`DOWNLOADER.md`](DOWNLOADER.md) for setup, all command-line options, caching details, limitations, and troubleshooting.
 
 ## Download the complete index
 
@@ -33,17 +33,14 @@ The [**index-v1 release**](https://github.com/toca-1/new-j2me-software-archive-s
 | `jarchive-combined-verified.csv.gz.sha256` | SHA-256 checksum for the compressed CSV |
 | `jarchive-combined-verified.summary.json` | Verification summary |
 
-The index covers the 816,215 archived file entries and 620,287 unique file contents described above. No JAR files are included. This release CSV is the verified base index. It is **not** the enriched CSV or manifest-details JSONL required by the site builder below.
+The index covers the 816,215 archived file entries and 620,287 unique file contents described above; no JAR files are included. This CSV is the verified base index -- it is **not** the enriched CSV or manifest-details JSONL required by the site builder below.
 
 ## Preview the site locally
 
-From a checkout containing `index.html`, `assets/`, and the generated `data/` directory, run:
-
-```bash
-python3 -m http.server 8000
-```
-
-On Windows, use `py -3 -m http.server 8000` instead. Then open [http://localhost:8000/](http://localhost:8000/) in your browser. The app reads `.json.gz` files and decompresses them in the browser if the server does not decompress them. The Python downloader uses its own published retrieval index by default; running this local web server does not change the downloader's index source.
+From a checkout containing `index.html`, `assets/`, and the generated `data/` directory,
+- run in the terminal on Linux/macOS: `python3 -m http.server 8000`
+- run in Powershell on Windows, `py -3 -m http.server 8000`.
+Then open [http://localhost:8000/](http://localhost:8000/) in your browser. The app reads `.json.gz` files and decompresses them in the browser if the server does not decompress them. The Python downloader uses its own published retrieval index by default; running this local web server does not change the downloader's index source.
 
 **Do not open `index.html` directly as a `file://` page:** browsers restrict local `fetch()` requests. Previewing an existing checkout does not require rebuilding its generated index.
 
@@ -70,12 +67,14 @@ The builder uses a temporary SQLite database and writes to a staging directory. 
 
 The browser search index lives under `data/`:
 
-- `data/manifest.json`: schema version and counts
+- `data/manifest.json`: index schema, configuration, and counts
+- `data/build-summary.json`: summary statistics from the index build
 - `data/names/grams.json.gz`: gram-to-shard bitmap for exact substring search
 - `data/names/NNN.json.gz`: sorted searchable labels (filename, MIDlet name, vendor) mapped to unique content IDs
-- `data/records/NNNN.json.gz`: grouped file contents, both checksums, archive paths, and summary metadata
-- `data/sha1/X.json.gz` and `data/sha256/X.json.gz`: one compressed lookup bucket per leading hexadecimal digit
+- `data/records/NNNN.json.gz`: grouped file contents, CRC32/SHA-1/SHA-256 checksums, archive paths, and summary metadata
+- `data/crc32/`, `data/sha1/`, and `data/sha256/`: compressed lookup shards for exact checksum searches
 - `data/details/NNNN.json.gz`: lazily fetched manifest/provenance entries corresponding to the same IDs as `records`
+- `data/upstream/`: supplementary metadata for downloads from upstream collections
 
 The Python downloader uses a separate index under `retrieval/v1/`, with its own manifest and SHA-1/SHA-256 lookup shards.
 
@@ -83,13 +82,12 @@ The Python downloader uses a separate index under `retrieval/v1/`, with its own 
 
 - Text search is substring-based; it does not automatically group related games or versions
 - Broad text searches may need to fetch and scan multiple index shards. A first search can take longer when the necessary data is not cached
-- Some manifest fields and historical source paths may be missing or misleading in the original archival metadata
 - Public metadata includes at most the configured number of historical original-source paths per manifest. Full original paths and untruncated manifest details remain in the original source infofiles and enrichment output
 - Download availability and speed depend on the Internet Archive and the user's connection
 
 ## Future work
 
-Planned and possible improvements are tracked in [**FUTURE_WORK.md**](FUTURE_WORK.md). Please submit further ideas and any problems via the "Issues" tab.
+Planned and possible improvements are tracked in [`FUTURE_WORK.md](FUTURE_WORK.md). Please submit further ideas and any problems via the "Issues" tab.
 
 ## Usage of AI
 
