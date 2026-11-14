@@ -21,7 +21,7 @@ The project's software license applies only to its original code and documentati
 
 ## Download an individual JAR
 
-Use the "*Direct download (Internet Archive)*" link(s) in a search result. However, beware that downloads from large solid-compressed archives can time out or return HTTP 504. Expand "*Direct download not working?*" for an alternative, or follow the instructions in [`DOWNLOADER.md`](DOWNLOADER.md) for setup, all command-line options, caching details, limitations, and troubleshooting.
+Use the direct download links in the search result. However, beware that downloads from large solid-compressed archives can time out or return HTTP 504. Expand "*Direct download not working?*" for an alternative, or follow the instructions in [`DOWNLOADER.md`](DOWNLOADER.md) for setup, all command-line options, caching details, limitations, and troubleshooting.
 
 ## Download the complete index
 
