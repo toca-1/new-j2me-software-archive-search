@@ -182,9 +182,17 @@
   overflow-wrap:anywhere; word-break:break-word; user-select:text; }
 .crc-warning { color:var(--muted); font-size:13px; }
 @media (max-width:650px) {
-  .download-row { grid-template-columns:44px minmax(0,1fr); gap:8px; }
+  /* Keep all three controls together when they fit. */
+  .download-row { grid-template-columns:44px max-content minmax(0,1fr); gap:8px; }
+  .download-number { grid-row:auto; }
+  .download-archive { grid-column:auto; width:auto; max-width:100%; white-space:nowrap; }
+  .download-path { grid-column:auto; }
+}
+@media (max-width:340px) {
+  /* On extremely narrow screens, preserve readable controls. */
+  .download-row { grid-template-columns:44px minmax(0,1fr); }
   .download-number { grid-row:1 / span 2; }
-  .download-archive { grid-column:2; width:fit-content; max-width:100%; white-space:normal; }
+  .download-archive { grid-column:2; width:fit-content; white-space:normal; }
   .download-path { grid-column:2; }
 }
 .download-mirror-group{margin-top:22px}
@@ -230,34 +238,76 @@
   .language-picker select{font-size:13px;max-width:95px}}
 
 
-/* Manifest toggle beside fallback download command controls */
-.fallback-actions .metadata-action {
+/* Compact disclosure above each result's download sources. */
+.download-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.download-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  max-width: 100%;
+  padding: 11px 15px;
+  border: 1px solid #80693e;
+  border-radius: 9px;
+  background: #3b301d;
+  color: #f4dfb5;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+}
+/* CSS triangle prevents the arrow from being rendered as a colorful emoji. */
+.download-toggle::after {
+  content: '';
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid currentColor;
+}
+.download-toggle[aria-expanded="true"]::after { transform: rotate(180deg); }
+.download-toggle:hover { background: #514024; border-color: var(--accent); color: #fff; }
+.download-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+.download-panel { margin-top: 18px; }
+.download-panel[hidden] { display: none; }
+
+/* Manifest control remains outside the collapsed download panel. */
+.download-bar .metadata-action {
   display: flex;
   align-items: center;
   margin-left: auto;
   padding-left: 14px;
-  border-left: 3px solid #50636b;
+  border-left: 2px solid #50636b;
   min-width: 0;
 }
-
-.fallback-actions .metadata-toggle {
+.download-bar .metadata-toggle {
   margin: 0;
   padding: 10px 12px;
   font-size: 14px;
   text-align: center;
 }
 
-/* On narrow screens, allow the controls to stack cleanly. */
+/* On mobile, place the longer manifest button on its own full-width row. */
 @media (max-width: 650px) {
-  .fallback-actions .metadata-action {
+  .download-bar .metadata-action {
     width: 100%;
     margin-left: 0;
     padding: 12px 0 0;
     border-left: 0;
     border-top: 1px solid var(--edge);
   }
-
-  .fallback-actions .metadata-toggle {
+  .download-bar .metadata-toggle {
     width: 100%;
     white-space: normal;
   }

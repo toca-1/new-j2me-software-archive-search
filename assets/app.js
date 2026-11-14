@@ -402,22 +402,48 @@ function renderResult(id, record) {
     }
   }
 
-  downloadSection.append(
-    elem('h4', t('downloadLinks'), 'download-heading'),
+  // Keep the download links and fallback commands collapsed until requested.
+  // The existing translated heading includes a parenthesized source name;
+  // remove it for the generic disclosure label without changing locale files.
+  const downloadLabel = t('downloadLinks').replace(/\s*[（(][^()（）]*[）)]\s*$/u, '').trim();
+  const downloadToggle = elem('button', downloadLabel, 'download-toggle');
+  downloadToggle.type = 'button';
+  downloadToggle.setAttribute('aria-expanded', 'false');
+  const downloadPanel = elem('div', undefined, 'download-panel');
+  downloadPanel.id = `download-panel-${id}`;
+  downloadPanel.hidden = true;
+  downloadToggle.setAttribute('aria-controls', downloadPanel.id);
+  downloadToggle.addEventListener('click', () => {
+    const opening = downloadToggle.getAttribute('aria-expanded') !== 'true';
+    downloadToggle.setAttribute('aria-expanded', String(opening));
+    downloadPanel.hidden = !opening;
+  });
+
+  // Reuse each locale's existing source description, omitting the redundant
+  // 'Download links (...)' prefix in the expanded panel.
+  const sourceHeading = key => {
+    const translated = t(key);
+    const match = translated.match(/[（(]([^()（）]+)[）)]\s*$/u);
+    return match ? match[1].trim() : translated;
+  };
+  const iaHeading = sourceHeading('downloadLinks');
+  downloadPanel.append(
+    elem('h4', document.documentElement.lang === 'en' && iaHeading === 'Internet Archive'
+      ? 'Internet archive' : iaHeading, 'download-heading'),
     iaList
   );
 
   if (mirrorList.childElementCount) {
     const mirrors = elem('div', undefined, 'download-mirror-group');
     mirrors.append(
-      elem('h4', t('downloadLinksOtherMirrors'), 'download-heading'),
+      elem('h4', sourceHeading('downloadLinksOtherMirrors'), 'download-heading'),
       mirrorList
     );
-    downloadSection.append(mirrors);
+    downloadPanel.append(mirrors);
   }
-
-  card.append(downloadSection, fallbackDownloadAction(sha256));
+  downloadPanel.append(fallbackDownloadAction(sha256));
   appendUpstreamDownloads(sha256, iaList);
+
   const more = elem('button', t('showMetadata'), 'metadata-toggle');
   more.type = 'button'; more.setAttribute('aria-expanded', 'false');
   const body = elem('div', undefined, 'metadata-body'); body.hidden = true;
@@ -436,11 +462,13 @@ function renderResult(id, record) {
       }
     }
   });
-  // Place metadata control after the download command buttons.
+  // Keep the manifest accessible even while downloads are collapsed.
   const manifestAction = elem('div', undefined, 'metadata-action');
   manifestAction.append(more);
-  card.querySelector('.fallback-actions').append(manifestAction);
-  card.append(body);
+  const downloadBar = elem('div', undefined, 'download-bar');
+  downloadBar.append(downloadToggle, manifestAction);
+  downloadSection.append(downloadBar, downloadPanel);
+  card.append(downloadSection, body);
   return card;
 }
 // Search within all original matches, with metadata loaded only on demand.
