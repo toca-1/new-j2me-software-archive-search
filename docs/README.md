@@ -87,7 +87,7 @@ The Python downloader uses a separate index under `retrieval/v1/`, with its own 
 
 ## Future work
 
-Planned and possible improvements are tracked in [`FUTURE_WORK.md](FUTURE_WORK.md). Please submit further ideas and any problems via the "Issues" tab.
+Planned and possible improvements are tracked in [`FUTURE_WORK.md`](FUTURE_WORK.md). Please submit further ideas and any problems via the "Issues" tab.
 
 ## Usage of AI
 
