@@ -396,3 +396,7 @@
 }
 
 .folder-file-sha{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+
+/* Prevent long fallback download commands from widening result cards. */
+.results { grid-template-columns: minmax(0, 1fr); }
+.results > .card { min-width: 0; }
