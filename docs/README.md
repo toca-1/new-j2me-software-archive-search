@@ -15,6 +15,7 @@ The project's software license applies only to its original code and documentati
 - Case-insensitive substring search of original filenames, MIDlet names, and vendors
 - Exact lookup by CRC32, SHA-1, or SHA-256 checksum
 - MIDlet name, vendor, version, CLDC, and MIDP information where available
+- Expandable "Other files" browser for distinct JAR contents in the same archive folder, with filtering and incremental loading
 - Direct download links to individual JAR files on the Internet Archive
 - Expandable manifest details and historical original-source locations
 - Alternative downloader instructions and copyable commands for Windows and Linux/macOS
@@ -61,26 +62,28 @@ python3 build_site.py \
   --expected-count 816215
 ```
 
-The builder uses a temporary SQLite database and writes to a staging directory. It replaces `data/` only after it has successfully generated and checked the new output. On successful completion it prints total byte size and file count, and writes `data/build-summary.json`. The default `--max-original-paths 2` publishes the first two historical original paths per manifest; the total available path count is retained. Use `--max-original-paths 0` to omit original paths from the website or `-1` to publish all paths (larger output and potential personal information in historical paths). The complete original metadata remains untouched outside the website. This command rebuilds the website's `data/` index. The downloader's `retrieval/v1/` index is separate; its generation is not covered by these instructions.
+The builder uses a temporary SQLite database and writes to a staging directory. It replaces `data/` only after it has successfully generated and checked the new output. On successful completion it prints total byte size and file count, and writes `data/build-summary.json`. The default `--max-original-paths 2` publishes the first two historical original paths per manifest; the total available path count is retained. Use `--max-original-paths 0` to omit original paths from the website or `-1` to publish all paths (larger output and potential personal information in historical paths). The complete original metadata remains untouched outside the website. This command rebuilds the website's `data/` index. After rebuilding the main index, regenerate its separate folder-browsing data with `python3 tools/build_folder_groups.py --repo .`. The downloader's `retrieval/v1/` index is separate; its generation is not covered by these instructions.
 
 ## Files and data design
 
 The browser search index lives under `data/`:
 
-- `data/manifest.json`: index schema, configuration, and counts
-- `data/build-summary.json`: summary statistics from the index build
+- `data/crc32/`, `data/sha1/`, and `data/sha256/`: compressed lookup shards for exact checksum searches
+- `data/details/NNNN.json.gz`: lazily fetched manifest/provenance entries corresponding to the same IDs as `records`
+- `data/folders/`: separately generated folder counts and lazily loaded folder-membership shards (run `tools/build_folder_groups.py` after rebuilding the main index)
 - `data/names/grams.json.gz`: gram-to-shard bitmap for exact substring search
 - `data/names/NNN.json.gz`: sorted searchable labels (filename, MIDlet name, vendor) mapped to unique content IDs
 - `data/records/NNNN.json.gz`: grouped file contents, CRC32/SHA-1/SHA-256 checksums, archive paths, and summary metadata
-- `data/crc32/`, `data/sha1/`, and `data/sha256/`: compressed lookup shards for exact checksum searches
-- `data/details/NNNN.json.gz`: lazily fetched manifest/provenance entries corresponding to the same IDs as `records`
 - `data/upstream/`: supplementary metadata for downloads from upstream collections
+- `data/build-summary.json`: summary statistics from the index build
+- `data/manifest.json`: index schema, configuration, and counts
 
 The Python downloader uses a separate index under `retrieval/v1/`, with its own manifest and SHA-1/SHA-256 lookup shards.
 
 ## Known limitations
 
-- Text search is substring-based; it does not automatically group related games or versions
+- Text search is substring-based
+- "Other files" groups distinct contents by exact archive folder name; shared folders do not prove that files are versions of the same app, and related files in different folders are not automatically linked
 - Broad text searches may need to fetch and scan multiple index shards. A first search can take longer when the necessary data is not cached
 - Public metadata includes at most the configured number of historical original-source paths per manifest. Full original paths and untruncated manifest details remain in the original source infofiles and enrichment output
 - Download availability and speed depend on the Internet Archive and the user's connection

@@ -1,6 +1,5 @@
 # Potential improvements
 
-- [ ] **Related builds and versions.** Group different JARs belonging to the same game or app by `MIDlet-Name`, vendor, and other manifest fields. Preserve the distinction between exact hash matches and inferred relationships; allow users to inspect individual variants
 - [ ] **Archive-path search.** Search paths as well as filenames and metadata
 - [ ] **Better navigation for large result sets.** Improve handling of very broad queries
 - [ ] **Speed up the search.** (Somehow??)
