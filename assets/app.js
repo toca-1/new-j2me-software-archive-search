@@ -355,6 +355,495 @@ async function appendUpstreamDownloads(sha256, list) {
 
 // END upstream direct download sources (v1)
 
+// BEGIN optional archive-folder browser (prototype v1).
+// This is a separate index. Search results and downloads still work even if
+// data/folders/ hasn't been generated yet. Grouping means shared *folder*,
+// never a verified software-version relationship.
+const folderShardsCache = new Map();
+let folderCatalogPromise = null;
+const FOLDER_PAGE_SIZE = 10;
+const FOLDER_UI = {
+  "en": {
+    other: "Other files",
+    folders: "Archive folders",
+    heading: "Files in archive folder",
+    disclaimer: "These files share an archive folder; they are not necessarily versions of the same app.",
+    filter: "Filter within this folder…",
+    choose: "Archive folder",
+    loading: "Loading folder contents…",
+    empty: "No other matching files.",
+    view: "View result",
+    showMore: "Show more",
+    loadError: "Could not load folder contents:",
+    counter: "{matching} of {total} other files",
+  },
+  "de": {
+    other: "Weitere Dateien",
+    folders: "Archivordner",
+    heading: "Dateien im Archivordner",
+    disclaimer: "Diese Dateien liegen im selben Archivordner. Sie sind nicht unbedingt verschiedene Versionen derselben Anwendung.",
+    filter: "In diesem Ordner filtern…",
+    choose: "Archivordner",
+    loading: "Ordnerinhalt wird geladen…",
+    empty: "Keine weiteren passenden Dateien.",
+    view: "Ergebnis öffnen",
+    showMore: "Mehr anzeigen",
+    loadError: "Ordnerinhalt konnte nicht geladen werden:",
+    counter: "{matching} von {total} weiteren Dateien",
+  },
+  "es": {
+    other: "Otros archivos",
+    folders: "Carpetas del archivo",
+    heading: "Archivos de la carpeta",
+    disclaimer: "Estos archivos están en la misma carpeta del archivo, pero no tienen por qué ser versiones de la misma aplicación.",
+    filter: "Filtrar en esta carpeta…",
+    choose: "Carpeta del archivo",
+    loading: "Cargando contenido de la carpeta…",
+    empty: "No hay otros archivos que coincidan.",
+    view: "Ver resultado",
+    showMore: "Mostrar más",
+    loadError: "No se pudo cargar el contenido de la carpeta:",
+    counter: "{matching} de {total} archivos adicionales",
+  },
+  "pt-BR": {
+    other: "Outros arquivos",
+    folders: "Pastas do acervo",
+    heading: "Arquivos na pasta do acervo",
+    disclaimer: "Estes arquivos estão na mesma pasta do acervo, mas não são necessariamente versões do mesmo aplicativo.",
+    filter: "Filtrar nesta pasta…",
+    choose: "Pasta do acervo",
+    loading: "Carregando conteúdo da pasta…",
+    empty: "Nenhum outro arquivo correspondente.",
+    view: "Ver resultado",
+    showMore: "Mostrar mais",
+    loadError: "Não foi possível carregar o conteúdo da pasta:",
+    counter: "{matching} de {total} outros arquivos",
+  },
+  "ru": {
+    other: "Другие файлы",
+    folders: "Папки архива",
+    heading: "Файлы в папке архива",
+    disclaimer: "Эти файлы находятся в одной папке архива, но не обязательно являются версиями одного приложения.",
+    filter: "Поиск в этой папке…",
+    choose: "Папка архива",
+    loading: "Загрузка содержимого папки…",
+    empty: "Других подходящих файлов нет.",
+    view: "Открыть результат",
+    showMore: "Показать ещё",
+    loadError: "Не удалось загрузить содержимое папки:",
+    counter: "{matching} из {total} других файлов",
+  },
+  "id": {
+    other: "File lain",
+    folders: "Folder arsip",
+    heading: "File dalam folder arsip",
+    disclaimer: "File-file ini berada dalam folder arsip yang sama, tetapi belum tentu merupakan versi dari aplikasi yang sama.",
+    filter: "Filter dalam folder ini…",
+    choose: "Folder arsip",
+    loading: "Memuat isi folder…",
+    empty: "Tidak ada file lain yang cocok.",
+    view: "Lihat hasil",
+    showMore: "Tampilkan lainnya",
+    loadError: "Tidak dapat memuat isi folder:",
+    counter: "{matching} dari {total} file lainnya",
+  },
+  "zh-CN": {
+    other: "其他文件",
+    folders: "归档文件夹",
+    heading: "归档文件夹中的文件",
+    disclaimer: "这些文件位于同一个归档文件夹，但不一定是同一应用的不同版本。",
+    filter: "在此文件夹中筛选…",
+    choose: "归档文件夹",
+    loading: "正在加载文件夹内容…",
+    empty: "没有其他符合条件的文件。",
+    view: "查看结果",
+    showMore: "显示更多",
+    loadError: "无法加载文件夹内容：",
+    counter: "其他 {total} 个文件中有 {matching} 个符合条件",
+  },
+  "pl": {
+    other: "Inne pliki",
+    folders: "Foldery archiwum",
+    heading: "Pliki w folderze archiwum",
+    disclaimer: "Te pliki znajdują się w tym samym folderze archiwum, ale niekoniecznie są wersjami tej samej aplikacji.",
+    filter: "Filtruj w tym folderze…",
+    choose: "Folder archiwum",
+    loading: "Wczytywanie zawartości folderu…",
+    empty: "Brak innych pasujących plików.",
+    view: "Zobacz wynik",
+    showMore: "Pokaż więcej",
+    loadError: "Nie udało się wczytać zawartości folderu:",
+    counter: "{matching} z {total} innych plików",
+  },
+  "vi": {
+    other: "Tệp khác",
+    folders: "Thư mục lưu trữ",
+    heading: "Tệp trong thư mục lưu trữ",
+    disclaimer: "Các tệp này nằm trong cùng một thư mục lưu trữ nhưng không nhất thiết là các phiên bản của cùng một ứng dụng.",
+    filter: "Lọc trong thư mục này…",
+    choose: "Thư mục lưu trữ",
+    loading: "Đang tải nội dung thư mục…",
+    empty: "Không có tệp phù hợp nào khác.",
+    view: "Xem kết quả",
+    showMore: "Hiển thị thêm",
+    loadError: "Không thể tải nội dung thư mục:",
+    counter: "{matching} / {total} tệp khác",
+  },
+  "fr": {
+    other: "Autres fichiers",
+    folders: "Dossiers de l’archive",
+    heading: "Fichiers du dossier d’archive",
+    disclaimer: "Ces fichiers se trouvent dans le même dossier d’archive, mais ne sont pas nécessairement des versions de la même application.",
+    filter: "Filtrer dans ce dossier…",
+    choose: "Dossier d’archive",
+    loading: "Chargement du dossier…",
+    empty: "Aucun autre fichier correspondant.",
+    view: "Voir le résultat",
+    showMore: "Afficher plus",
+    loadError: "Impossible de charger le contenu du dossier :",
+    counter: "{matching} sur {total} autres fichiers",
+  },
+  "tr": {
+    other: "Diğer dosyalar",
+    folders: "Arşiv klasörleri",
+    heading: "Arşiv klasöründeki dosyalar",
+    disclaimer: "Bu dosyalar aynı arşiv klasöründedir ancak aynı uygulamanın farklı sürümleri olmak zorunda değildir.",
+    filter: "Bu klasörde filtrele…",
+    choose: "Arşiv klasörü",
+    loading: "Klasör içeriği yükleniyor…",
+    empty: "Eşleşen başka dosya yok.",
+    view: "Sonucu görüntüle",
+    showMore: "Daha fazla göster",
+    loadError: "Klasör içeriği yüklenemedi:",
+    counter: "{total} diğer dosyadan {matching} tanesi",
+  },
+  "it": {
+    other: "Altri file",
+    folders: "Cartelle dell’archivio",
+    heading: "File nella cartella dell’archivio",
+    disclaimer: "Questi file si trovano nella stessa cartella dell’archivio, ma non sono necessariamente versioni della stessa applicazione.",
+    filter: "Filtra in questa cartella…",
+    choose: "Cartella dell’archivio",
+    loading: "Caricamento del contenuto della cartella…",
+    empty: "Nessun altro file corrispondente.",
+    view: "Visualizza risultato",
+    showMore: "Mostra altri",
+    loadError: "Impossibile caricare il contenuto della cartella:",
+    counter: "{matching} di {total} altri file",
+  },
+  "uk": {
+    other: "Інші файли",
+    folders: "Папки архіву",
+    heading: "Файли в папці архіву",
+    disclaimer: "Ці файли містяться в одній папці архіву, але не обов’язково є версіями тієї самої програми.",
+    filter: "Фільтрувати в цій папці…",
+    choose: "Папка архіву",
+    loading: "Завантаження вмісту папки…",
+    empty: "Інших відповідних файлів немає.",
+    view: "Переглянути результат",
+    showMore: "Показати більше",
+    loadError: "Не вдалося завантажити вміст папки:",
+    counter: "{matching} із {total} інших файлів",
+  },
+  "th": {
+    other: "ไฟล์อื่น",
+    folders: "โฟลเดอร์ในคลัง",
+    heading: "ไฟล์ในโฟลเดอร์ของคลัง",
+    disclaimer: "ไฟล์เหล่านี้อยู่ในโฟลเดอร์เดียวกันของคลัง แต่ไม่จำเป็นต้องเป็นเวอร์ชันของแอปเดียวกัน",
+    filter: "กรองไฟล์ในโฟลเดอร์นี้…",
+    choose: "โฟลเดอร์ในคลัง",
+    loading: "กำลังโหลดไฟล์ในโฟลเดอร์…",
+    empty: "ไม่พบไฟล์อื่นที่ตรงเงื่อนไข",
+    view: "ดูผลลัพธ์",
+    showMore: "แสดงเพิ่มเติม",
+    loadError: "ไม่สามารถโหลดไฟล์ในโฟลเดอร์ได้:",
+    counter: "ตรงเงื่อนไข {matching} จาก {total} ไฟล์อื่น",
+  },
+  "cs": {
+    other: "Další soubory",
+    folders: "Složky archivu",
+    heading: "Soubory ve složce archivu",
+    disclaimer: "Tyto soubory jsou ve stejné složce archivu, ale nemusí jít o různé verze téže aplikace.",
+    filter: "Filtrovat v této složce…",
+    choose: "Složka archivu",
+    loading: "Načítání obsahu složky…",
+    empty: "Žádné další odpovídající soubory.",
+    view: "Zobrazit výsledek",
+    showMore: "Zobrazit více",
+    loadError: "Obsah složky se nepodařilo načíst:",
+    counter: "{matching} z {total} dalších souborů",
+  },
+  "zh-TW": {
+    other: "其他檔案",
+    folders: "封存資料夾",
+    heading: "封存資料夾中的檔案",
+    disclaimer: "這些檔案位於同一個封存資料夾，但不一定是同一應用程式的不同版本。",
+    filter: "篩選此資料夾中的檔案…",
+    choose: "封存資料夾",
+    loading: "正在載入資料夾內容…",
+    empty: "沒有其他符合條件的檔案。",
+    view: "檢視結果",
+    showMore: "顯示更多",
+    loadError: "無法載入資料夾內容：",
+    counter: "其他 {total} 個檔案中有 {matching} 個符合條件",
+  },
+  "ro": {
+    other: "Alte fișiere",
+    folders: "Folderele arhivei",
+    heading: "Fișiere din folderul arhivei",
+    disclaimer: "Aceste fișiere se află în același folder al arhivei, dar nu sunt neapărat versiuni ale aceleiași aplicații.",
+    filter: "Filtrează în acest folder…",
+    choose: "Folderul arhivei",
+    loading: "Se încarcă fișierele din folder…",
+    empty: "Nu există alte fișiere potrivite.",
+    view: "Vezi rezultatul",
+    showMore: "Afișează mai multe",
+    loadError: "Nu s-au putut încărca fișierele din folder:",
+    counter: "{matching} din {total} alte fișiere",
+  },
+  "hi": {
+    other: "अन्य फ़ाइलें",
+    folders: "संग्रह के फ़ोल्डर",
+    heading: "संग्रह के फ़ोल्डर में फ़ाइलें",
+    disclaimer: "ये फ़ाइलें संग्रह के एक ही फ़ोल्डर में हैं, लेकिन ज़रूरी नहीं कि ये एक ही ऐप के अलग-अलग संस्करण हों।",
+    filter: "इस फ़ोल्डर में फ़िल्टर करें…",
+    choose: "संग्रह का फ़ोल्डर",
+    loading: "फ़ोल्डर की सामग्री लोड हो रही है…",
+    empty: "कोई अन्य मेल खाती फ़ाइल नहीं।",
+    view: "परिणाम देखें",
+    showMore: "और दिखाएँ",
+    loadError: "फ़ोल्डर की सामग्री लोड नहीं हो सकी:",
+    counter: "{total} अन्य फ़ाइलों में से {matching}",
+  },
+  "ja": {
+    other: "ほかのファイル",
+    folders: "アーカイブ内のフォルダー",
+    heading: "アーカイブフォルダー内のファイル",
+    disclaimer: "これらのファイルは同じアーカイブフォルダーにありますが、必ずしも同じアプリの別バージョンとは限りません。",
+    filter: "このフォルダー内を絞り込む…",
+    choose: "アーカイブフォルダー",
+    loading: "フォルダーの内容を読み込み中…",
+    empty: "一致するほかのファイルはありません。",
+    view: "検索結果を見る",
+    showMore: "さらに表示",
+    loadError: "フォルダーの内容を読み込めませんでした：",
+    counter: "ほかの {total} 件中 {matching} 件",
+  },
+  "ko": {
+    other: "다른 파일",
+    folders: "보관 폴더",
+    heading: "보관 폴더의 파일",
+    disclaimer: "이 파일들은 같은 보관 폴더에 있지만 반드시 동일한 앱의 다른 버전인 것은 아닙니다.",
+    filter: "이 폴더에서 필터링…",
+    choose: "보관 폴더",
+    loading: "폴더 내용 불러오는 중…",
+    empty: "일치하는 다른 파일이 없습니다.",
+    view: "결과 보기",
+    showMore: "더 보기",
+    loadError: "폴더 내용을 불러올 수 없습니다:",
+    counter: "다른 파일 {total}개 중 {matching}개",
+  },
+  "nl": {
+    other: "Andere bestanden",
+    folders: "Archiefmappen",
+    heading: "Bestanden in archiefmap",
+    disclaimer: "Deze bestanden staan in dezelfde archiefmap, maar zijn niet noodzakelijk verschillende versies van dezelfde app.",
+    filter: "Filter binnen deze map…",
+    choose: "Archiefmap",
+    loading: "Mapinhoud laden…",
+    empty: "Geen andere overeenkomende bestanden.",
+    view: "Resultaat bekijken",
+    showMore: "Meer tonen",
+    loadError: "Kan mapinhoud niet laden:",
+    counter: "{matching} van {total} andere bestanden",
+  },
+  "ms": {
+    other: "Fail lain",
+    folders: "Folder arkib",
+    heading: "Fail dalam folder arkib",
+    disclaimer: "Fail ini berada dalam folder arkib yang sama, tetapi tidak semestinya versi berlainan bagi aplikasi yang sama.",
+    filter: "Tapis dalam folder ini…",
+    choose: "Folder arkib",
+    loading: "Memuatkan kandungan folder…",
+    empty: "Tiada fail lain yang sepadan.",
+    view: "Lihat hasil",
+    showMore: "Tunjukkan lagi",
+    loadError: "Tidak dapat memuatkan kandungan folder:",
+    counter: "{matching} daripada {total} fail lain",
+  },
+};
+function folderT(key) {
+  return (FOLDER_UI[document.documentElement.lang] || FOLDER_UI.en)[key];
+}
+function folderBucket(folder) {
+  // FNV-1a on UTF-8: must match tools/build_folder_groups.py exactly.
+  let h = 2166136261;
+  for (const byte of new TextEncoder().encode(folder))
+    h = Math.imul(h ^ byte, 16777619) >>> 0;
+  return (h >>> 24).toString(16).padStart(2, '0');
+}
+function folderCatalog() {
+  if (!folderCatalogPromise) folderCatalogPromise = (async () => {
+    const info = await readJson('folders/manifest.json');
+    if (info.schema_version !== 1 || info.unique_files !== manifest.unique_files ||
+        info.record_chunk !== manifest.record_chunk || !/^[0-9a-f]{64}$/.test(info.index_manifest_sha256))
+      throw new Error('Folder index and search index do not match. Rebuild data/folders/.');
+    // Verify the byte-identical manifest used when record IDs were assigned.
+    if (!crypto?.subtle) throw new Error('Folder index requires a secure origin (localhost or HTTPS).');
+    const response = await fetch(ROOT + 'manifest.json');
+    if (!response.ok) throw new Error('Could not verify search index manifest');
+    const bytes = await response.arrayBuffer();
+    const digest = await crypto.subtle.digest('SHA-256', bytes);
+    const hex = Array.from(new Uint8Array(digest), n => n.toString(16).padStart(2,'0')).join('');
+    if (hex !== info.index_manifest_sha256)
+      throw new Error('Folder index was built for a different version of data/manifest.json.');
+    const counts = await readGzipJson('folders/counts.json.gz');
+    if (!Array.isArray(counts)) throw new Error('Invalid folder count index');
+    return new Map(counts);
+  })().catch(error => {
+    // Optional feature. No visible empty/broken control if it was not built.
+    console.warn('Archive-folder browsing disabled:', error);
+    return null;
+  });
+  return folderCatalogPromise;
+}
+function folderEntries(folder) {
+  const key = folderBucket(folder);
+  return memoized(folderShardsCache, key,
+    () => readGzipJson(`folders/groups/${key}.json.gz`), 8).then(rows => rows[folder] || []);
+}
+function folderMemberRow(entry) {
+  // [id, sha256, display_title, vendor, version, bytes]
+  const [, sha, title, vendor, version, bytes] = entry;
+  const row = elem('div', undefined, 'folder-file');
+  const main = elem('div', undefined, 'folder-file-main');
+  main.append(elem('div', title, 'folder-file-title'));
+  const meta = elem('div', undefined, 'folder-file-meta');
+  if (vendor) meta.append(elem('span', vendor));
+  if (version) meta.append(elem('span', t('version', {version})));
+  meta.append(elem('span', size(bytes)));
+  meta.append(elem('span', `SHA-256 ${sha.slice(0, 12)}…`, 'folder-file-sha'));
+  main.append(meta);
+  const link = elem('a', folderT('view'), 'folder-file-link');
+  const url = new URL(location.href);
+  url.searchParams.set('sha256', sha);
+  link.href = url.href;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.setAttribute('aria-label', `${folderT('view')}: ${title}`);
+  row.append(main, link);
+  return row;
+}
+async function addFolderBrowser(id, record, card, downloadSection, downloadBar,
+                                downloadToggle, downloadPanel) {
+  const seen = new Set();
+  const paths = [];
+  for (const source of record[3]) {
+    const folder = source[2].slice(0, source[2].lastIndexOf('/'));
+    if (folder && !seen.has(folder)) {seen.add(folder); paths.push(folder);}
+  }
+  if (!paths.length) return;
+  const catalog = await folderCatalog();
+  if (!catalog || !card.isConnected) return;
+  const groups = paths.map(folder => ({folder, count: catalog.get(folder) || 0}))
+    .filter(group => group.count > 1);
+  if (!groups.length) return;
+
+  const buttonText = groups.length === 1
+    ? `${folderT('other')} · ${fmt(groups[0].count - 1)}`
+    : `${folderT('folders')} · ${fmt(groups.length)}`;
+  const button = elem('button', buttonText, 'folder-toggle');
+  button.type = 'button';
+  button.setAttribute('aria-expanded', 'false');
+  const panel = elem('div', undefined, 'folder-panel');
+  panel.id = `folder-panel-${id}`;
+  panel.hidden = true;
+  button.setAttribute('aria-controls', panel.id);
+  // Inside the existing action row: small and neutral, no extra card section.
+  downloadBar.insertBefore(button, downloadBar.querySelector('.metadata-action'));
+  downloadSection.insertBefore(panel, downloadPanel);
+  let activeGroup = groups[0].folder;
+  let request = 0;
+  const content = elem('div', undefined, 'folder-content');
+  panel.append(elem('p', folderT('disclaimer'), 'folder-disclaimer'));
+  if (groups.length > 1) {
+    const choice = elem('div', undefined, 'folder-choice');
+    const label = elem('label', folderT('choose'));
+    label.htmlFor = `folder-choose-${id}`;
+    const select = elem('select');
+    select.id = label.htmlFor;
+    for (const group of groups) {
+      const opt = elem('option', `${group.folder} (${fmt(group.count)})`);
+      opt.value = group.folder;
+      select.append(opt);
+    }
+    select.addEventListener('change', () => {activeGroup = select.value; loadFolder();});
+    choice.append(label, select);
+    panel.append(choice);
+  } else {
+    panel.append(elem('div', `${folderT('heading')}: ${activeGroup}`, 'folder-title'));
+  }
+  panel.append(content);
+
+  async function loadFolder() {
+    const selected = activeGroup;
+    const token = ++request;
+    content.replaceChildren(elem('p', folderT('loading'), 'small'));
+    try {
+      const all = await folderEntries(selected);
+      if (token !== request || !card.isConnected) return;
+      if (!Array.isArray(all)) throw new Error('Invalid folder member list');
+      // The current result is already visible; don't repeat it in the list.
+      const members = all.filter(row => row[0] !== id);
+      const tools = elem('div', undefined, 'folder-tools');
+      const filter = elem('input');
+      filter.type = 'search'; filter.placeholder = folderT('filter');
+      filter.setAttribute('aria-label', folderT('filter'));
+      const counter = elem('span', undefined, 'folder-counter');
+      tools.append(filter, counter);
+      const rows = elem('div', undefined, 'folder-files');
+      const more = elem('button', folderT('showMore'), 'folder-more');
+      more.type = 'button';
+      let visible = FOLDER_PAGE_SIZE;
+      const render = () => {
+        const q = filter.value.toLocaleLowerCase().trim();
+        const matching = q ? members.filter(([,sha,title,vendor,version]) =>
+          [sha,title,vendor,version].some(v => String(v || '').toLocaleLowerCase().includes(q))) : members;
+        counter.textContent = folderT('counter')
+          .replace('{matching}', fmt(matching.length))
+          .replace('{total}', fmt(members.length));
+        rows.replaceChildren(...matching.slice(0, visible).map(folderMemberRow));
+        if (!matching.length) rows.append(elem('p', folderT('empty'), 'small'));
+        more.hidden = visible >= matching.length;
+      };
+      filter.addEventListener('input', () => { visible = FOLDER_PAGE_SIZE; render(); });
+      more.addEventListener('click', () => { visible += FOLDER_PAGE_SIZE; render(); });
+      content.replaceChildren(tools, rows, more);
+      render();
+    } catch (error) {
+      if (token === request && card.isConnected)
+        content.replaceChildren(elem('p', `${folderT('loadError')} ${error.message}`, 'folder-error'));
+    }
+  }
+  function collapse() {
+    button.setAttribute('aria-expanded','false');
+    panel.hidden = true;
+  }
+  button.addEventListener('click', () => {
+    const open = panel.hidden;
+    if (open) {
+      // Avoid having two huge result-card sections open at once.
+      downloadPanel.hidden = true;
+      downloadToggle.setAttribute('aria-expanded', 'false');
+    }
+    button.setAttribute('aria-expanded', String(open));
+    panel.hidden = !open;
+    if (open && !content.hasChildNodes()) loadFolder();
+  });
+  downloadToggle.addEventListener('click', () => { if (!downloadPanel.hidden) collapse(); });
+}
+// END optional archive-folder browser (prototype v1).
+
 function renderResult(id, record) {
   // [sha256, sha1, byteSize, sources, [title,vendor,version,cldc,midp]]
   const [sha256, sha1, bytes, sources, quick] = record;
@@ -469,6 +958,8 @@ function renderResult(id, record) {
   downloadBar.append(downloadToggle, manifestAction);
   downloadSection.append(downloadBar, downloadPanel);
   card.append(downloadSection, body);
+  addFolderBrowser(id, record, card, downloadSection, downloadBar, downloadToggle, downloadPanel)
+    .catch(error => console.warn('Archive-folder UI unavailable:', error));
   return card;
 }
 // Search within all original matches, with metadata loaded only on demand.
@@ -661,7 +1152,16 @@ async function init() {
       t('hintHash', {hash: searchMode.toUpperCase()});
     $('query').focus();
   }));
-  $('search-form').addEventListener('submit', e => { e.preventDefault(); runSearch(); });
+  $('search-form').addEventListener('submit', e => {
+    e.preventDefault();
+    // If a folder result opened this page by hash, normal searches clear that link.
+    const url = new URL(location.href);
+    if (url.searchParams.has('sha256')) {
+      url.searchParams.delete('sha256');
+      history.replaceState(history.state, '', url.href);
+    }
+    runSearch();
+  });
   $('more').addEventListener('click', () => renderMore(generation).catch(e => {
     status(t('loadMoreError')); console.error(e);
   }));
@@ -671,6 +1171,13 @@ async function init() {
     $('unique-count').textContent = fmt(manifest.unique_files);
     if ($('entries-count')) $('entries-count').textContent = fmt(manifest.total_rows);
     if ($('shared-count')) $('shared-count').textContent = fmt(manifest.shared_files);
+    // Open a specific group member in a separate tab by its stable SHA-256.
+    const linkedSha = new URLSearchParams(location.search).get('sha256');
+    if (linkedSha && /^[0-9a-f]{64}$/i.test(linkedSha)) {
+      document.querySelector('[data-mode="sha256"]').click();
+      $('query').value = linkedSha.toLowerCase();
+      await runSearch();
+    }
   } catch (e) {
     status(t('searchIndexUnavailable')); $('results').replaceChildren(elem('div', e.message, 'empty'));
   }
