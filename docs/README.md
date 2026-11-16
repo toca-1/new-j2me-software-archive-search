@@ -71,8 +71,8 @@ The browser search index lives under `data/`:
 - `data/crc32/`, `data/sha1/`, and `data/sha256/`: compressed lookup shards for exact checksum searches
 - `data/details/NNNN.json.gz`: lazily fetched manifest/provenance entries corresponding to the same IDs as `records`
 - `data/folders/`: separately generated folder counts and lazily loaded folder-membership shards (run `tools/build_folder_groups.py` after rebuilding the main index)
-- `data/names/grams.json.gz`: gram-to-shard bitmap for exact substring search
-- `data/names/NNN.json.gz`: sorted searchable labels (filename, MIDlet name, vendor) mapped to unique content IDs
+- `data/names-v2/grams.json.gz`: gram-to-shard bitmap for exact substring search
+- `data/names-v2/NNN.json.gz`: sorted searchable labels (filename, MIDlet name, vendor) mapped to unique content IDs
 - `data/records/NNNN.json.gz`: grouped file contents, CRC32/SHA-1/SHA-256 checksums, archive paths, and summary metadata
 - `data/upstream/`: supplementary metadata for downloads from upstream collections
 - `data/build-summary.json`: summary statistics from the index build
