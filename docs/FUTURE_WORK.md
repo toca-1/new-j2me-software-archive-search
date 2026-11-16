@@ -1,11 +1,13 @@
 # Potential improvements
 
 - [ ] **Search improvements.** Search paths as well as filenames and metadata. Also for search refinements, have a way to exclude terms (e.g., when searching "Sonic" then a bunch of results with "Panasonic" come up and one might want to exclude these). If implemented, there should be a page where this is documented as well as a link to said page as soon as "search refinements" are visible to the user
+- [ ] **Optional J2ME-specific search filters.** In a collapsible advanced-filter section, let visitors narrow results by archive collection (Lite/Full), MIDP and CLDC version, file size, and vendor. Handle missing metadata explicitly (e.g., "Unknown") and keep the default search UI uncluttered.
 - [ ] **Better navigation for large result sets.** Improve handling of very broad queries
 - [ ] **Document reproducibility.** Publish or refine the indexing, extraction, hashing and metadata-join methodology, including the overlong Linux filename handled by archive streaming
 - [ ] **Metadata quality tools.** Identify conflicting or incomplete manifest fields, as well as fields that could still be added (e.g.,  screen resolution / device compatibility)
 - [ ] **Export search results.**
 - [ ] **Check docs.** Make sure that everything is accurate and up-to-date
+- [ ] **Beginner-friendly help page.** Explain what J2ME and JAR files are, what this independent index does (and does not host), how to use J2ME emulators on Android/desktop, why there are multiple builds of the same title, and what to try when direct downloads fail. Link to the guide unobtrusively from the site.
 - [ ] **Faster initial result sorting.** Investigate generating a compact sorting-metadata index so switching from Default to title/size sorting doesn't require fetching and decompressing numerous full record shards. (Currently, the first non-default sort takes long, but at least subsequent sorting is nearly instantaneous thanks to caching)
 - [ ] **Stronger folder-index compatibility checks.** Improve the compatibility check between the folder-group index and the main record index. Currently, it relies on the SHA-256 of `data/manifest.json`, which might remain unchanged even if record contents or ID assignments change during a rebuild. Consider using a fingerprint or build identifier tied to the actual record data to prevent incorrect folder associations
 - [ ] **Repo file cleanup.** Review obsolete scripts, generated files, redundant documentation, and temporary development artifacts. Remove only files confirmed to be unused, preserving historical or reproducibility-related material where useful.

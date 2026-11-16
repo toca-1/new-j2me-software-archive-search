@@ -188,11 +188,25 @@ function downloadTestDom(context) {
     return {
       tagName: tag, className: '', children: [], hidden: false, isConnected: true,
       append(...nodes) { this.children.push(...nodes); },
+      insertBefore(node, reference) {
+        const at = this.children.indexOf(reference);
+        if (at < 0) this.children.push(node);
+        else this.children.splice(at, 0, node);
+      },
+      querySelector(selector) {
+        const wanted = selector.startsWith('.') ? selector.slice(1) : selector;
+        return find(this, wanted);
+      },
+      hasChildNodes() { return this.children.length !== 0; },
+      replaceChildren(...nodes) { this.children = nodes; },
       setAttribute(key, value) { attrs.set(key, String(value)); },
       getAttribute(key) { return attrs.get(key) ?? null; },
       removeAttribute(key) { attrs.delete(key); },
-      addEventListener(type, handler) { listeners.set(type, handler); },
-      click() { listeners.get('click')?.(); },
+      addEventListener(type, handler) {
+        if (!listeners.has(type)) listeners.set(type, []);
+        listeners.get(type).push(handler);
+      },
+      click() { for (const handler of listeners.get('click') || []) handler(); },
       get childElementCount() { return this.children.filter(x => x?.tagName).length; }
     };
   }
@@ -293,6 +307,41 @@ test('closing while loading prevents a late reveal, and errors still show primar
   assert.equal(errorPanel.hidden, false);
   assert.equal(find(errorCard, 'download-list').childElementCount, 1);
   assert.equal(errorToggle.getAttribute('aria-busy'), null);
+});
+
+test('opening downloads during mirror loading closes the expanded folder browser', async () => {
+  const {run, context} = loadApp();
+  const find = downloadTestDom(context);
+  run(`folderCatalog = async () => new Map([['Games', 2]]);
+       // Keep the folder contents pending; only the disclosure state matters.
+       folderEntries = () => new Promise(() => {});
+       let finishUpstream;
+       upstreamMatchesFor = () => new Promise(resolve => { finishUpstream = resolve; });`);
+  const card = run(`renderResult(42, ${testRecord})`);
+  // addFolderBrowser inserts the button after awaiting the optional catalog.
+  await new Promise(resolve => setImmediate(resolve));
+  const folderToggle = find(card, 'folder-toggle');
+  const folderPanel = find(card, 'folder-panel');
+  const downloadToggle = find(card, 'download-toggle');
+  const downloadPanel = find(card, 'download-panel');
+  assert.ok(folderToggle && folderPanel && downloadToggle && downloadPanel);
+
+  folderToggle.click();
+  assert.equal(folderToggle.getAttribute('aria-expanded'), 'true');
+  assert.equal(folderPanel.hidden, false);
+
+  downloadToggle.click(); // First click: mirror lookup is still pending.
+  assert.equal(downloadToggle.getAttribute('aria-expanded'), 'true');
+  assert.equal(downloadToggle.getAttribute('aria-busy'), 'true');
+  assert.equal(downloadPanel.hidden, true, 'Download links wait for mirrors');
+  assert.equal(folderToggle.getAttribute('aria-expanded'), 'false',
+    'Opening downloads must collapse Other files even while loading');
+  assert.equal(folderPanel.hidden, true);
+
+  run('finishUpstream([])');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(downloadPanel.hidden, false);
+  assert.equal(folderPanel.hidden, true, 'Only the requested disclosure remains open');
 });
 
 test('localized download headings and Show all use the locale files', () => {

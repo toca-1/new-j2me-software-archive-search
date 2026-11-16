@@ -648,7 +648,11 @@ async function addFolderBrowser(id, record, card, downloadSection, downloadBar,
     panel.hidden = !open;
     if (open && !content.hasChildNodes()) loadFolder();
   });
-  downloadToggle.addEventListener('click', () => { if (!downloadPanel.hidden) collapse(); });
+  // The download toggle is already expanded while optional links load, even
+  // though its panel stays hidden. Close this folder for that state too.
+  downloadToggle.addEventListener('click', () => {
+    if (downloadToggle.getAttribute('aria-expanded') === 'true') collapse();
+  });
 }
 // END optional archive-folder browser (prototype v1).
 
