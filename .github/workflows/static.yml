@@ -36,6 +36,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run pre-deployment checks
+        run: |
+          python3 tests/check_repo.py
+          node --check assets/app.js
+          node --check assets/i18n.js
+          node --test tests/app.test.cjs
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
@@ -46,6 +58,7 @@ jobs:
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='missing_files/' \
+            --exclude='tests/' \
             ./ "$RUNNER_TEMP/pages/"
           du -sh "$RUNNER_TEMP/pages"
 
