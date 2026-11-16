@@ -15,6 +15,8 @@ This document records which Internet Archive collections and which files within 
 | [Ovi Store Panic (2015)](https://archive.org/details/2015_ovi_store_panic) | Not processed; downloads unavailable |
 | [Ovi Store Panic 2 (2015)](https://archive.org/details/2015_ovi_store_panic_2) | Not processed; downloads unavailable |
 
+Additionally, the third-party mirror [nnproject](https://f.nnproject.cc/jarchive/) has been incorporated into the site.
+
 # Matching and publication methodology
 
 1. Use the [verified base-index release](https://github.com/toca-1/new-j2me-software-archive-search/releases/tag/index-v1) (`jarchive-combined-verified.csv.gz`) as the reference set of SHA-256 hashes.
