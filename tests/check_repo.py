@@ -7,6 +7,8 @@ Run from any directory with: python3 tests/check_repo.py
 
 import json
 import re
+from html.parser import HTMLParser
+from xml.etree import ElementTree
 import unittest
 from pathlib import Path
 
@@ -102,6 +104,69 @@ class RepositoryChecks(unittest.TestCase):
                 with self.subTest(asset=name):
                     self.assertTrue((ROOT / name.split('?', 1)[0].split('#', 1)[0]).is_file(),
                                     f'Broken homepage asset: {name}')
+
+    def test_homepage_seo_and_sharing_metadata(self):
+        class HeadTags(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.tags = []
+                self.title_text = ''
+                self.in_title = False
+
+            def handle_starttag(self, tag, attrs):
+                if tag in ('meta', 'link'):
+                    self.tags.append((tag, dict(attrs)))
+                if tag == 'title':
+                    self.in_title = True
+
+            def handle_endtag(self, tag):
+                if tag == 'title':
+                    self.in_title = False
+
+            def handle_data(self, text):
+                if self.in_title:
+                    self.title_text += text
+
+        parser = HeadTags()
+        parser.feed((ROOT / 'index.html').read_text(encoding='utf-8'))
+        tags = parser.tags
+        english = get_json(LOCALES / 'en.json')
+
+        def meta(key, value):
+            matches = [attrs['content'] for tag, attrs in tags if tag == 'meta'
+                       and attrs.get(key) == value and 'content' in attrs]
+            self.assertEqual(len(matches), 1, f'Expected one {key}={value} meta tag')
+            return matches[0]
+
+        def link(relation):
+            matches = [attrs for tag, attrs in tags if tag == 'link'
+                       and attrs.get('rel') == relation]
+            self.assertEqual(len(matches), 1, f'Expected one {relation} link')
+            return matches[0]
+
+        self.assertEqual(parser.title_text, english['pageTitle'])
+        self.assertEqual(meta('name', 'description'), english['metaDescription'])
+        self.assertEqual(meta('property', 'og:title'), english['pageTitle'])
+        self.assertEqual(meta('property', 'og:description'), english['metaDescription'])
+        self.assertEqual(meta('property', 'og:site_name'), english['pageTitle'])
+        self.assertEqual(meta('property', 'og:type'), 'website')
+        self.assertEqual(meta('name', 'twitter:card'), 'summary')
+        url = 'https://toca-1.github.io/new-j2me-software-archive-search/'
+        self.assertEqual(meta('property', 'og:url'), url)
+        self.assertEqual(link('canonical')['href'], url)
+        favicon = link('icon')
+        self.assertEqual(favicon.get('type'), 'image/svg+xml')
+        self.assertEqual(favicon.get('href'), 'assets/favicon.svg')
+        icon_file = ROOT / favicon['href']
+        self.assertTrue(icon_file.is_file())
+        self.assertEqual(ElementTree.parse(icon_file).getroot().tag,
+                         '{http://www.w3.org/2000/svg}svg')
+        html = (ROOT / 'index.html').read_text(encoding='utf-8')
+        self.assertIn(english['heroSuffix'], html)
+        self.assertIn(english['hostNotice'], html)
+        revision = re.search(r"const LOCALE_REVISION = '([^']+)'", (ROOT / 'assets/i18n.js').read_text(encoding='utf-8'))
+        self.assertIsNotNone(revision)
+        self.assertIn('assets/i18n.js?v=' + revision.group(1), html)
 
     def test_checked_in_manifest_and_build_summary_agree(self):
         manifest = get_json(ROOT / 'data' / 'manifest.json')
