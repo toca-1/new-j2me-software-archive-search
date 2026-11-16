@@ -145,6 +145,16 @@ async function detailsById(id) {
   const rows = await memoized(detailsCache, chunk, () => readGzipJson(`details/${String(chunk).padStart(4, '0')}.json.gz`), 6);
   return rows[id % manifest.record_chunk];
 }
+// Recognize an entire hexadecimal checksum, never just a matching prefix.
+// CRC32 can collide, so that lookup continues to return every matching ID.
+function detectHashType(value) {
+  const hash = value.trim();
+  if (!/^[0-9a-f]+$/i.test(hash)) return null;
+  if (hash.length === 8) return 'crc32';
+  if (hash.length === 40) return 'sha1';
+  if (hash.length === 64) return 'sha256';
+  return null;
+}
 // Exact CRC32 lookup can return multiple distinct file contents.
 async function crc32Lookup(crc) {
   const key = crc.toLowerCase();
@@ -956,15 +966,16 @@ async function runSearch() {
     if (searchMode === 'name') {
       if (Array.from(term).length < 2) throw new Error(t('enterName'));
       ids = await searchNames(term.toLowerCase(), current);
-    } else if (searchMode === 'crc32') {
-      if (!/^[0-9a-f]{8}$/i.test(term)) throw new Error(t('enterCrc'));
-      status(t('lookingUpCrc'));
-      ids = await crc32Lookup(term);
     } else {
-      const re = searchMode === 'sha1' ? /^[0-9a-f]{40}$/i : /^[0-9a-f]{64}$/i;
-      if (!re.test(term)) throw new Error(t('enterExactHash', {hash: searchMode.toUpperCase()}));
-      const id = await exactHashLookup(searchMode, term.toLowerCase());
-      if (id !== undefined) ids = [id];
+      const hashType = detectHashType(term);
+      if (!hashType) throw new Error(t('enterAnyHash'));
+      if (hashType === 'crc32') {
+        status(t('lookingUpCrc'));
+        ids = await crc32Lookup(term);
+      } else {
+        const id = await exactHashLookup(hashType, term.toLowerCase());
+        if (id !== undefined) ids = [id];
+      }
     }
     if (current !== generation) return;
     active = ids; shown = 0;
@@ -983,6 +994,15 @@ async function runSearch() {
     if (current === generation) $('search-form').querySelector('button').disabled = false;
   }
 }
+function updateSearchHint() {
+  if (searchMode === 'name') {
+    $('hint').textContent = t('hintName');
+    return;
+  }
+  const type = detectHashType($('query').value);
+  const label = {crc32: 'CRC32', sha1: 'SHA-1', sha256: 'SHA-256'}[type];
+  $('hint').textContent = label ? t('detectedHash', {hash: label}) : t('hintHashAuto');
+}
 async function init() {
   await I18N.init();
   installResultTools();
@@ -992,15 +1012,11 @@ async function init() {
       b.classList.toggle('active', b === button);
       b.setAttribute('aria-pressed', b === button ? 'true' : 'false');
     });
-    $('query').placeholder = searchMode === 'name' ? t('queryPlaceholder') :
-      searchMode === 'crc32' ? t('queryPlaceholderCrc') :
-      searchMode === 'sha1' ? t('queryPlaceholderSha1') : t('queryPlaceholderSha256');
-    $('hint').textContent = searchMode === 'name' ?
-      t('hintName') :
-      searchMode === 'crc32' ? t('hintCrc') :
-      t('hintHash', {hash: searchMode.toUpperCase()});
+    $('query').placeholder = searchMode === 'name' ? t('queryPlaceholder') : t('queryPlaceholderHashAuto');
+    updateSearchHint();
     $('query').focus();
   }));
+  $('query').addEventListener('input', updateSearchHint);
   $('search-form').addEventListener('submit', e => {
     e.preventDefault();
     // If a folder result opened this page by hash, normal searches clear that link.
@@ -1030,12 +1046,24 @@ async function init() {
     // Open a specific group member in a separate tab by its stable SHA-256.
     const linkedSha = new URLSearchParams(location.search).get('sha256');
     if (linkedSha && /^[0-9a-f]{64}$/i.test(linkedSha)) {
-      document.querySelector('[data-mode="sha256"]').click();
+      document.querySelector('[data-mode="hash"]').click();
       $('query').value = linkedSha.toLowerCase();
+      updateSearchHint();
       await runSearch();
     }
   } catch (e) {
-    status(t('searchIndexUnavailable')); $('results').replaceChildren(elem('div', e.message, 'empty'));
+    // Show the error only after fetchIndexWithRetry has exhausted its retries.
+    // Otherwise the results section remains hidden and startup failures look
+    // like an unresponsive search page.
+    document.querySelector('.results-section').hidden = false;
+    status(t('searchIndexUnavailable'));
+    const message = elem('div', e.message, 'empty');
+    const reload = elem('button', t('reloadPage'), 'startup-reload');
+    reload.type = 'button';
+    reload.addEventListener('click', () => location.reload());
+    message.append(reload);
+    $('results').replaceChildren(message);
+    console.error('[J2ME] Index startup failed:', e);
   }
 }
 init();

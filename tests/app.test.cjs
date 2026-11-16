@@ -402,3 +402,227 @@ test('updated locale files bypass stale browser caches and resolve migrated labe
     assert.equal(fetched.length, language === 'en' ? 1 : 2);
   }
 });
+
+// The initial results area starts hidden. If the manifest finally fails to
+// load, a visitor must see the error without having to submit a search first.
+function startupTestDom(context) {
+  const nodes = new Map();
+  function node(tag = 'div') {
+    const listeners = new Map();
+    return {
+      tagName: tag, textContent: '', hidden: false, children: [],
+      append(...items) { this.children.push(...items); },
+      replaceChildren(...items) { this.children = items; },
+      addEventListener(event, callback) { listeners.set(event, callback); },
+      click() { listeners.get('click')?.(); }
+    };
+  }
+  for (const id of ['status', 'results', 'unique-count', 'language-select',
+    'search-form', 'more', 'show-all', 'query']) nodes.set(id, node());
+  const section = {hidden: true};
+  context.document = {
+    getElementById: id => nodes.get(id) || null,
+    querySelectorAll: () => [],
+    querySelector: selector => selector === '.results-section' ? section : null,
+    createElement: node
+  };
+  let reloads = 0;
+  context.location = {search: '', reload: () => { reloads++; }};
+  context.URLSearchParams = URLSearchParams;
+  context.window.J2ME_I18N.init = async () => {};
+  const english = JSON.parse(fs.readFileSync(
+    path.resolve(__dirname, '../assets/locales/en.json'), 'utf8'));
+  context.window.J2ME_I18N.t = (key, vars = {}) =>
+    String(english[key] || key).replace(/\{(\w+)\}/g,
+      (match, name) => Object.hasOwn(vars, name) ? String(vars[name]) : match);
+  return {nodes, section, getReloads: () => reloads};
+}
+
+test('Hash mode detects only complete 8/40/64-character hexadecimal inputs', () => {
+  const {run, context} = loadApp();
+  const cases = [
+    [' DEADBEEF ', 'crc32'],
+    ['a'.repeat(40), 'sha1'],
+    ['F'.repeat(64), 'sha256'],
+    ['deadbee', null], ['a'.repeat(39), null], ['b'.repeat(65), null],
+    ['deadbeeg', null], ['0xdeadbeef', null], ['DEAD BEEF', null],
+    ['some game', null], ['', null]
+  ];
+  for (const [value, type] of cases) {
+    context.inputHash = value;
+    assert.equal(run('detectHashType(inputHash)'), type, `Input: ${value}`);
+  }
+  const homepage = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
+  assert.deepEqual([...homepage.matchAll(/data-mode="([^"]+)"/g)].map(match => match[1]),
+    ['name', 'hash'], 'The search UI should offer only Text and Hash');
+});
+
+test('Hash search dispatches all three formats and reports invalid values', async () => {
+  const {run, context} = loadApp();
+  const state = {
+    query: {value: ''}, results: {children: [], replaceChildren(...v) { this.children = v; }, append(...v) { this.children.push(...v); }},
+    more: {hidden: true}, 'show-all': {hidden: true},
+    status: {textContent: ''}, 'result-tools': {hidden: true},
+    'search-form': {querySelector: () => ({disabled: false})}
+  };
+  context.document.getElementById = id => state[id];
+  context.document.querySelector = selector => selector === '.results-section'
+    ? {hidden: true} : null;
+  context.document.createElement = tag => ({tagName: tag, textContent: '', className: ''});
+  run(`manifest = {record_chunk: 4096};
+       searchMode = 'hash';
+       resetResultTools = () => {};
+       setResultControlsBusy = () => {};
+       renderMore = async () => {};
+       window.lookupCalls = [];
+       crc32Lookup = async value => { window.lookupCalls.push(['crc32', value]); return [17, 19]; };
+       exactHashLookup = async (type, value) => { window.lookupCalls.push([type, value]); return 23; };`);
+  const cases = [
+    ['DEADBEEF', ['crc32', 'DEADBEEF'], [17, 19]],
+    ['A'.repeat(40), ['sha1', 'a'.repeat(40)], [23]],
+    ['F'.repeat(64), ['sha256', 'f'.repeat(64)], [23]]
+  ];
+  for (const [input, expectedLookup, expectedIds] of cases) {
+    state.query.value = input;
+    await run('runSearch()');
+    assert.deepEqual(Array.from(run('active')), expectedIds);
+    assert.deepEqual(Array.from(context.window.lookupCalls.at(-1)), expectedLookup);
+    assert.equal(state.results.children.length, 0, 'Valid results should not show an error');
+  }
+  const callCount = context.window.lookupCalls.length;
+  for (const bad of ['ZZZZZZZZ', '1234567', 'a'.repeat(41), '0xdeadbeef']) {
+    state.query.value = bad;
+    await run('runSearch()');
+    assert.equal(state.status.textContent, 'searchError');
+    assert.equal(state.results.children.length, 1);
+    assert.equal(state.results.children[0].textContent, 'enterAnyHash');
+  }
+  assert.equal(context.window.lookupCalls.length, callCount,
+    'Invalid hash inputs should not start any lookup');
+});
+
+test('Hash hint identifies the detected type and keeps Text mode unambiguous', () => {
+  const {run, context} = loadApp();
+  const dictionary = JSON.parse(fs.readFileSync(
+    path.resolve(__dirname, '../assets/locales/en.json'), 'utf8'));
+  context.window.J2ME_I18N.t = (key, vars = {}) =>
+    String(dictionary[key] || key).replace(/\{(\w+)\}/g,
+      (whole, name) => Object.hasOwn(vars, name) ? String(vars[name]) : whole);
+  const query = {value: ''}, hint = {textContent: ''};
+  context.document.getElementById = id => id === 'query' ? query : hint;
+  run("searchMode = 'hash'");
+  query.value = 'dEaDbEeF';
+  run('updateSearchHint()');
+  assert.equal(hint.textContent, 'Detected: CRC32.');
+  query.value = 'a'.repeat(40);
+  run('updateSearchHint()');
+  assert.equal(hint.textContent, 'Detected: SHA-1.');
+  query.value = 'a'.repeat(64);
+  run('updateSearchHint()');
+  assert.equal(hint.textContent, 'Detected: SHA-256.');
+  query.value = 'a'.repeat(9);
+  run('updateSearchHint()');
+  assert.equal(hint.textContent, dictionary.hintHashAuto);
+  run("searchMode = 'name'; updateSearchHint()");
+  assert.equal(hint.textContent, dictionary.hintName);
+});
+
+test('existing SHA-256 permalinks open the new Hash mode', async () => {
+  const {run, context} = loadApp();
+  const {nodes, section} = startupTestDom(context);
+  run('installResultTools = () => {};');
+  const sha = 'B'.repeat(64);
+  context.location.search = `?sha256=${sha}`;
+  const query = {value: '', placeholder: '', focus() {}, addEventListener() {}};
+  nodes.set('query', query);
+  nodes.set('hint', {textContent: ''});
+  const buttons = ['name', 'hash'].map(mode => {
+    const listeners = new Map();
+    return {
+      dataset: {mode}, classList: {toggle() {}}, setAttribute() {},
+      addEventListener(event, fn) { listeners.set(event, fn); },
+      click() { listeners.get('click')?.(); }
+    };
+  });
+  context.document.querySelectorAll = selector => selector === '[data-mode]' ? buttons : [];
+  context.document.querySelector = selector => selector === '.results-section' ? section
+    : selector === '[data-mode="hash"]' ? buttons[1] : null;
+  const manifestData = JSON.parse(fs.readFileSync(
+    path.resolve(__dirname, '../data/manifest.json'), 'utf8'));
+  context.fetch = async () => ({ok: true, json: async () => manifestData});
+  run(`runSearch = async () => { window.permalink = {mode: searchMode, query: $('query').value}; };`);
+  await run('init()');
+  assert.deepEqual(Object.fromEntries(Object.entries(context.window.permalink)),
+    {mode: 'hash', query: sha.toLowerCase()});
+  assert.equal(query.placeholder, 'Paste a CRC32, SHA-1 or SHA-256 hash…');
+  assert.equal(section.hidden, true, 'Successful permalink startup should not show an error');
+});
+
+test('startup reveals final 503 failure only after retries, with a translated reload button', async () => {
+  const {run, context} = loadApp();
+  const {nodes, section, getReloads} = startupTestDom(context);
+  run('installResultTools = () => {};');
+  const requested = [];
+  context.fetch = async url => {
+    requested.push(url);
+    return {ok: false, status: 503, headers: {get: () => null}};
+  };
+  assert.equal(section.hidden, true, 'Results are initially hidden');
+  await run('init()');
+  assert.deepEqual(requested, Array(4).fill('./data/manifest.json'),
+    'All four existing HTTP 503 attempts must run before showing the error');
+  assert.equal(section.hidden, false, 'The final error must be visible immediately');
+  assert.equal(nodes.get('status').textContent, 'Search index unavailable');
+  const [message] = nodes.get('results').children;
+  assert.match(message.textContent, /manifest\.json.*HTTP 503/);
+  assert.equal(message.children.length, 1);
+  const [button] = message.children;
+  assert.equal(button.textContent, 'Reload page');
+  assert.equal(button.type, 'button');
+  assert.equal(getReloads(), 0);
+  button.click();
+  assert.equal(getReloads(), 1, 'Reload button should actually reload the page');
+});
+
+test('successful startup leaves the Results section hidden', async () => {
+  const {run, context} = loadApp();
+  const {nodes, section} = startupTestDom(context);
+  run('installResultTools = () => {};');
+  const manifest = JSON.parse(fs.readFileSync(
+    path.resolve(__dirname, '../data/manifest.json'), 'utf8'));
+  context.fetch = async () => ({ok: true, json: async () => manifest});
+  await run('init()');
+  assert.equal(section.hidden, true);
+  assert.equal(nodes.get('results').children.length, 0);
+  assert.equal(nodes.get('unique-count').textContent,
+    Number(manifest.unique_files).toLocaleString('en-US'));
+});
+
+test('one unavailable text-search shard fails the search without caching partial results, then recovers', async () => {
+  const {run, context} = loadApp();
+  run(`NAME_INDEX = nameIndexConfig({names_chunks: 2, names_grams: 'names-v2/grams.json.gz'});
+       gramMap = async () => ({'3': {son: '3'}});`);
+  context.TextDecoder = TextDecoder;
+  context.Uint8Array = Uint8Array;
+  const hits = [];
+  let blockShard = true;
+  const responses = {
+    './data/names-v2/000.json.gz': [['sonic', 1, 0]],
+    './data/names-v2/001.json.gz': [['sonic adventure', 2, 1]]
+  };
+  context.fetch = async url => {
+    hits.push(url);
+    if (blockShard && url === './data/names-v2/001.json.gz')
+      return {ok: false, status: 503, headers: {get: () => null}};
+    const body = new TextEncoder().encode(JSON.stringify(responses[url]));
+    return {ok: true, arrayBuffer: async () => body.buffer};
+  };
+  await assert.rejects(run("searchNames('son', generation)"), /001\.json\.gz.*HTTP 503/);
+  assert.equal(hits.filter(url => url.endsWith('/001.json.gz')).length, 4,
+    'A single failed shard should receive all four HTTP 503 attempts');
+  assert.equal(run("recentNameSearches.has('son')"), false,
+    'Do not retain incomplete search results');
+  blockShard = false;
+  assert.deepEqual(Array.from(await run("searchNames('son', generation)")), [1, 2],
+    'A later retry should recover all matches from both shards');
+});

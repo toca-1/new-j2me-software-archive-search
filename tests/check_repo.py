@@ -80,6 +80,19 @@ class RepositoryChecks(unittest.TestCase):
         self.assertNotIn('downloadLinks', english)
         self.assertNotIn('downloadLinksOtherMirrors', english)
 
+    def test_hash_search_hints_are_concise_and_punctuated(self):
+        for file in sorted(LOCALES.glob('*.json')):
+            with self.subTest(language=file.stem):
+                locale = get_json(file)
+                hint = locale['hintHashAuto']
+                detected = locale['detectedHash']
+                self.assertTrue(all(length in hint for length in ('8', '40', '64')))
+                # A single instruction sentence; don't repeat that the type is detected.
+                self.assertEqual(len(re.findall(r'[.!?。।]', hint)), 1)
+                self.assertIn('{hash}', detected)
+                self.assertTrue(detected.endswith(('.', '。', '।')),
+                                'Detected-hash hint needs punctuation before the hosting notice')
+
     def test_homepage_referenced_assets_exist(self):
         html = (ROOT / 'index.html').read_text(encoding='utf-8')
         for attribute in ('src', 'href'):
