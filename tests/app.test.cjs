@@ -12,6 +12,13 @@ const original = fs.readFileSync(filename, 'utf8');
 assert.match(original, /\binit\(\);\s*$/, 'Expected the app to initialize at the end of app.js');
 const withoutStartup = original.replace(/\binit\(\);\s*$/, '');
 
+// These UI tests must also run on the source-only ZIP, which has no data/.
+// Generated index consistency is tested separately by check_repo/check_index.
+const TEST_MANIFEST = Object.freeze({
+  schema_version: 4, record_chunk: 4096, unique_files: 620287,
+  names_chunks: 256, names_grams: 'names-v2/grams.json.gz'
+});
+
 function loadApp() {
   const context = vm.createContext({
     window: {J2ME_I18N: {
@@ -45,8 +52,8 @@ test('gram intersection selects only relevant name shards', () => {
 
 test('name shard count and paths follow manifest settings, not hardcoded defaults', async () => {
   const {run, context} = loadApp();
-  context.config = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/manifest.json'), 'utf8'));
-  // Verify the checked-in manifest is accepted without changing its bytes.
+  context.config = TEST_MANIFEST;
+  // Verify the expected manifest configuration is accepted.
   assert.equal(run('nameIndexConfig(config).chunks'), context.config.names_chunks);
   assert.equal(run('nameIndexConfig(config).grams'), context.config.names_grams);
   // A hypothetical future build changes both the shard count and directory.
@@ -596,8 +603,7 @@ test('existing SHA-256 permalinks open the new Hash mode', async () => {
   context.document.querySelectorAll = selector => selector === '[data-mode]' ? buttons : [];
   context.document.querySelector = selector => selector === '.results-section' ? section
     : selector === '[data-mode="hash"]' ? buttons[1] : null;
-  const manifestData = JSON.parse(fs.readFileSync(
-    path.resolve(__dirname, '../data/manifest.json'), 'utf8'));
+  const manifestData = TEST_MANIFEST;
   context.fetch = async () => ({ok: true, json: async () => manifestData});
   run(`runSearch = async () => { window.permalink = {mode: searchMode, query: $('query').value}; };`);
   await run('init()');
@@ -637,8 +643,7 @@ test('successful startup leaves the Results section hidden', async () => {
   const {run, context} = loadApp();
   const {nodes, section} = startupTestDom(context);
   run('installResultTools = () => {};');
-  const manifest = JSON.parse(fs.readFileSync(
-    path.resolve(__dirname, '../data/manifest.json'), 'utf8'));
+  const manifest = TEST_MANIFEST;
   context.fetch = async () => ({ok: true, json: async () => manifest});
   await run('init()');
   assert.equal(section.hidden, true);
@@ -674,4 +679,89 @@ test('one unavailable text-search shard fails the search without caching partial
   blockShard = false;
   assert.deepEqual(Array.from(await run("searchNames('son', generation)")), [1, 2],
     'A later retry should recover all matches from both shards');
+});
+
+
+test('search-index failure shows a friendly localized message; Retry search actually reruns it', async () => {
+  const {run, context} = loadApp();
+  const {nodes} = startupTestDom(context);
+  nodes.get('query').value = 'sonic';
+  nodes.get('search-form').querySelector = () => ({disabled: false});
+  nodes.set('result-tools', {hidden: false});
+  run(`manifest = {record_chunk: 4096};
+       searchMode = 'name';
+       let calls = 0;
+       resetResultTools = () => {};
+       setResultControlsBusy = () => {};
+       searchNames = async () => {
+         calls++;
+         if (calls === 1) throw new TypeError('NetworkError when attempting to fetch resource');
+         return [7];
+       };
+       renderMore = async () => { $('results').append(elem('div', 'Sonic result', 'card')); };`);
+  await run('runSearch()');
+  assert.equal(run('calls'), 1);
+  assert.equal(nodes.get('status').textContent, 'Search error');
+  const [errorPanel] = nodes.get('results').children;
+  assert.equal(errorPanel.children[0].textContent,
+    'Some search data could not be loaded. Check your connection and try again.');
+  assert.ok(!errorPanel.children[0].textContent.includes('NetworkError'));
+  assert.equal(nodes.get('result-tools').hidden, true);
+  const [retry] = errorPanel.children.slice(1);
+  assert.equal(retry.textContent, 'Retry search');
+  assert.equal(retry.type, 'button');
+  retry.click();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(run('calls'), 2, 'Retry must repeat the actual search');
+  assert.equal(nodes.get('results').children[0].textContent, 'Sonic result');
+  assert.equal(nodes.get('result-tools').hidden, false);
+  // A stale Retry from an older query must not launch another search.
+  run('generation++');
+  retry.click();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(run('calls'), 2);
+});
+
+test('failure while loading result records clears any partial result cards', async () => {
+  const {run, context} = loadApp();
+  const {nodes} = startupTestDom(context);
+  nodes.get('query').value = 'sonic';
+  nodes.get('search-form').querySelector = () => ({disabled: false});
+  nodes.set('result-tools', {hidden: false});
+  run(`manifest = {record_chunk: 4096};
+       searchMode = 'name';
+       resetResultTools = () => {};
+       setResultControlsBusy = () => {};
+       searchNames = async () => [7, 8];
+       renderMore = async () => {
+         $('results').append(elem('div', 'Incomplete', 'card'));
+         throw new Error('records/0001.json.gz: HTTP 503');
+       };`);
+  await run('runSearch()');
+  assert.equal(nodes.get('results').children.length, 1);
+  assert.equal(nodes.get('results').children[0].children[0].textContent,
+    'Some search data could not be loaded. Check your connection and try again.');
+  assert.equal(run('active.length'), 0);
+  assert.equal(run('originalResults'), null);
+  assert.equal(nodes.get('result-tools').hidden, true);
+  assert.equal(nodes.get('more').hidden, true);
+  assert.equal(nodes.get('show-all').hidden, true);
+});
+
+
+test('unsupported gzip browsers keep their specific guidance rather than offering futile retries', async () => {
+  const {run, context} = loadApp();
+  const {nodes} = startupTestDom(context);
+  nodes.get('query').value = 'sonic';
+  nodes.get('search-form').querySelector = () => ({disabled: false});
+  nodes.set('result-tools', {hidden: true});
+  run(`manifest = {record_chunk: 4096};
+       searchMode = 'name';
+       resetResultTools = () => {};
+       searchNames = async () => { throw new Error(t('gzipRequired')); };`);
+  await run('runSearch()');
+  const panel = nodes.get('results').children[0];
+  assert.equal(panel.children.length, 1);
+  assert.equal(panel.children[0].textContent,
+    'This site requires a current browser with gzip DecompressionStream support.');
 });

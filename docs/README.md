@@ -13,7 +13,8 @@ The project's software license applies only to its original code and documentati
 ## Search features
 
 - Case-insensitive substring search of original filenames, MIDlet names, and vendors; default text results prioritize exact, prefix, and word-start filename/title matches over incidental substrings and vendor-only hits
-- Exact lookup by CRC32, SHA-1, or SHA-256 checksum
+- A single Hash search mode automatically detects complete CRC32 (8 hexadecimal characters), SHA-1 (40), or SHA-256 (64) checksums; other inputs show a format error
+- Search-within-results refinement, sorting by title or file size, and incremental loading or **Show all** for larger result sets
 - MIDlet name, vendor, version, CLDC, and MIDP information where available
 - Expandable "Other files" browser for distinct JAR contents in the same archive folder, with filtering and incremental loading
 - Direct download links to individual JAR files on the Internet Archive
@@ -52,7 +53,9 @@ Required input files, created by the separate verification and enrichment pipeli
 1. `jarchive-enriched.csv`: verified SHA-1/SHA-256 index with basic MIDlet fields
 2. `jarchive-enriched-details.jsonl.gz`: manifest fields and original source locations
 
-These enriched inputs are not included in the base-index release above and are not published by the site package. With `index.html`, `assets/`, and `build_site.py` in the current directory, run the following Linux/macOS example, adjusting the input paths as needed:
+These enriched inputs are not included in the base-index release above and are not published by the site package. **Availability note:** This repository snapshot does not include `build_site.py` or the enriched input files. The following is a maintainer rebuild command for an environment where those separate pipeline components are available; it cannot be run using this source checkout alone. If you only want to preview an existing index, use the local-server instructions above instead.
+
+With `index.html`, `assets/`, and a separately obtained `build_site.py` in the current directory, run the following Linux/macOS example, adjusting the input paths as needed:
 
 ```bash
 python3 build_site.py \
@@ -90,7 +93,7 @@ The Python downloader uses a separate index under `retrieval/v1/`, with its own 
 
 ## Future work
 
-Planned and possible improvements are tracked in [`FUTURE_WORK.md`](FUTURE_WORK.md). Please submit further ideas and any problems via [the "Issues" tab](https://github.com/toca-1/new-j2me-software-archive-search/issues).
+Planned and possible improvements are tracked in [`FUTURE_WORK.md`](FUTURE_WORK.md); the suggested implementation order and acceptance checks are in [`IMPLEMENTATION_CHECKLIST.md`](IMPLEMENTATION_CHECKLIST.md). Please submit further ideas and any problems via [the "Issues" tab](https://github.com/toca-1/new-j2me-software-archive-search/issues).
 
 ## Usage of AI
 

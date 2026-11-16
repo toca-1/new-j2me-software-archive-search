@@ -96,6 +96,8 @@
   "lookingUpCrc": "Đang tra cứu CRC32…",
   "noMatchingFiles": "Không tìm thấy tệp phù hợp.",
   "searchError": "Lỗi tìm kiếm",
+  "searchLoadError": "Không thể tải một phần dữ liệu tìm kiếm. Hãy kiểm tra kết nối rồi thử lại.",
+  "retrySearch": "Thử tìm kiếm lại",
   "hintName": "Tìm theo tên tệp, tên trò chơi và nhà phát triển (không phân biệt chữ hoa chữ thường).",
   "hintHashAuto": "Nhập 8, 40 hoặc 64 ký tự thập lục phân.",
   "detectedHash": "Đã nhận diện: {hash}.",

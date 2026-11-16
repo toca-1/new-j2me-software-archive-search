@@ -100,6 +100,8 @@
   "lookingUpCrc": "Vyhledávání CRC32…",
   "noMatchingFiles": "Nebyly nalezeny žádné odpovídající soubory.",
   "searchError": "Chyba vyhledávání",
+  "searchLoadError": "Některá vyhledávací data se nepodařilo načíst. Zkontrolujte připojení a zkuste to znovu.",
+  "retrySearch": "Opakovat hledání",
   "hintName": "Hledejte podle názvů souborů, her a vydavatelů (bez rozlišení velikosti písmen).",
   "hintHashAuto": "Zadejte 8, 40 nebo 64 hexadecimálních znaků.",
   "detectedHash": "Rozpoznáno: {hash}.",

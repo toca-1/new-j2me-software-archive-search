@@ -96,6 +96,8 @@
   "lookingUpCrc": "CRC32 を検索中…",
   "noMatchingFiles": "一致するファイルは見つかりませんでした。",
   "searchError": "検索エラー",
+  "searchLoadError": "検索データの一部を読み込めませんでした。接続を確認して再試行してください。",
+  "retrySearch": "検索を再試行",
   "hintName": "ファイル名、ゲーム名、開発元を検索します（大文字・小文字を区別しません）。",
   "hintHashAuto": "16 進数で 8、40、または 64 文字を入力してください。",
   "detectedHash": "判定結果：{hash}。",

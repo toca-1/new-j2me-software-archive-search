@@ -964,15 +964,23 @@ async function runSearch() {
   showAllBusy = false;
   if (!manifest) { status(t('indexNotLoaded')); return; }
   if (!term) { status(t('enterSearchTerm')); return; }
+  // Input mistakes are not network failures; keep them distinct from the
+  // retryable error shown when an index shard or record cannot be loaded.
+  const hashType = searchMode === 'name' ? null : detectHashType(term);
+  const invalid = searchMode === 'name'
+    ? (Array.from(term).length < 2 ? t('enterName') : null)
+    : (!hashType ? t('enterAnyHash') : null);
+  if (invalid) {
+    status(t('searchError'));
+    $('results').append(elem('div', invalid, 'empty'));
+    return;
+  }
   $('search-form').querySelector('button').disabled = true;
   try {
     let ids = [];
     if (searchMode === 'name') {
-      if (Array.from(term).length < 2) throw new Error(t('enterName'));
       ids = await searchNames(term.toLowerCase(), current);
     } else {
-      const hashType = detectHashType(term);
-      if (!hashType) throw new Error(t('enterAnyHash'));
       if (hashType === 'crc32') {
         status(t('lookingUpCrc'));
         ids = await crc32Lookup(term);
@@ -993,7 +1001,26 @@ async function runSearch() {
     await renderMore(current, INITIAL_PAGE);
   } catch (e) {
     if (current !== generation) return;
-    status(t('searchError')); $('results').append(elem('div', e.message, 'empty')); console.error(e);
+    // Never present an underlying browser exception (or a partial result set)
+    // as if it were a successful search. The console retains the actual error.
+    active = []; shown = 0; originalResults = null;
+    $('result-tools').hidden = true;
+    $('more').hidden = true; $('show-all').hidden = true;
+    status(t('searchError'));
+    const message = elem('div', undefined, 'empty');
+    // An unsupported browser cannot fix missing gzip support by retrying.
+    const unsupportedBrowser = e?.message === t('gzipRequired');
+    message.append(elem('p', unsupportedBrowser ? t('gzipRequired') : t('searchLoadError')));
+    if (!unsupportedBrowser) {
+      const retry = elem('button', t('retrySearch'), 'search-retry');
+      retry.type = 'button';
+      retry.addEventListener('click', () => {
+        if (current === generation) runSearch();
+      });
+      message.append(retry);
+    }
+    $('results').replaceChildren(message);
+    console.error('[J2ME] Search failed:', e);
   } finally {
     if (current === generation) $('search-form').querySelector('button').disabled = false;
   }

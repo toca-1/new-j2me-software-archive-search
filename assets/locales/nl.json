@@ -99,6 +99,8 @@
   "lookingUpCrc": "CRC32 opzoeken…",
   "noMatchingFiles": "Geen overeenkomende bestanden gevonden.",
   "searchError": "Zoekfout",
+  "searchLoadError": "Sommige zoekgegevens konden niet worden geladen. Controleer je verbinding en probeer het opnieuw.",
+  "retrySearch": "Opnieuw zoeken",
   "hintName": "Zoek op bestandsnamen, gametitels en makers (hoofdletterongevoelig).",
   "hintHashAuto": "Voer 8, 40 of 64 hexadecimale tekens in.",
   "detectedHash": "Herkend: {hash}.",

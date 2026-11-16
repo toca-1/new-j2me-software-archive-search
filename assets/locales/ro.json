@@ -100,6 +100,8 @@
   "lookingUpCrc": "Se caută CRC32…",
   "noMatchingFiles": "Nu s-au găsit fișiere corespunzătoare.",
   "searchError": "Eroare de căutare",
+  "searchLoadError": "Unele date de căutare nu au putut fi încărcate. Verificați conexiunea și încercați din nou.",
+  "retrySearch": "Reîncercați căutarea",
   "hintName": "Caută în nume de fișiere, titluri de jocuri și producători (fără diferențiere între majuscule și minuscule).",
   "hintHashAuto": "Introdu 8, 40 sau 64 de caractere hexazecimale.",
   "detectedHash": "Detectat: {hash}.",

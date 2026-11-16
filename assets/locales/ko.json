@@ -96,6 +96,8 @@
   "lookingUpCrc": "CRC32 조회 중…",
   "noMatchingFiles": "일치하는 파일을 찾지 못했습니다.",
   "searchError": "검색 오류",
+  "searchLoadError": "일부 검색 데이터를 불러오지 못했습니다. 연결 상태를 확인한 후 다시 시도하세요.",
+  "retrySearch": "검색 다시 시도",
   "hintName": "파일 이름, 게임 제목 및 개발사 검색 (대소문자 구분 없음).",
   "hintHashAuto": "16진수 8자, 40자 또는 64자를 입력하세요.",
   "detectedHash": "감지됨: {hash}.",

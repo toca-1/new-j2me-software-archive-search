@@ -96,6 +96,8 @@
   "lookingUpCrc": "CRC32 aranıyor…",
   "noMatchingFiles": "Eşleşen dosya bulunamadı.",
   "searchError": "Arama hatası",
+  "searchLoadError": "Bazı arama verileri yüklenemedi. Bağlantınızı kontrol edip yeniden deneyin.",
+  "retrySearch": "Aramayı yeniden dene",
   "hintName": "Dosya adlarında, oyun başlıklarında ve geliştiricilerde ara (büyük/küçük harf duyarsız).",
   "hintHashAuto": "8, 40 veya 64 onaltılık karakter girin.",
   "detectedHash": "Algılandı: {hash}.",

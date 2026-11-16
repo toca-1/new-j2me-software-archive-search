@@ -96,6 +96,8 @@
   "lookingUpCrc": "正在查詢 CRC32…",
   "noMatchingFiles": "找不到符合條件的檔案。",
   "searchError": "搜尋錯誤",
+  "searchLoadError": "部分搜尋資料無法載入。請檢查網路連線後重試。",
+  "retrySearch": "重試搜尋",
   "hintName": "依檔名、遊戲名稱及開發商搜尋（不區分大小寫）。",
   "hintHashAuto": "請輸入 8、40 或 64 個十六進位字元。",
   "detectedHash": "已辨識：{hash}。",

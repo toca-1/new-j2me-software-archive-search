@@ -86,6 +86,8 @@
   "lookingUpCrc": "正在查询 CRC32…",
   "noMatchingFiles": "未找到匹配的文件。",
   "searchError": "搜索出错",
+  "searchLoadError": "部分搜索数据无法加载。请检查网络连接后重试。",
+  "retrySearch": "重试搜索",
   "hintName": "按文件名、游戏标题和开发商搜索（不区分大小写）。",
   "hintHashAuto": "请输入 8、40 或 64 位十六进制字符。",
   "detectedHash": "已识别：{hash}。",

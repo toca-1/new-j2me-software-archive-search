@@ -169,8 +169,14 @@ class RepositoryChecks(unittest.TestCase):
         self.assertIn('assets/i18n.js?v=' + revision.group(1), html)
 
     def test_checked_in_manifest_and_build_summary_agree(self):
-        manifest = get_json(ROOT / 'data' / 'manifest.json')
-        summary = get_json(ROOT / 'data' / 'build-summary.json')
+        manifest_path = ROOT / 'data' / 'manifest.json'
+        summary_path = ROOT / 'data' / 'build-summary.json'
+        if not manifest_path.exists() and not summary_path.exists():
+            self.skipTest('Source-only checkout: generated manifest/summary absent')
+        self.assertTrue(manifest_path.is_file(), 'Missing data/manifest.json')
+        self.assertTrue(summary_path.is_file(), 'Missing data/build-summary.json')
+        manifest = get_json(manifest_path)
+        summary = get_json(summary_path)
         self.assertEqual(manifest['schema_version'], 4)
         self.assertGreater(manifest['record_chunk'], 0)
         self.assertGreater(manifest['names_chunks'], 0)

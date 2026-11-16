@@ -86,6 +86,8 @@
   "lookingUpCrc": "Looking up CRC32…",
   "noMatchingFiles": "No matching files found.",
   "searchError": "Search error",
+  "searchLoadError": "Some search data could not be loaded. Check your connection and try again.",
+  "retrySearch": "Retry search",
   "hintName": "Search filenames, game titles and vendors (case-insensitive).",
   "hintHashAuto": "Enter 8, 40 or 64 hexadecimal characters.",
   "detectedHash": "Detected: {hash}.",

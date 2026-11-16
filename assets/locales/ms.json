@@ -96,6 +96,8 @@
   "lookingUpCrc": "Mencari CRC32…",
   "noMatchingFiles": "Tiada fail sepadan ditemui.",
   "searchError": "Ralat carian",
+  "searchLoadError": "Sebahagian data carian gagal dimuatkan. Semak sambungan anda dan cuba lagi.",
+  "retrySearch": "Cuba carian sekali lagi",
   "hintName": "Cari nama fail, tajuk permainan dan pembangun (tanpa membezakan huruf besar/kecil).",
   "hintHashAuto": "Masukkan 8, 40 atau 64 aksara perenambelasan.",
   "detectedHash": "Dikesan: {hash}.",

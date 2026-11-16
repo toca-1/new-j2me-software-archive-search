@@ -86,6 +86,8 @@
   "lookingUpCrc": "Buscando CRC32…",
   "noMatchingFiles": "No se encontraron archivos coincidentes.",
   "searchError": "Error de búsqueda",
+  "searchLoadError": "No se han podido cargar algunos datos de búsqueda. Comprueba tu conexión e inténtalo de nuevo.",
+  "retrySearch": "Reintentar búsqueda",
   "hintName": "Busca archivos, títulos y desarrolladores (sin distinguir mayúsculas).",
   "hintHashAuto": "Introduce 8, 40 o 64 caracteres hexadecimales.",
   "detectedHash": "Detectado: {hash}.",

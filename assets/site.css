@@ -403,3 +403,7 @@
 .startup-reload{display:block;margin:16px auto 0;background:var(--panel2);border:1px solid #49595e;border-radius:9px;color:var(--text);padding:10px 18px;font:inherit;font-size:14px;cursor:pointer}
 .startup-reload:hover{border-color:var(--accent);color:var(--accent)}
 .startup-reload:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+.search-retry{display:block;margin:16px auto 0;background:var(--panel2);border:1px solid #49595e;border-radius:9px;color:var(--text);padding:10px 18px;font:inherit;font-size:14px;cursor:pointer}
+.search-retry:hover{border-color:var(--accent);color:var(--accent)}
+.search-retry:focus-visible{outline:2px solid var(--accent);outline-offset:3px}

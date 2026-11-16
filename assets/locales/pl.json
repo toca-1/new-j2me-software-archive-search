@@ -101,6 +101,8 @@
   "lookingUpCrc": "Wyszukiwanie CRC32…",
   "noMatchingFiles": "Nie znaleziono pasujących plików.",
   "searchError": "Błąd wyszukiwania",
+  "searchLoadError": "Nie udało się wczytać części danych wyszukiwania. Sprawdź połączenie i spróbuj ponownie.",
+  "retrySearch": "Ponów wyszukiwanie",
   "hintName": "Szukaj nazw plików, tytułów gier i producentów (bez rozróżniania wielkości liter).",
   "hintHashAuto": "Wpisz 8, 40 lub 64 znaki szesnastkowe.",
   "detectedHash": "Wykryto: {hash}.",

@@ -9,6 +9,7 @@ on:
       - "docs/DOWNLOADER.md"
       - "docs/SOURCES.md"
       - "docs/FUTURE_WORK.md"
+      - "docs/IMPLEMENTATION_CHECKLIST.md"
       - "docs/ATTRIBUTION.md"
       - "LICENSE"
       - "missing_files/**"
@@ -47,6 +48,8 @@ jobs:
           node --check assets/app.js
           node --check assets/i18n.js
           node --test tests/app.test.cjs
+          python3 -m unittest discover -s tests -p 'test_check_index.py'
+          python3 tests/check_index.py
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

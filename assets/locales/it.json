@@ -99,6 +99,8 @@
   "lookingUpCrc": "Ricerca CRC32…",
   "noMatchingFiles": "Nessun file corrispondente trovato.",
   "searchError": "Errore di ricerca",
+  "searchLoadError": "Non è stato possibile caricare alcuni dati di ricerca. Controlla la connessione e riprova.",
+  "retrySearch": "Riprova la ricerca",
   "hintName": "Cerca nomi file, titoli di giochi e produttori (senza distinzione tra maiuscole e minuscole).",
   "hintHashAuto": "Inserisci 8, 40 o 64 caratteri esadecimali.",
   "detectedHash": "Rilevato: {hash}.",

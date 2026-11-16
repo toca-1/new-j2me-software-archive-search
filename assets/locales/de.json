@@ -86,6 +86,8 @@
   "lookingUpCrc": "CRC32 wird gesucht…",
   "noMatchingFiles": "Keine passenden Dateien gefunden.",
   "searchError": "Suchfehler",
+  "searchLoadError": "Ein Teil der Suchdaten konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.",
+  "retrySearch": "Suche wiederholen",
   "hintName": "Dateinamen, Spieltitel und Hersteller durchsuchen (ohne Groß-/Kleinschreibung).",
   "hintHashAuto": "8, 40 oder 64 Hexadezimalzeichen eingeben.",
   "detectedHash": "Erkannt: {hash}.",

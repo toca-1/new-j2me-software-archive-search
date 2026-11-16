@@ -86,6 +86,8 @@
   "lookingUpCrc": "Mencari CRC32…",
   "noMatchingFiles": "Tidak ditemukan berkas yang cocok.",
   "searchError": "Kesalahan pencarian",
+  "searchLoadError": "Sebagian data pencarian gagal dimuat. Periksa koneksi Anda dan coba lagi.",
+  "retrySearch": "Coba cari lagi",
   "hintName": "Cari nama berkas, judul game, dan pengembang (tanpa membedakan huruf besar/kecil).",
   "hintHashAuto": "Masukkan 8, 40, atau 64 karakter heksadesimal.",
   "detectedHash": "Terdeteksi: {hash}.",
