@@ -11,12 +11,14 @@ node --check assets/app.js
 node --check assets/i18n.js
 node --test tests/app.test.cjs
 python3 -m unittest discover -s tests -p 'test_check_index.py'
+python3 -m unittest discover -s tests -p 'test_folder_index.py'
 ```
 
 To check a **complete checkout containing the generated `data/` shards** before deploying:
 
 ```sh
 python3 tests/check_index.py
+python3 tools/check_folder_index.py --repo . --require-folders
 ```
 
 The source-only ZIP does **not** include `data/` at all. The offline tests
@@ -29,6 +31,8 @@ Run it in a checkout containing all generated shards.
 - `app.test.cjs` tests selected functions from the real `assets/app.js` with lightweight mocks: URL encoding, name-shard selection/search caching, CRC32 collisions, exact SHA-256 lookup, refinement/sorting, retry handling, and the download/folder disclosure interaction.
 - `test_check_index.py` exercises the index smoke checker against a small synthetic dataset, including deliberately missing shards and damaged gzip content; it does not require the generated archive.
 - `check_index.py` runs on the actual generated index: checks expected record/detail and hash-shard counts, verifies every name shard referenced by the gram map exists, and decompresses representative shards. It does **not** read every record, validate individual download URLs, or require optional upstream/folder indexes.
+- `test_folder_index.py` builds tiny folder indexes and proves that reordering records or changing source paths is detected even when the main manifest is unchanged.
+- `tools/check_folder_index.py` verifies the v2 folder fingerprint against **all** current record shards; it is a deliberately more expensive check and must be run after regenerating `data/folders/`. The Pages workflow runs it when the optional folder index is present. `--require-folders` also fails if it is absent.
 - The Pages deployment workflow runs the offline checks, the synthetic Python smoke-check tests, **and** the real index smoke check before preparing or uploading the site. A failure stops that deployment; the previously published site stays online. A deployable checkout must have the generated `data/` files.
 
 **Limits:** This is not a browser end-to-end test. The smoke check samples rather than exhaustively validating generated shards and does not validate live Internet Archive/mirror URLs. Keep manual VM/browser testing for changes affecting rendering, download links and new index builds.

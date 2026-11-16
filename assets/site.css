@@ -311,7 +311,6 @@
 .folder-panel{margin-top:16px;padding:15px;border-radius:10px;
   border:1px solid var(--edge);background:#111a1d;min-width:0}
 .folder-panel[hidden]{display:none}
-.folder-disclaimer{font-size:13px;line-height:1.5;color:var(--muted);margin:0 0 13px}
 .folder-title{font-size:15px;font-weight:650;margin-bottom:12px;overflow-wrap:anywhere}
 .folder-choice{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 13px}
 .folder-choice label{font-size:14px;color:var(--muted)}

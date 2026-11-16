@@ -24,6 +24,8 @@ import sqlite3
 import sys
 import tempfile
 
+from folder_fingerprint import update_record_digest
+
 
 def bucket_for(folder: str) -> str:
     """UTF-8 FNV-1a 32-bit, upper byte; equivalent to the browser implementation."""
@@ -78,6 +80,7 @@ def build(repo: Path) -> None:
         ) WITHOUT ROWID''')
         total_sources = 0
         record_count = 0
+        records_digest = hashlib.sha256()
         for n in range(chunks):
             path = data / 'records' / f'{n:04d}.json.gz'
             if not path.is_file():
@@ -92,6 +95,7 @@ def build(repo: Path) -> None:
                 if record_id >= count:
                     raise ValueError('Record shards exceed unique_files')
                 sha, _, bytesize, sources, quick = record
+                update_record_digest(records_digest, record)
                 if not isinstance(sha, str) or len(sha) != 64 or any(c not in '0123456789abcdef' for c in sha):
                     raise ValueError(f'Invalid SHA-256 at ID {record_id}')
                 if not isinstance(quick, list) or len(quick) < 3:
@@ -150,7 +154,8 @@ def build(repo: Path) -> None:
             flush_bucket(current_bucket, bucket_data)
         write_gzip_json(staging / 'counts.json.gz', counts)
         stats = {
-            'schema_version': 1,
+            'schema_version': 2,
+            'records_sha256': records_digest.hexdigest(),
             'index_manifest_sha256': hashlib.sha256(manifest_bytes).hexdigest(),
             'unique_files': count,
             'record_chunk': chunk,
@@ -180,6 +185,7 @@ def build(repo: Path) -> None:
         total_bytes = sum(p.stat().st_size for p in target.rglob('*') if p.is_file())
         print(f'\nBuilt data/folders/ successfully')
         print(f"  Folder groups: {len(counts):,}")
+        print(f"  Record fingerprint: {records_digest.hexdigest()}")
         print(f"  Distinct contents in groups: {len(candidate_ids):,} / {count:,}")
         print(f"  Shards: {shards_written}")
         print(f"  Largest: {largest[1]} ({largest[0]:,})")

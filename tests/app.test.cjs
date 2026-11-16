@@ -193,7 +193,7 @@ function downloadTestDom(context) {
     const attrs = new Map();
     const listeners = new Map();
     return {
-      tagName: tag, className: '', children: [], hidden: false, isConnected: true,
+      tagName: tag, className: '', value: '', children: [], hidden: false, isConnected: true,
       append(...nodes) { this.children.push(...nodes); },
       insertBefore(node, reference) {
         const at = this.children.indexOf(reference);
@@ -764,4 +764,65 @@ test('unsupported gzip browsers keep their specific guidance rather than offerin
   assert.equal(panel.children.length, 1);
   assert.equal(panel.children[0].textContent,
     'This site requires a current browser with gzip DecompressionStream support.');
+});
+
+test('folder member verification rejects stale IDs and changed archive paths', async () => {
+  const {run, context} = loadApp();
+  const main = [
+    'a'.repeat(64), 'b'.repeat(40), 3072,
+    [[0, 'Sonic.jar', 'Games/Sonic.jar', '1234ABCD']],
+    ['Sonic', 'Publisher', '1.0', '', '']
+  ];
+  context.currentRecord = main;
+  context.member = [42, main[0], 'Sonic', 'Publisher', '1.0', 3072];
+  run(`manifest = {unique_files: 100};
+       recordById = async id => currentRecord;`);
+  await run("verifyFolderPage([member], 'Games')");
+
+  // Reassigned ID: same group metadata, but the current record is different.
+  context.currentRecord = ['f'.repeat(64), ...main.slice(1)];
+  await assert.rejects(run("verifyFolderPage([member], 'Games')"), /out of date/);
+
+  // Identical SHA but moved to a different folder is also incompatible.
+  context.currentRecord = [main[0], main[1], main[2],
+    [[0, 'Sonic.jar', 'Elsewhere/Sonic.jar', '1234ABCD']], main[4]];
+  await assert.rejects(run("verifyFolderPage([member], 'Games')"), /out of date/);
+
+  context.currentRecord = main;
+  context.member = [42, main[0], 'Sonic', 'Incorrect publisher', '1.0', 3072];
+  await assert.rejects(run("verifyFolderPage([member], 'Games')"), /out of date/);
+});
+
+test('obsolete folder-index manifests disable optional folder browsing', async () => {
+  const {run, context} = loadApp();
+  run(`manifest = {record_chunk: 4096, unique_files: 620287};
+       readJson = async () => ({schema_version: 1,
+         unique_files: 620287, record_chunk: 4096,
+         index_manifest_sha256: 'a'.repeat(64)});`);
+  assert.equal(await run('folderCatalog()'), null);
+});
+
+test('folder UI never displays a link for a member whose record ID changed', async () => {
+  const {run, context} = loadApp();
+  const find = downloadTestDom(context);
+  run(`manifest = {unique_files: 620287, record_chunk: 4096};
+       folderCatalog = async () => new Map([['Games', 2]]);
+       folderEntries = async () => [
+         [42, 'a'.repeat(64), 'Sonic', 'Publisher', '1.0', 3072],
+         [43, 'b'.repeat(64), 'Echo', 'Publisher', '1.0', 3000]
+       ];
+       recordById = async id => id === 42
+         ? ${testRecord}
+         : ['c'.repeat(64), 'b'.repeat(40), 3000,
+            [[0, 'Echo.jar', 'Games/Echo.jar', '1234ABCD']],
+            ['Echo', 'Publisher', '1.0', '', '']];`);
+  const card = run(`renderResult(42, ${testRecord})`);
+  await new Promise(resolve => setImmediate(resolve));
+  const toggle = find(card, 'folder-toggle');
+  assert.ok(toggle);
+  toggle.click();
+  await new Promise(resolve => setImmediate(resolve));
+  const panel = find(card, 'folder-panel');
+  assert.equal(find(panel, 'folder-file-link'), null);
+  assert.match(find(panel, 'folder-error').textContent, /out of date/);
 });

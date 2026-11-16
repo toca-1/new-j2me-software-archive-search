@@ -16,8 +16,7 @@ const WORKERS = 8;
 // Use more concurrent reads than before (2) without fetching every chunk at once.
 const SUMMARY_WORKERS = 6;
 const MAX_CACHED_SEARCH_SHARDS = 12;
-// Read the search-only index settings from data/manifest.json. This change
-// leaves the manifest byte-identical for the folder browser's SHA-256 check.
+// Read the search-only index settings from data/manifest.json.
 function nameIndexConfig(index) {
   const chunks = index.names_chunks;
   const grams = index.names_grams;
@@ -492,8 +491,10 @@ function folderBucket(folder) {
 function folderCatalog() {
   if (!folderCatalogPromise) folderCatalogPromise = (async () => {
     const info = await readJson('folders/manifest.json');
-    if (info.schema_version !== 1 || info.unique_files !== manifest.unique_files ||
-        info.record_chunk !== manifest.record_chunk || !/^[0-9a-f]{64}$/.test(info.index_manifest_sha256))
+    if (info.schema_version !== 2 || info.unique_files !== manifest.unique_files ||
+        info.record_chunk !== manifest.record_chunk ||
+        !/^[0-9a-f]{64}$/.test(info.index_manifest_sha256) ||
+        !/^[0-9a-f]{64}$/.test(info.records_sha256))
       throw new Error('Folder index and search index do not match. Rebuild data/folders/.');
     // Verify the byte-identical manifest used when record IDs were assigned.
     if (!crypto?.subtle) throw new Error('Folder index requires a secure origin (localhost or HTTPS).');
@@ -518,6 +519,38 @@ function folderEntries(folder) {
   const key = folderBucket(folder);
   return memoized(folderShardsCache, key,
     () => readGzipJson(`folders/groups/${key}.json.gz`), 8).then(rows => rows[folder] || []);
+}
+// Verify only the rows about to become visible, against the current main index.
+// The folder manifest also contains a full-record fingerprint checked in CI;
+// per-row checks defend against stale/mixed assets at runtime without loading
+// all ~620k main records just to open a folder.
+function folderIndexMismatch() {
+  return new Error('Folder index is out of date; rebuild data/folders/.');
+}
+async function verifyFolderPage(entries, folder) {
+  let next = 0;
+  const worker = async () => {
+    while (next < entries.length) {
+      const entry = entries[next++];
+      if (!Array.isArray(entry) || entry.length !== 6) throw folderIndexMismatch();
+      const [id, sha, title, vendor, version, bytes] = entry;
+      if (!Number.isSafeInteger(id) || id < 0 || id >= manifest.unique_files ||
+          typeof sha !== 'string' || !/^[0-9a-f]{64}$/.test(sha))
+        throw folderIndexMismatch();
+      const record = await recordById(id);
+      if (!Array.isArray(record) || record[0] !== sha || record[2] !== bytes ||
+          !Array.isArray(record[3]) || !Array.isArray(record[4]))
+        throw folderIndexMismatch();
+      const matchingSource = record[3].find(source =>
+        typeof source[2] === 'string' &&
+        source[2].slice(0, source[2].lastIndexOf('/')) === folder);
+      if (!matchingSource || String(record[4][0] || matchingSource[1]) !== title ||
+          String(record[4][1] || '') !== vendor ||
+          String(record[4][2] || '') !== version)
+        throw folderIndexMismatch();
+    }
+  };
+  await Promise.all(Array.from({length: Math.min(SUMMARY_WORKERS, entries.length)}, worker));
 }
 function folderMemberRow(entry) {
   // [id, sha256, display_title, vendor, version, bytes]
@@ -572,7 +605,6 @@ async function addFolderBrowser(id, record, card, downloadSection, downloadBar,
   let activeGroup = groups[0].folder;
   let request = 0;
   const content = elem('div', undefined, 'folder-content');
-  panel.append(elem('p', t('folderDisclaimer'), 'folder-disclaimer'));
   if (groups.length > 1) {
     const choice = elem('div', undefined, 'folder-choice');
     const label = elem('label', t('folderChoose'));
@@ -600,6 +632,10 @@ async function addFolderBrowser(id, record, card, downloadSection, downloadBar,
       const all = await folderEntries(selected);
       if (token !== request || !card.isConnected) return;
       if (!Array.isArray(all)) throw new Error('Invalid folder member list');
+      // Every group must contain the result which led us here. Detect stale
+      // record-ID assignments even if the ordinary manifest was unchanged.
+      if (!all.some(row => Array.isArray(row) && row[0] === id && row[1] === record[0]))
+        throw folderIndexMismatch();
       // The current result is already visible; don't repeat it in the list.
       const members = all.filter(row => row[0] !== id);
       const tools = elem('div', undefined, 'folder-tools');
@@ -612,16 +648,34 @@ async function addFolderBrowser(id, record, card, downloadSection, downloadBar,
       const more = elem('button', t('folderShowMore'), 'folder-more');
       more.type = 'button';
       let visible = FOLDER_PAGE_SIZE;
-      const render = () => {
+      const verifiedIds = new Set();
+      let renderRequest = 0;
+      const render = async () => {
+        const tokenForRender = ++renderRequest;
         const q = filter.value.toLocaleLowerCase().trim();
         const matching = q ? members.filter(([,sha,title,vendor,version]) =>
           [sha,title,vendor,version].some(v => String(v || '').toLocaleLowerCase().includes(q))) : members;
-        counter.textContent = t('folderCounter', {
-          matching: fmt(matching.length), total: fmt(members.length)
-        });
-        rows.replaceChildren(...matching.slice(0, visible).map(folderMemberRow));
-        if (!matching.length) rows.append(elem('p', t('folderEmpty'), 'small'));
-        more.hidden = visible >= matching.length;
+        const page = matching.slice(0, visible);
+        rows.replaceChildren(elem('p', t('folderLoading'), 'small'));
+        more.hidden = true;
+        try {
+          const unverified = page.filter(row => !verifiedIds.has(row[0]));
+          await verifyFolderPage(unverified, selected);
+          unverified.forEach(row => verifiedIds.add(row[0]));
+          if (token !== request || tokenForRender !== renderRequest || !card.isConnected) return;
+          counter.textContent = t('folderCounter', {
+            matching: fmt(matching.length), total: fmt(members.length)
+          });
+          rows.replaceChildren(...page.map(folderMemberRow));
+          if (!matching.length) rows.append(elem('p', t('folderEmpty'), 'small'));
+          more.hidden = visible >= matching.length;
+        } catch (error) {
+          if (token === request && tokenForRender === renderRequest && card.isConnected) {
+            // Never show an unverified folder link.
+            content.replaceChildren(elem('p', `${t('folderLoadError')} ${error.message}`, 'folder-error'));
+            console.warn('Archive-folder entry verification failed:', error);
+          }
+        }
       };
       filter.addEventListener('input', () => { visible = FOLDER_PAGE_SIZE; render(); });
       more.addEventListener('click', () => { visible += FOLDER_PAGE_SIZE; render(); });

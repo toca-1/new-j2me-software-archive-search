@@ -81,6 +81,31 @@ The browser search index lives under `data/`:
 - `data/build-summary.json`: summary statistics from the index build
 - `data/manifest.json`: index schema, configuration, and counts
 
+### Folder-index rebuild compatibility
+
+`data/folders/` is a supplemental index and must be rebuilt **after every change to
+`data/records/`**. The folder index's v2 manifest contains a SHA-256 fingerprint
+of the complete ordered, uncompressed JSON record data (including archive paths
+and display metadata), in addition to the original main-manifest digest.
+Reordering records or changing their sources is detected even if the main
+`data/manifest.json` stays unchanged. The browser verifies visible folder
+members against the live records before displaying links; stale or old-schema
+folder data is disabled rather than presenting potentially wrong associations.
+
+From a checkout with the complete `data/` directory:
+
+```sh
+python3 tools/build_folder_groups.py --repo .
+python3 tools/check_folder_index.py --repo . --require-folders
+```
+
+The second command reads **all record shards**, so it is intentionally separate
+from the lightweight `tests/check_index.py` smoke check. The deployment workflow
+also runs the full folder compatibility check when `data/folders/` exists.
+A mismatch fails deployment; regenerate the folder index rather than modifying
+its manifest by hand. The original search data are not rewritten by the folder
+builder.
+
 The Python downloader uses a separate index under `retrieval/v1/`, with its own manifest and SHA-1/SHA-256 lookup shards.
 
 ## Known limitations

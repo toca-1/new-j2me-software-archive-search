@@ -49,7 +49,9 @@ jobs:
           node --check assets/i18n.js
           node --test tests/app.test.cjs
           python3 -m unittest discover -s tests -p 'test_check_index.py'
+          python3 -m unittest discover -s tests -p 'test_folder_index.py'
           python3 tests/check_index.py
+          python3 tools/check_folder_index.py --repo .
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

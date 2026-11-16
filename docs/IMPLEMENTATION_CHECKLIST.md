@@ -4,9 +4,9 @@ Use this as a **working sequence**; the full ideas list remains in [`FUTURE_WORK
 
 ## Stage 1 — Reliability and clear feedback (small changes)
 
-- [ ] **1. Audit and correct the docs.** Check claims and commands against the repository, clarify which generated data and builder files are not shipped, and align CI documentation with the actual workflow. **Done when:** all documented commands match files and actions, and source-only limitations are explicit. *An initial pass is included with the first patch; recheck against your full VM checkout before marking complete.*
-- [ ] **2. Handle search-load errors gracefully.** Display a localized explanation and a working **Retry search** button after fetch retries fail, while keeping invalid queries distinct from network failures and never showing partial results. **Done when:** a simulated missing/503 shard or network exception can fail and then recover using Retry; all locale keys and automated tests pass. *Implementation included with the first patch; manually test in your VM before marking complete.*
-- [ ] **3. Strengthen folder-index compatibility.** Tie the folder-group index to the actual record build/ID assignments instead of only the manifest bytes. **Done when:** a record-order change causes a clear incompatibility warning and no wrong folder associations appear.
+- [x] **1. Audit and correct the docs.** Check claims and commands against the repository, clarify which generated data and builder files are not shipped, and align CI documentation with the actual workflow. **Done when:** all documented commands match files and actions, and source-only limitations are explicit. *Verified in the Ubuntu VM (stage 1).*
+- [x] **2. Handle search-load errors gracefully.** Display a localized explanation and a working **Retry search** button after fetch retries fail, while keeping invalid queries distinct from network failures and never showing partial results. **Done when:** a simulated missing/503 shard or network exception can fail and then recover using Retry; all locale keys and automated tests pass. *Verified in the Ubuntu VM (stage 1).*
+- [ ] **3. Strengthen folder-index compatibility.** Tie the folder-group index to the actual record build/ID assignments instead of only the manifest bytes. **Done when:** a record-order change causes a clear incompatibility warning and no wrong folder associations appear. *Stage 3 patch is prepared; rebuild `data/folders/`, run `tools/check_folder_index.py`, and verify in your VM before checking this box.*
 
 ## Stage 2 — Better core search and usability
 
@@ -38,12 +38,15 @@ node --check assets/app.js
 node --check assets/i18n.js
 node --test tests/app.test.cjs
 python3 -m unittest discover -s tests -p 'test_check_index.py'
+python3 -m unittest discover -s tests -p 'test_folder_index.py'
 ```
 
 If the checkout contains the **complete** generated `data/` directory, additionally run:
 
 ```bash
 python3 tests/check_index.py
+python3 tools/build_folder_groups.py --repo .  # Needed only when main records changed or upgrading folder v1 to v2
+python3 tools/check_folder_index.py --repo . --require-folders
 python3 -m http.server 8000
 ```
 
