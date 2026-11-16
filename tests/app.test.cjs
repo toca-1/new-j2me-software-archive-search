@@ -294,3 +294,111 @@ test('closing while loading prevents a late reveal, and errors still show primar
   assert.equal(find(errorCard, 'download-list').childElementCount, 1);
   assert.equal(errorToggle.getAttribute('aria-busy'), null);
 });
+
+test('localized download headings and Show all use the locale files', () => {
+  for (const [lang, expected] of Object.entries({
+    en: ['Download links', 'Internet archive', 'Other mirrors', 'Show all (3)'],
+    de: ['Downloadlinks', 'Internet Archive', 'andere Mirrors', 'Alle anzeigen (3)'],
+    'zh-TW': ['下載連結', 'Internet Archive', '其他鏡像站', '顯示全部 (3)']
+  })) {
+    const dictionary = JSON.parse(fs.readFileSync(
+      path.resolve(__dirname, `../assets/locales/${lang}.json`), 'utf8'));
+    const {run, context} = loadApp();
+    const find = downloadTestDom(context);
+    context.document.documentElement.lang = lang;
+    context.window.J2ME_I18N.t = (key, vars = {}) => {
+      const message = dictionary[key] || key;
+      if (typeof message !== 'string') return key;
+      return message.replace(/\{(\w+)\}/g, (whole, name) =>
+        Object.hasOwn(vars, name) ? String(vars[name]) : whole);
+    };
+    run('addFolderBrowser = async () => {};');
+    const card = run(`renderResult(42, ${testRecord})`);
+    const toggle = find(card, 'download-toggle');
+    const panel = find(card, 'download-panel');
+    const headings = panel.children.filter(x => x?.className === 'download-heading' ||
+      x?.className === 'download-mirror-group').map(x =>
+        x.className === 'download-mirror-group' ? x.children[0].textContent : x.textContent);
+    assert.equal(toggle.textContent, expected[0], `Disclosure label (${lang})`);
+    assert.deepEqual(headings, expected.slice(1, 3), `Source headings (${lang})`);
+
+    const elements = new Map();
+    context.document.getElementById = id => {
+      if (!elements.has(id)) elements.set(id, {textContent: '', hidden: false});
+      return elements.get(id);
+    };
+    run('active = [1, 2, 3, 4]; shown = 1; updatePaginationButtons()');
+    assert.equal(elements.get('show-all').textContent, expected[3], `Show all (${lang})`);
+  }
+});
+
+test('folder-browser text uses the same translation and interpolation functions', () => {
+  const {run, context} = loadApp();
+  const dictionary = JSON.parse(fs.readFileSync(
+    path.resolve(__dirname, '../assets/locales/zh-CN.json'), 'utf8'));
+  context.window.J2ME_I18N.t = (key, vars = {}) =>
+    String(dictionary[key] || key).replace(/\{(\w+)\}/g,
+      (whole, name) => Object.hasOwn(vars, name) ? String(vars[name]) : whole);
+  assert.equal(run("t('folderOther')"), '其他文件');
+  assert.equal(run("t('folderView')"), '查看结果');
+  assert.equal(run("t('folderCounter', {matching: '2', total: '10'})"),
+    '其他 10 个文件中有 2 个符合条件');
+});
+
+test('updated locale files bypass stale browser caches and resolve migrated labels', async () => {
+  const i18nSource = fs.readFileSync(path.resolve(__dirname, '../assets/i18n.js'), 'utf8');
+  const homepage = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
+  const scriptRevision = homepage.match(/assets\/i18n\.js\?v=([^"&]+)/)?.[1];
+  assert.ok(scriptRevision, 'The translation loader must have a versioned script URL');
+  assert.match(homepage, new RegExp(`assets/app\\.js\\?v=${scriptRevision}`),
+    'The app and translation loader should be published with the same asset revision');
+
+  for (const language of ['en', 'de']) {
+    const fetched = [];
+    const select = {setAttribute() {}, addEventListener() {}, value: ''};
+    const context = vm.createContext({
+      window: {},
+      location: {search: `?lang=${language}`},
+      URLSearchParams,
+      Intl,
+      localStorage: {getItem: () => null, setItem() {}},
+      document: {
+        documentElement: {lang: 'en'},
+        title: '',
+        querySelector: () => null,
+        querySelectorAll: () => [],
+        getElementById: id => id === 'language-select' ? select : null
+      },
+      fetch: async (url, options) => {
+        fetched.push({url, options});
+        // Model a previously cached locale without Step 5 keys. An unversioned
+        // fetch would return this stale payload and render raw translation keys.
+        const localeFile = /assets\/locales\/([^/?]+)\.json/.exec(url)?.[1];
+        const dictionary = JSON.parse(fs.readFileSync(
+          path.resolve(__dirname, `../assets/locales/${localeFile}.json`), 'utf8'));
+        if (!url.includes('?v=')) {
+          delete dictionary.downloadToggle;
+          delete dictionary.downloadHeadingInternetArchive;
+          delete dictionary.showAllRemaining;
+        }
+        return {ok: true, json: async () => dictionary};
+      }
+    });
+    vm.runInContext(i18nSource, context);
+    await context.window.J2ME_I18N.init();
+    const translations = JSON.parse(fs.readFileSync(
+      path.resolve(__dirname, `../assets/locales/${language}.json`), 'utf8'));
+    const t = context.window.J2ME_I18N.t;
+    assert.equal(t('downloadToggle'), translations.downloadToggle, language);
+    assert.equal(t('downloadHeadingInternetArchive'), translations.downloadHeadingInternetArchive, language);
+    assert.equal(t('downloadHeadingOtherMirrors'), translations.downloadHeadingOtherMirrors, language);
+    assert.equal(t('showAllRemaining', {count: 3}), translations.showAllRemaining.replace('{count}', '3'), language);
+    assert.equal(context.document.documentElement.lang, language);
+    for (const request of fetched) {
+      assert.equal(request.options.cache, 'no-cache', 'Locale files must be revalidated');
+      assert.equal(new URL(request.url, 'https://example.org/').searchParams.get('v'),
+        scriptRevision, 'Locale files must use the same revision as the loader script');
+    }
+    assert.equal(fetched.length, language === 'en' ? 1 : 2);
+  }
+});

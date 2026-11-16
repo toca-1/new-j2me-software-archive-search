@@ -68,6 +68,18 @@ class RepositoryChecks(unittest.TestCase):
                 self.assertFalse(referenced - available,
                                  f'Unknown English keys: {sorted(referenced - available)}')
 
+    def test_embedded_translation_tables_were_migrated(self):
+        app = (ROOT / 'assets' / 'app.js').read_text(encoding='utf-8')
+        for old_name in ('FOLDER_UI', 'SHOW_ALL_LABELS', 'sourceHeading'):
+            self.assertNotIn(old_name, app, f'Embedded translation code remains: {old_name}')
+        english = get_json(LOCALES / 'en.json')
+        for key in ('folderOther', 'folderCounter', 'folderView', 'showAllRemaining',
+                    'downloadToggle', 'downloadHeadingInternetArchive',
+                    'downloadHeadingOtherMirrors'):
+            self.assertIn(key, english)
+        self.assertNotIn('downloadLinks', english)
+        self.assertNotIn('downloadLinksOtherMirrors', english)
+
     def test_homepage_referenced_assets_exist(self):
         html = (ROOT / 'index.html').read_text(encoding='utf-8')
         for attribute in ('src', 'href'):

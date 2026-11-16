@@ -31,9 +31,12 @@ window.J2ME_I18N = (() => {
   }
   let english = {};
   let chosen = {};
+  // A locale file can be updated while an older response is still in a browser
+  // cache. Keep the request versioned and revalidate before displaying UI text.
+  const LOCALE_REVISION = '20261116-step5';
 
   async function load(code) {
-    const response = await fetch(`assets/locales/${code}.json`);
+    const response = await fetch(`assets/locales/${code}.json?v=${LOCALE_REVISION}`, {cache: 'no-cache'});
     if (!response.ok) throw new Error(`Translation ${code}: HTTP ${response.status}`);
     return response.json();
   }
