@@ -400,3 +400,9 @@
 /* Prevent long fallback download commands from widening result cards. */
 .results { grid-template-columns: minmax(0, 1fr); }
 .results > .card { min-width: 0; }
+
+/* Search result pagination actions. */
+.result-pagination { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+.result-pagination > button[hidden] { display: none !important; }
+#show-all { font: inherit; padding: 0.7rem 1.1rem; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: 0.65rem; cursor: pointer; }
+#show-all:disabled { opacity: 0.55; cursor: wait; }

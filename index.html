@@ -4,7 +4,7 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101718"><meta name="description" content="Search J2ME games, apps and exact JAR builds in the New J2ME Software Archive by filename, title, vendor, SHA-1 or SHA-256. Includes verified checksums and an alternative JAR downloader.">
   <title>J2ME Games &amp; Apps Archive Search</title>
-  <link rel="stylesheet" href="assets/site.css"><script defer src="assets/i18n.js"></script><script defer src="assets/app.js"></script>
+  <link rel="stylesheet" href="assets/site.css"><script defer src="assets/i18n.js"></script><script defer src="assets/app.js?v=names-v2"></script>
   <meta name="google-site-verification" content="hmUcMdVu_pZ0UopzfXlKN3TwEPL4aV5bofLrxHOxEOM" />
 </head>
 <body>
@@ -19,7 +19,7 @@
       <form id="search-form"><label for="query" class="sr-only" data-i18n="queryLabel">Search query</label><input id="query" type="search" spellcheck="false" autocomplete="off" placeholder="Filename, game title or vendor…" data-i18n-placeholder="queryPlaceholder" required><button type="submit"><span data-i18n="searchButton">Search</span> <span aria-hidden="true"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em;flex-shrink:0"><path d="M7 17 17 7 M7 7h10v10"/></svg></span></button></form>
       <p class="hint"><span id="hint" data-i18n="hintInitial">Case-insensitive text search.</span> <span data-i18n="hostNotice">Files are hosted by Internet Archive.</span></p>
       </section>
-<section class="results-section" aria-label="Search results" data-i18n-aria-label="resultsSection" hidden><div class="result-heading"><h2 data-i18n="resultsHeading">Results</h2><span id="status" role="status" aria-live="polite"></span></div><div id="results" class="results"></div><button id="more" type="button" hidden data-i18n="moreResults">Show more results</button></section>
+<section class="results-section" aria-label="Search results" data-i18n-aria-label="resultsSection" hidden><div class="result-heading"><h2 data-i18n="resultsHeading">Results</h2><span id="status" role="status" aria-live="polite"></span></div><div id="results" class="results"></div><div class="result-pagination"><button id="more" type="button" hidden data-i18n="moreResults">Show more results</button><button id="show-all" type="button" hidden>Show all</button></div></section>
 
   </main>
   <footer><span data-i18n="footer">Unofficial community index · not affiliated with the archive's maintainers</span></footer>

@@ -10,11 +10,23 @@ const ARCHIVES = ['JARchiveLite_v11.7z', 'JARchive_v11.7z'];
 const NNPROJECT_FULL_MISSING = new Set([".                                       1/.                                       1 (WORMS) (1.0) (CLDC-1.1, MIDP-2.0) (BootJoker) (7f17fdeefba505d9fe2e5a51e789347e2f5153ec8ab8d32ac9c1c79b99e1c789).jar", "..VIETVTC..nguoi con gai mau lanh/..VIETVTC..nguoi con gai mau lanh (HeroCraft) (1.4.0) (CLDC-1.0, MIDP-2.0) (Main) (01505f772d07305863f419a69179c73e9ebebfdfc754e24d2592ef66c1b72ba3).jar", "ChinhDomTV/ChinhDomTV (nguyendoanchinh.wapsite.meTELEVISION%202G-S40) (1.01) (CLDC-1.0, MIDP-2.0) (GameMidlet) (9ce85ae8fddff39f10c5cea313c7c43d82b88761540c9406915cfb933a4e0f0f).jar", "M_YouTube_ChinhDom/M_YouTube_ChinhDom (m.youtube.comwatchdesktop_uri=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D-yOXycNEoAc&v=-yOXycNEoAc&gl=US) (1.01) (CLDC-1.0, MIDP-2.0) (GameMidlet) (1fa199e30bfadadde6ece841ad54e2e0b6afa13b9332cd9f738ad1aadb939571).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (532b09be357ff5054ba559825912bc6f43de6f8de41fdadeadc9773821e0a727).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (6847ae78ed5a35676f251f370584ccaaebee8a496080580abd5a22292c0ed425).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (ac001c962b1dc5803c34333fbed1f7d86e23b1ca52be7a11d1419a7e89f41381).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (ea019cb412a7cabf0de0a34df8f198c9610505b4750bf3e2b448f79ea172228d).jar"]);
 const NNPROJECT_FULL_OVERRIDES = new Map([]);
 const PAGE = 20;
+const INITIAL_PAGE = 5;
 const WORKERS = 8;
 const MAX_CACHED_SEARCH_SHARDS = 12;
+// Separate search-only index. The main manifest is kept byte-identical
+// for archive-folder verification and compatibility with older cached pages.
+const NAME_INDEX = Object.freeze({
+  chunks: 1024,
+  grams: 'names-v2/grams.json.gz',
+  directory: 'names-v2'
+});
 let manifest, searchMode = 'name', active = [], shown = 0, generation = 0;
 let searchGramPromise = null;
 let labelsForMatches = new Map();
+// Remember completed queries without retaining all parsed name shards.
+const recentNameSearches = new Map();
+const MAX_RECENT_NAME_SEARCHES = 5;
+let showAllBusy = false;
 const recordsCache = new Map(), detailsCache = new Map(), hashesCache = new Map(), namesCache = new Map();
 
 const upstreamShardCache = new Map();
@@ -93,14 +105,14 @@ async function exactHashLookup(mode, hash) {
   return bucket[hash];
 }
 async function gramMap() {
-  if (!searchGramPromise) searchGramPromise = readGzipJson(manifest.names_grams).catch(e => { searchGramPromise = null; throw e; });
+  if (!searchGramPromise) searchGramPromise = readGzipJson(NAME_INDEX.grams).catch(e => { searchGramPromise = null; throw e; });
   return searchGramPromise;
 }
 function candidateNameShards(query, maps) {
   const chars = Array.from(query);
   const length = chars.length >= 3 ? 3 : 2;
   const grams = maps[String(length)];
-  let bits = (1n << BigInt(manifest.names_chunks)) - 1n;
+  let bits = (1n << BigInt(NAME_INDEX.chunks)) - 1n;
   for (let i = 0; i <= chars.length - length; i++) {
     const value = grams[chars.slice(i, i + length).join('')];
     if (!value) return [];
@@ -108,15 +120,24 @@ function candidateNameShards(query, maps) {
     if (bits === 0n) return [];
   }
   const shards = [];
-  for (let i = 0; i < manifest.names_chunks; i++)
+  for (let i = 0; i < NAME_INDEX.chunks; i++)
     if (bits & (1n << BigInt(i))) shards.push(i);
   return shards;
 }
 function nameShard(i) {
   return memoized(namesCache, i,
-    () => readGzipJson(`names/${String(i).padStart(3, '0')}.json.gz`), MAX_CACHED_SEARCH_SHARDS);
+    () => readGzipJson(`${NAME_INDEX.directory}/${String(i).padStart(3, '0')}.json.gz`), MAX_CACHED_SEARCH_SHARDS);
 }
 async function searchNames(query, current) {
+  const remembered = recentNameSearches.get(query);
+  if (remembered) {
+    recentNameSearches.delete(query);
+    recentNameSearches.set(query, remembered);
+    labelsForMatches = new Map(remembered.labels);
+    console.info('[J2ME search cache] HIT:', query, remembered.ids.length, 'results');
+    return [...remembered.ids];
+  }
+  console.info('[J2ME search cache] MISS:', query);
   status(t('loadingIndex'));
   const grams = await gramMap();
   if (current !== generation) return [];
@@ -132,7 +153,10 @@ async function searchNames(query, current) {
       const list = await nameShard(candidates[index]);
       if (current !== generation) return;
       found[index] = list.filter(([label]) => label.includes(query));
-      status(t('searchingNames', {done: fmt(++completed), total: fmt(candidates.length)}));
+      const done = ++completed;
+      const percent = Math.floor(100 * done / candidates.length);
+      // Reuse existing translated status template and place percent before (done/total).
+      status(t('searchingNames', {done: `${percent}% (${fmt(done)}`, total: `${fmt(candidates.length)})`}));
     }
   });
   await Promise.all(workers);
@@ -143,7 +167,11 @@ async function searchNames(query, current) {
     const earlier = labelsForMatches.get(id);
     if (!earlier || kind < earlier[1]) labelsForMatches.set(id, [label, kind]);
   }
-  return [...ids];
+  const matches = [...ids];
+  recentNameSearches.set(query, {ids: matches, labels: [...labelsForMatches]});
+  while (recentNameSearches.size > MAX_RECENT_NAME_SEARCHES)
+    recentNameSearches.delete(recentNameSearches.keys().next().value);
+  return matches;
 }
 function copyButton(value, label = t('copy')) {
   const b = elem('button', label, 'copy'); b.type = 'button';
@@ -1055,15 +1083,15 @@ async function applyResultTools() {
   if (!state || state.busy) return;
   const current = generation;
   const query = $('refine-query').value.trim(), order = $('result-sort').value;
-  state.busy = true; setResultControlsBusy(true); $('more').disabled = true;
+  state.busy = true; setResultControlsBusy(true); $('more').disabled = true; $('show-all').disabled = true;
   try {
     if (query || order !== 'default') await prepareResultSummaries(state, current);
     if (current !== generation || originalResults !== state) return;
     active = selectResultIds(state, query, order); shown = 0; resultViewVersion++;
-    $('results').replaceChildren(); $('more').hidden = true;
+    $('results').replaceChildren(); $('more').hidden = true; $('show-all').hidden = true;
     status(query ? t('subsetCount', {count: fmt(active.length), total: fmt(state.ids.length)}) :
       t('matchingFiles', {count: fmt(active.length), pluralCount: active.length}));
-    if (active.length) await renderMore(current);
+    if (active.length) await renderMore(current, INITIAL_PAGE);
     else $('results').append(elem('div', t('noRefinedResults'), 'empty'));
   } catch (error) {
     if (current === generation && originalResults === state) {
@@ -1072,24 +1100,71 @@ async function applyResultTools() {
   } finally {
     state.busy = false;
     if (current === generation && originalResults === state) {
-      setResultControlsBusy(false); $('more').disabled = false;
+      setResultControlsBusy(false); $('more').disabled = false; $('show-all').disabled = false;
     }
   }
 }
-async function renderMore(current) {
+// Localized "Show all" label (all supported interface languages).
+const SHOW_ALL_LABELS = {
+  en:'Show all', de:'Alle anzeigen', es:'Mostrar todo', 'pt-BR':'Mostrar tudo',
+  ru:'Показать все', id:'Tampilkan semua', 'zh-CN':'显示全部', pl:'Pokaż wszystkie',
+  vi:'Hiển thị tất cả', fr:'Tout afficher', tr:'Tümünü göster', it:'Mostra tutti',
+  uk:'Показати всі', th:'แสดงทั้งหมด', cs:'Zobrazit vše', 'zh-TW':'顯示全部',
+  ro:'Afișează tot', hi:'सभी दिखाएँ', ja:'すべて表示', ko:'모두 보기',
+  nl:'Alles tonen', ms:'Papar semua'
+};
+function updatePaginationButtons() {
+  const remaining = Math.max(0, active.length - shown);
+  const more = $('more'), all = $('show-all');
+  more.hidden = all.hidden = remaining === 0;
+  more.textContent = t('moreRemaining', {count: fmt(remaining)});
+  const lang = $('language-select')?.value || 'en';
+  all.textContent = `${SHOW_ALL_LABELS[lang] || SHOW_ALL_LABELS.en} (${fmt(remaining)})`;
+}
+async function renderAllRemaining(current) {
+  if (showAllBusy || current !== generation) return;
+  showAllBusy = true;
+  const view = resultViewVersion;
+  $('more').disabled = true;
+  $('show-all').disabled = true;
+  try {
+    while (current === generation && view === resultViewVersion && shown < active.length) {
+      const before = shown;
+      await renderMore(current, PAGE);
+      if (shown === before) break; // Prevent looping if the view was cancelled.
+      // Allow browser painting and user interactions between batches.
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+  } catch (error) {
+    if (current === generation && view === resultViewVersion) {
+      status(t('loadMoreError'));
+      console.error(error);
+    }
+  } finally {
+    if (current === generation && view === resultViewVersion) {
+      showAllBusy = false;
+      $('more').disabled = Boolean(originalResults?.busy);
+      $('show-all').disabled = Boolean(originalResults?.busy);
+      updatePaginationButtons();
+    }
+  }
+}
+async function renderMore(current, pageSize = PAGE) {
   const view = resultViewVersion;
   if (current !== generation || moreLoadingVersion === view) return;
-  const button = $('more'); button.disabled = true; moreLoadingVersion = view;
+  const button = $('more'); button.disabled = true; $('show-all').disabled = true; moreLoadingVersion = view;
   try {
-    const ids = active.slice(shown, Math.min(shown + PAGE, active.length));
+    const ids = active.slice(shown, Math.min(shown + pageSize, active.length));
     const results = await Promise.all(ids.map(recordById));
     if (current !== generation || view !== resultViewVersion) return;
     results.forEach((rec, i) => $('results').append(renderResult(ids[i], rec)));
-    shown += ids.length; button.hidden = shown >= active.length;
-    button.textContent = t('moreRemaining', {count: fmt(active.length - shown)});
+    shown += ids.length; updatePaginationButtons();
   } finally {
     if (moreLoadingVersion === view) moreLoadingVersion = null;
-    if (current === generation && view === resultViewVersion) button.disabled = Boolean(originalResults && originalResults.busy);
+    if (current === generation && view === resultViewVersion) {
+      button.disabled = Boolean(showAllBusy || (originalResults && originalResults.busy));
+      $('show-all').disabled = Boolean(showAllBusy || (originalResults && originalResults.busy));
+    }
   }
 }
 
@@ -1098,7 +1173,8 @@ async function runSearch() {
   const current = ++generation;
   resetResultTools();
   const term = $('query').value.trim();
-  $('results').replaceChildren(); $('more').hidden = true; labelsForMatches = new Map();
+  $('results').replaceChildren(); $('more').hidden = true; $('show-all').hidden = true; labelsForMatches = new Map();
+  showAllBusy = false;
   if (!manifest) { status(t('indexNotLoaded')); return; }
   if (!term) { status(t('enterSearchTerm')); return; }
   $('search-form').querySelector('button').disabled = true;
@@ -1126,7 +1202,7 @@ async function runSearch() {
       status(t('zeroMatching')); $('results').append(elem('div', t('noMatchingFiles'), 'empty')); return;
     }
     status(t('matchingFiles', {count: fmt(ids.length), pluralCount: ids.length}));
-    await renderMore(current);
+    await renderMore(current, INITIAL_PAGE);
   } catch (e) {
     if (current !== generation) return;
     status(t('searchError')); $('results').append(elem('div', e.message, 'empty')); console.error(e);
@@ -1165,6 +1241,8 @@ async function init() {
   $('more').addEventListener('click', () => renderMore(generation).catch(e => {
     status(t('loadMoreError')); console.error(e);
   }));
+  $('show-all').addEventListener('click', () => renderAllRemaining(generation));
+  $('language-select').addEventListener('change', () => updatePaginationButtons());
   try {
     manifest = await readJson('manifest.json');
     if (manifest.schema_version !== 4) throw new Error(t('schemaMismatch'));
