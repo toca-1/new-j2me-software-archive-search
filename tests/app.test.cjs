@@ -38,13 +38,33 @@ test('archive paths are encoded as ONE URL member, including slashes and symbols
 
 test('gram intersection selects only relevant name shards', () => {
   const {run} = loadApp();
+  run("NAME_INDEX = nameIndexConfig({names_chunks: 4, names_grams: 'names-v2/grams.json.gz'})");
   assert.deepEqual(Array.from(run("candidateNameShards('abcd', {'3': {abc: '3', bcd: '2'}})")), [1]);
   assert.deepEqual(Array.from(run("candidateNameShards('abcz', {'3': {abc: '3'}})")), []);
 });
 
+test('name shard count and paths follow manifest settings, not hardcoded defaults', async () => {
+  const {run, context} = loadApp();
+  context.config = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/manifest.json'), 'utf8'));
+  // Verify the checked-in manifest is accepted without changing its bytes.
+  assert.equal(run('nameIndexConfig(config).chunks'), context.config.names_chunks);
+  assert.equal(run('nameIndexConfig(config).grams'), context.config.names_grams);
+  // A hypothetical future build changes both the shard count and directory.
+  run("NAME_INDEX = nameIndexConfig({names_chunks: 4, names_grams: 'search/next/grams.json.gz'})");
+  context.requestedPaths = [];
+  run('readGzipJson = async path => { requestedPaths.push(path); return {}; };');
+  await run('gramMap()');
+  await run('nameShard(3)');
+  assert.deepEqual(context.requestedPaths, ['search/next/grams.json.gz', 'search/next/003.json.gz']);
+  assert.deepEqual(Array.from(run("candidateNameShards('abc', {'3': {abc: 'f'}})")), [0, 1, 2, 3]);
+  assert.throws(() => run("nameIndexConfig({names_chunks: 0, names_grams: 'search/grams.json.gz'})"), /schemaMismatch/);
+  assert.throws(() => run("nameIndexConfig({names_chunks: 4, names_grams: '../grams.json.gz'})"), /schemaMismatch/);
+});
+
 test('name search deduplicates IDs, remembers labels, and reuses cached results', async () => {
   const {run} = loadApp();
-  run(`gramMap = async () => ({'3': {son: '3'}});
+  run(`NAME_INDEX = nameIndexConfig({names_chunks: 2, names_grams: 'names-v2/grams.json.gz'});
+       gramMap = async () => ({'3': {son: '3'}});
        nameShard = async i => i === 0
          ? [['sonic', 5, 1], ['panasonic', 7, 2]]
          : [['sonic', 5, 0], ['sonar', 9, 0]];`);
@@ -58,7 +78,8 @@ test('name search deduplicates IDs, remembers labels, and reuses cached results'
 
 test('text results rank exact, prefix, word-start, substring, and vendor-only hits', async () => {
   const {run} = loadApp();
-  run(`gramMap = async () => ({'3': {son: '1', oni: '1', nic: '1'}});
+  run(`NAME_INDEX = nameIndexConfig({names_chunks: 1, names_grams: 'names-v2/grams.json.gz'});
+       gramMap = async () => ({'3': {son: '1', oni: '1', nic: '1'}});
        nameShard = async () => [
          ['panasonic', 11, 0],     // Inside a filename word.
          ['sonic studio', 22, 2],  // Vendor prefix, below filename hits.

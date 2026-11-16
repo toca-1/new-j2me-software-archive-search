@@ -16,13 +16,20 @@ const WORKERS = 8;
 // Use more concurrent reads than before (2) without fetching every chunk at once.
 const SUMMARY_WORKERS = 6;
 const MAX_CACHED_SEARCH_SHARDS = 12;
-// Separate search-only index. The main manifest is kept byte-identical
-// for archive-folder verification and compatibility with older cached pages.
-const NAME_INDEX = Object.freeze({
-  chunks: 1024,
-  grams: 'names-v2/grams.json.gz',
-  directory: 'names-v2'
-});
+// Read the search-only index settings from data/manifest.json. This change
+// leaves the manifest byte-identical for the folder browser's SHA-256 check.
+function nameIndexConfig(index) {
+  const chunks = index.names_chunks;
+  const grams = index.names_grams;
+  const suffix = '/grams.json.gz';
+  const directory = typeof grams === 'string' && grams.endsWith(suffix)
+    ? grams.slice(0, -suffix.length) : '';
+  if (!Number.isSafeInteger(chunks) || chunks < 1 || !directory ||
+      directory.split('/').some(part => !part || part === '.' || part === '..' || part.includes('\\')))
+    throw new Error(t('schemaMismatch'));
+  return Object.freeze({chunks, grams, directory});
+}
+let NAME_INDEX;
 let manifest, searchMode = 'name', active = [], shown = 0, generation = 0;
 let searchGramPromise = null;
 let labelsForMatches = new Map();
@@ -1344,8 +1351,13 @@ async function init() {
   $('show-all').addEventListener('click', () => renderAllRemaining(generation));
   $('language-select').addEventListener('change', () => updatePaginationButtons());
   try {
-    manifest = await readJson('manifest.json');
-    if (manifest.schema_version !== 4) throw new Error(t('schemaMismatch'));
+    const loadedManifest = await readJson('manifest.json');
+    if (loadedManifest.schema_version !== 4) throw new Error(t('schemaMismatch'));
+    const loadedNameIndex = nameIndexConfig(loadedManifest);
+    // Publish both settings together so a malformed index cannot leave the
+    // search handler with a loaded manifest but no name-index configuration.
+    manifest = loadedManifest;
+    NAME_INDEX = loadedNameIndex;
     $('unique-count').textContent = fmt(manifest.unique_files);
     if ($('entries-count')) $('entries-count').textContent = fmt(manifest.total_rows);
     if ($('shared-count')) $('shared-count').textContent = fmt(manifest.shared_files);
