@@ -46,13 +46,60 @@ function urlFor(collection, archivePath) {
   const member = encodeURIComponent(archivePath).replace(/[!'()*]/g, ch => '%' + ch.charCodeAt(0).toString(16).toUpperCase());
   return IA + ARCHIVES[collection] + '/' + member;
 }
+// Retry temporary network and HTTP failures without silently losing search shards.
+// Four total attempts: the first request plus up to three retries.
+const FETCH_MAX_ATTEMPTS = 4;
+const FETCH_RETRY_BASE_MS = 650;
+const FETCH_RETRY_MAX_MS = 8000;
+function fetchRetryDelay(response, attempt) {
+  const retryAfter = response?.headers?.get('Retry-After');
+  let suggestedMs = 0;
+  if (retryAfter) {
+    const value = retryAfter.trim();
+    if (/^\d+(?:\.\d+)?$/.test(value)) {
+      suggestedMs = Number(value) * 1000;
+    } else {
+      const until = Date.parse(value);
+      if (Number.isFinite(until)) suggestedMs = Math.max(0, until - Date.now());
+    }
+  }
+  const backoffMs = FETCH_RETRY_BASE_MS * 2 ** (attempt - 1) + Math.random() * 250;
+  return Math.min(FETCH_RETRY_MAX_MS, Math.max(suggestedMs, backoffMs));
+}
+async function fetchIndexWithRetry(path) {
+  const url = ROOT + path;
+  for (let attempt = 1; attempt <= FETCH_MAX_ATTEMPTS; attempt++) {
+    let response;
+    try {
+      response = await fetch(url);
+    } catch (error) {
+      // Retry temporary network failures, but not intentional cancellations.
+      if (attempt === FETCH_MAX_ATTEMPTS || error?.name === 'AbortError') throw error;
+      const delay = fetchRetryDelay(null, attempt);
+      console.warn(`[J2ME] Network error loading ${path}; retry ${attempt}/${FETCH_MAX_ATTEMPTS - 1} in ${Math.round(delay)}ms`, error);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      continue;
+    }
+    if (response.ok) return response;
+    // Never retry 404 (or other permanent client errors). Exact-hash lookup
+    // intentionally handles 404 as an empty bucket elsewhere in the code.
+    const transient = response.status === 408 || response.status === 429 ||
+      (response.status >= 500 && response.status <= 599);
+    if (!transient || attempt === FETCH_MAX_ATTEMPTS)
+      throw new Error(t('loadFailed', {path, status: response.status}));
+    const delay = fetchRetryDelay(response, attempt);
+    console.warn(`[J2ME] HTTP ${response.status} loading ${path}; retry ${attempt}/${FETCH_MAX_ATTEMPTS - 1} in ${Math.round(delay)}ms`);
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+}
+
 async function readJson(path) {
-  const response = await fetch(ROOT + path);
+  const response = await fetchIndexWithRetry(path);
   if (!response.ok) throw new Error(t('loadFailed', {path, status: response.status}));
   return response.json();
 }
 async function readGzipJson(path) {
-  const response = await fetch(ROOT + path);
+  const response = await fetchIndexWithRetry(path);
   if (!response.ok) throw new Error(t('loadFailed', {path, status: response.status}));
   // Some hosts serve .gz with Content-Encoding, others as raw gzip bytes.
   const raw = new Uint8Array(await response.arrayBuffer());
