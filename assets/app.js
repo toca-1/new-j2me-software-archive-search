@@ -446,10 +446,10 @@ async function appendUpstreamDownloads(sha256, list) {
   try {
     const matches = await upstreamMatchesFor(sha256);
     if (!list.isConnected) return; // The search results could have changed.
-    for (const match of matches) {
-      list.append(downloadSourceRow(list.childElementCount + 1,
-        match.label, match.path, match.url));
-    }
+    // Build all optional rows before inserting them, avoiding individual updates.
+    const firstNumber = list.childElementCount + 1;
+    list.append(...matches.map((match, index) =>
+      downloadSourceRow(firstNumber + index, match.label, match.path, match.url)));
   } catch (error) {
     // Optional upstream URLs must not affect primary links or CLI fallback.
     console.warn('Optional upstream download links unavailable:', error);
@@ -938,6 +938,7 @@ async function addFolderBrowser(id, record, card, downloadSection, downloadBar,
       // Avoid having two huge result-card sections open at once.
       downloadPanel.hidden = true;
       downloadToggle.setAttribute('aria-expanded', 'false');
+      downloadToggle.removeAttribute('aria-busy');
     }
     button.setAttribute('aria-expanded', String(open));
     panel.hidden = !open;
@@ -1005,10 +1006,35 @@ function renderResult(id, record) {
   downloadPanel.id = `download-panel-${id}`;
   downloadPanel.hidden = true;
   downloadToggle.setAttribute('aria-controls', downloadPanel.id);
+  // Fetch optional links only on the first expansion, but reveal the complete
+  // panel together. Otherwise primary links show first and optional ones pop in.
+  let upstreamLookupStarted = false;
+  let upstreamReady = false;
   downloadToggle.addEventListener('click', () => {
     const opening = downloadToggle.getAttribute('aria-expanded') !== 'true';
     downloadToggle.setAttribute('aria-expanded', String(opening));
-    downloadPanel.hidden = !opening;
+    if (!opening) {
+      downloadPanel.hidden = true;
+      downloadToggle.removeAttribute('aria-busy');
+      return;
+    }
+    if (upstreamReady) {
+      downloadPanel.hidden = false;
+      return;
+    }
+    downloadPanel.hidden = true;
+    downloadToggle.setAttribute('aria-busy', 'true');
+    if (!upstreamLookupStarted) {
+      upstreamLookupStarted = true;
+      appendUpstreamDownloads(sha256, iaList).then(() => {
+        // Even if the optional lookup fails, the primary links must be shown.
+        upstreamReady = true;
+        downloadToggle.removeAttribute('aria-busy');
+        // Another disclosure might have been opened during the request.
+        if (card.isConnected && downloadToggle.getAttribute('aria-expanded') === 'true')
+          downloadPanel.hidden = false;
+      });
+    }
   });
 
   // Reuse each locale's existing source description, omitting the redundant
@@ -1034,7 +1060,6 @@ function renderResult(id, record) {
     downloadPanel.append(mirrors);
   }
   downloadPanel.append(fallbackDownloadAction(sha256));
-  appendUpstreamDownloads(sha256, iaList);
 
   const more = elem('button', t('showMetadata'), 'metadata-toggle');
   more.type = 'button'; more.setAttribute('aria-expanded', 'false');

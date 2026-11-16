@@ -158,3 +158,118 @@ test('temporary HTTP 503 is retried; permanent HTTP 404 is not', async () => {
   await assert.rejects(run("fetchIndexWithRetry('missing.json')"), /HTTP 404/);
   assert.deepEqual(requested, ['./data/missing.json']);
 });
+
+// Minimal DOM for the real download disclosure handler, without a browser dependency.
+function downloadTestDom(context) {
+  function makeElement(tag) {
+    const attrs = new Map();
+    const listeners = new Map();
+    return {
+      tagName: tag, className: '', children: [], hidden: false, isConnected: true,
+      append(...nodes) { this.children.push(...nodes); },
+      setAttribute(key, value) { attrs.set(key, String(value)); },
+      getAttribute(key) { return attrs.get(key) ?? null; },
+      removeAttribute(key) { attrs.delete(key); },
+      addEventListener(type, handler) { listeners.set(type, handler); },
+      click() { listeners.get('click')?.(); },
+      get childElementCount() { return this.children.filter(x => x?.tagName).length; }
+    };
+  }
+  context.document.createElement = makeElement;
+  context.document.createTextNode = text => ({nodeType: 3, textContent: text});
+  context.document.documentElement = {lang: 'en'};
+  function find(root, className) {
+    if (root.className === className) return root;
+    for (const child of root.children || []) {
+      const matched = find(child, className);
+      if (matched) return matched;
+    }
+    return null;
+  }
+  return find;
+}
+
+const testRecord = `[
+  '${'a'.repeat(64)}', '${'b'.repeat(40)}', 3072,
+  [[0, 'Sonic.jar', 'Games/Sonic.jar', '1234ABCD']],
+  ['Sonic', 'Publisher', '1.0', 'CLDC-1.1', 'MIDP-2.0']
+]`;
+
+test('download disclosure reveals all links at once after the optional lookup', async () => {
+  const {run, context} = loadApp();
+  const find = downloadTestDom(context);
+  run(`addFolderBrowser = async () => {};
+       let upstreamCalls = 0;
+       let finishUpstream;
+       upstreamMatchesFor = () => {
+         upstreamCalls++;
+         return new Promise(resolve => { finishUpstream = resolve; });
+       };`);
+  const card = run(`renderResult(42, ${testRecord})`);
+  const toggle = find(card, 'download-toggle');
+  const panel = find(card, 'download-panel');
+  const archiveLinks = find(card, 'download-list');
+  assert.ok(toggle && panel && archiveLinks);
+  assert.equal(panel.hidden, true);
+  assert.equal(archiveLinks.childElementCount, 1, 'Primary link exists before opening');
+  assert.equal(run('upstreamCalls'), 0, 'Rendering does not start optional requests');
+
+  toggle.click();
+  assert.equal(run('upstreamCalls'), 1);
+  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+  assert.equal(toggle.getAttribute('aria-busy'), 'true');
+  assert.equal(panel.hidden, true, 'Do not reveal only the primary links');
+  assert.equal(archiveLinks.childElementCount, 1);
+  run(`finishUpstream([
+    {label: 'Historical mirror', path: 'Archive/Sonic.jar', url: 'https://example.org/a'},
+    {label: 'Second mirror', path: 'Sonic.jar', url: 'https://example.org/b'}
+  ])`);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(archiveLinks.childElementCount, 3, 'Both optional rows are ready');
+  assert.equal(archiveLinks.children[1].children[0].textContent, '2');
+  assert.equal(archiveLinks.children[2].children[0].textContent, '3');
+  assert.equal(panel.hidden, false, 'Reveal the complete panel together');
+  assert.equal(toggle.getAttribute('aria-busy'), null);
+
+  toggle.click(); // Collapse.
+  assert.equal(panel.hidden, true);
+  toggle.click(); // Reopen without any lookup.
+  assert.equal(panel.hidden, false);
+  assert.equal(run('upstreamCalls'), 1, 'Reopening does not repeat the lookup');
+  assert.equal(archiveLinks.childElementCount, 3, 'No duplicate download links');
+});
+
+test('closing while loading prevents a late reveal, and errors still show primary links', async () => {
+  const {run, context} = loadApp();
+  const find = downloadTestDom(context);
+  run(`addFolderBrowser = async () => {};
+       let calls = 0;
+       let finishUpstream;
+       upstreamMatchesFor = () => {
+         calls++;
+         return new Promise(resolve => { finishUpstream = resolve; });
+       };`);
+  const card = run(`renderResult(43, ${testRecord})`);
+  const toggle = find(card, 'download-toggle');
+  const panel = find(card, 'download-panel');
+  toggle.click(); // Start loading.
+  toggle.click(); // Cancel the expansion during loading.
+  assert.equal(toggle.getAttribute('aria-busy'), null);
+  run('finishUpstream([])');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(panel.hidden, true, 'Do not reopen a panel the visitor closed');
+  toggle.click();
+  assert.equal(panel.hidden, false, 'After loading, opening is immediate');
+  assert.equal(run('calls'), 1);
+
+  // A failed optional lookup must not hide the primary link indefinitely.
+  run(`upstreamMatchesFor = async () => { throw new Error('Optional source offline'); };`);
+  const errorCard = run(`renderResult(44, ${testRecord})`);
+  const errorToggle = find(errorCard, 'download-toggle');
+  const errorPanel = find(errorCard, 'download-panel');
+  errorToggle.click();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(errorPanel.hidden, false);
+  assert.equal(find(errorCard, 'download-list').childElementCount, 1);
+  assert.equal(errorToggle.getAttribute('aria-busy'), null);
+});
