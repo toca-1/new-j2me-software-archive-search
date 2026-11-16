@@ -5,12 +5,7 @@ on:
   push:
     branches: ["main"]
     paths-ignore:
-      - "docs/README.md"
-      - "docs/DOWNLOADER.md"
-      - "docs/SOURCES.md"
-      - "docs/FUTURE_WORK.md"
-      - "docs/IMPLEMENTATION_CHECKLIST.md"
-      - "docs/ATTRIBUTION.md"
+      - "docs/**"
       - "LICENSE"
       - "missing_files/**"
 
