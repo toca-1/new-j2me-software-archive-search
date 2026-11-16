@@ -1,6 +1,8 @@
 # New J2ME Software Archive Search
 
-[Search J2ME games, apps, and exact JAR builds](https://toca-1.github.io/new-j2me-software-archive-search/) by filename, title, vendor, or various hashes (CRC32, SHA-1, SHA-256). A current browser with JavaScript enabled is required. This independent index covers [TwoSpacesSG's **New J2ME Software Archive**](https://archive.org/details/96x65pixels_j2me) as well as its upstream sources that are listed in the archive's description, cf. [`SOURCES.MD`](SOURCES.md). For an alternative visual exploration of the archive refer to [this website](https://f.nnproject.cc/jarchive/).
+[Search J2ME games, apps, and exact JAR builds](https://toca-1.github.io/new-j2me-software-archive-search/) by filename, title, vendor, or various hashes (CRC32, SHA-1, SHA-256). A current browser with JavaScript enabled is required.
+
+This independent index covers [TwoSpacesSG's **New J2ME Software Archive**](https://archive.org/details/96x65pixels_j2me) as well as its upstream sources that are listed in the archive's description, cf. [`SOURCES.MD`](SOURCES.md). For an alternative visual exploration of the archive refer to [this website](https://f.nnproject.cc/jarchive/).
 
 ## Downloads, third-party content, and licensing
 
@@ -13,13 +15,12 @@ The project's software license applies only to its original code and documentati
 ## Search features
 
 - Case-insensitive substring search of original filenames, MIDlet names, and vendors; default text results prioritize exact, prefix, and word-start filename/title matches over incidental substrings and vendor-only hits
-- A single Hash search mode automatically detects complete CRC32 (8 hexadecimal characters), SHA-1 (40), or SHA-256 (64) checksums; other inputs show a format error
-- Search-within-results refinement, sorting by title or file size, and incremental loading or **Show all** for larger result sets
+- A single Hash search mode which automatically detects complete CRC32, SHA-1, or SHA-256 checksums
 - MIDlet name, vendor, version, CLDC, and MIDP information where available
-- Expandable "Other files" browser for distinct JAR contents in the same archive folder, with filtering and incremental loading
-- Direct download links to individual JAR files on the Internet Archive
+- Search-within-results refinement, sorting by title or file size
+- Direct download links to individual JAR files on the Internet Archive and other mirror sites, together with alternative downloader instructions and copyable commands for Windows and Linux/macOS
 - Expandable manifest details and historical original-source locations
-- Alternative downloader instructions and copyable commands for Windows and Linux/macOS
+- Expandable "Other files" browser for distinct JAR contents in the same archive folder with filtering
 
 ## Download an individual JAR
 
@@ -35,7 +36,7 @@ The [**index-v1 release**](https://github.com/toca-1/new-j2me-software-archive-s
 | `jarchive-combined-verified.csv.gz.sha256` | SHA-256 checksum for the compressed CSV |
 | `jarchive-combined-verified.summary.json` | Verification summary |
 
-The index covers the 816,215 archived file entries and 620,287 unique file contents described above; no JAR files are included. This CSV is the verified base index -- it is **not** the enriched CSV or manifest-details JSONL required by the site builder below.
+The index covers the 816,215 archived file entries and 620,287 unique file contents described above; **no** JAR files are included. This CSV is the verified base index -- it is **not** the enriched CSV or manifest-details JSONL required by the site builder below.
 
 ## Preview the site locally
 
@@ -83,42 +84,24 @@ The browser search index lives under `data/`:
 
 ### Folder-index rebuild compatibility
 
-`data/folders/` is a supplemental index and must be rebuilt **after every change to
-`data/records/`**. The folder index's v2 manifest contains a SHA-256 fingerprint
-of the complete ordered, uncompressed JSON record data (including archive paths
-and display metadata), in addition to the original main-manifest digest.
-Reordering records or changing their sources is detected even if the main
-`data/manifest.json` stays unchanged. The browser verifies visible folder
-members against the live records before displaying links; stale or old-schema
-folder data is disabled rather than presenting potentially wrong associations.
+`data/folders/` is a supplemental index and must be rebuilt after every change to `data/records/`. The folder index's v2 manifest contains a SHA-256 fingerprint of the complete ordered, uncompressed JSON record data (including archive paths and display metadata), in addition to the original main-manifest digest. Reordering records or changing their sources is detected even if the main `data/manifest.json` stays unchanged. The browser verifies visible folder members against the live records before displaying links; stale or old-schema folder data is disabled rather than presenting potentially wrong associations.
 
-From a checkout with the complete `data/` directory:
+From a checkout with the complete `data/` directory (the second command reads all record shards, i.e., it is separate from the lightweight `tests/check_index.py` check):
 
 ```sh
 python3 tools/build_folder_groups.py --repo .
 python3 tools/check_folder_index.py --repo . --require-folders
 ```
 
-The second command reads **all record shards**, so it is intentionally separate
-from the lightweight `tests/check_index.py` smoke check. The deployment workflow
-also runs the full folder compatibility check when `data/folders/` exists.
-A mismatch fails deployment; regenerate the folder index rather than modifying
-its manifest by hand. The original search data are not rewritten by the folder
-builder.
-
-The Python downloader uses a separate index under `retrieval/v1/`, with its own manifest and SHA-1/SHA-256 lookup shards.
-
 ## Known limitations
 
 - Text search is substring-based
-- "Other files" groups distinct contents by exact archive folder name; shared folders do not prove that files are versions of the same app, and related files in different folders are not automatically linked
 - Broad text searches may need to fetch and scan multiple index shards. A first search can take longer when the necessary data is not cached
 - Public metadata includes at most the configured number of historical original-source paths per manifest. Full original paths and untruncated manifest details remain in the original source infofiles and enrichment output
-- Download availability and speed depend on the Internet Archive and the user's connection
 
 ## Future work
 
-Planned and possible improvements are tracked in [`FUTURE_WORK.md`](FUTURE_WORK.md); the suggested implementation order and acceptance checks are in [`IMPLEMENTATION_CHECKLIST.md`](IMPLEMENTATION_CHECKLIST.md). Please submit further ideas and any problems via [the "Issues" tab](https://github.com/toca-1/new-j2me-software-archive-search/issues).
+Planned and possible improvements are tracked in [`FUTURE_WORK.md`](FUTURE_WORK.md). Please submit further ideas and any problems via [the "Issues" tab](https://github.com/toca-1/new-j2me-software-archive-search/issues).
 
 ## Usage of AI
 
