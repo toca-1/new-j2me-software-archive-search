@@ -12,6 +12,9 @@ const NNPROJECT_FULL_OVERRIDES = new Map([]);
 const PAGE = 20;
 const INITIAL_PAGE = 5;
 const WORKERS = 8;
+// Sorting/refining needs metadata from record chunks spread across the archive.
+// Use more concurrent reads than before (2) without fetching every chunk at once.
+const SUMMARY_WORKERS = 6;
 const MAX_CACHED_SEARCH_SHARDS = 12;
 // Separate search-only index. The main manifest is kept byte-identical
 // for archive-folder verification and compatibility with older cached pages.
@@ -175,6 +178,23 @@ function nameShard(i) {
   return memoized(namesCache, i,
     () => readGzipJson(`${NAME_INDEX.directory}/${String(i).padStart(3, '0')}.json.gz`), MAX_CACHED_SEARCH_SHARDS);
 }
+// Lower scores are more relevant. Kind 0 = filename, 1 = MIDlet title,
+// 2 = vendor. Vendor-only hits follow all filename/title matches.
+// Use Unicode letters, digits and combining marks when detecting word starts.
+const NAME_WORD_END = /[\p{L}\p{N}\p{M}]$/u;
+function nameMatchRank(query, label, kind) {
+  const vendorPenalty = kind === 2 ? 4 : 0;
+  // "sonic.jar" should be an exact filename match for a search for "sonic".
+  if (label === query || (kind === 0 && label.endsWith('.jar') && label.slice(0, -4) === query))
+    return vendorPenalty;
+  if (label.startsWith(query)) return vendorPenalty + 1;
+  // A label can contain the term more than once: "panasonic sonic" has a
+  // whole-word match even though its first occurrence is inside a word.
+  for (let at = label.indexOf(query); at !== -1; at = label.indexOf(query, at + 1)) {
+    if (!NAME_WORD_END.test(label.slice(0, at))) return vendorPenalty + 2;
+  }
+  return vendorPenalty + 3; // Remaining substring matches, e.g. "panasonic".
+}
 async function searchNames(query, current) {
   const remembered = recentNameSearches.get(query);
   if (remembered) {
@@ -208,13 +228,21 @@ async function searchNames(query, current) {
   });
   await Promise.all(workers);
   if (current !== generation) return [];
-  const ids = new Set();
+  const ids = new Set(), bestRank = new Map();
   for (const batch of found) for (const [label, id, kind] of batch) {
     ids.add(id);
+    const rank = nameMatchRank(query, label, kind);
+    if (!bestRank.has(id) || rank < bestRank.get(id)) bestRank.set(id, rank);
+    // Keep the original preferred label for card-title fallback; ranking
+    // separately considers every matching label for the same record.
     const earlier = labelsForMatches.get(id);
     if (!earlier || kind < earlier[1]) labelsForMatches.set(id, [label, kind]);
   }
-  const matches = [...ids];
+  // Eight stable tiers avoid a full sort and preserve the previous order
+  // between matches of equal relevance, even for very broad searches.
+  const ranked = Array.from({length: 8}, () => []);
+  for (const id of ids) ranked[bestRank.get(id)].push(id);
+  const matches = ranked.flat();
   recentNameSearches.set(query, {ids: matches, labels: [...labelsForMatches]});
   while (recentNameSearches.size > MAX_RECENT_NAME_SEARCHES)
     recentNameSearches.delete(recentNameSearches.keys().next().value);
@@ -1106,7 +1134,7 @@ async function prepareResultSummaries(state, current) {
       await new Promise(resolve => setTimeout(resolve, 0));
     }
   };
-  const outcomes = await Promise.allSettled(Array.from({length: Math.min(2, batches.length)}, worker));
+  const outcomes = await Promise.allSettled(Array.from({length: Math.min(SUMMARY_WORKERS, batches.length)}, worker));
   const failed = outcomes.find(outcome => outcome.status === 'rejected');
   if (failed) throw failed.reason;
   if (current === generation && originalResults === state) state.ready = true;

@@ -12,7 +12,7 @@ The project's software license applies only to its original code and documentati
 
 ## Search features
 
-- Case-insensitive substring search of original filenames, MIDlet names, and vendors
+- Case-insensitive substring search of original filenames, MIDlet names, and vendors; default text results prioritize exact, prefix, and word-start filename/title matches over incidental substrings and vendor-only hits
 - Exact lookup by CRC32, SHA-1, or SHA-256 checksum
 - MIDlet name, vendor, version, CLDC, and MIDP information where available
 - Expandable "Other files" browser for distinct JAR contents in the same archive folder, with filtering and incremental loading
