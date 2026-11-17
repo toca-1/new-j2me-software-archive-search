@@ -1,6 +1,5 @@
 - [ ] **Search improvements.** Search paths as well as filenames and metadata
 - [ ] **Optional J2ME-specific search filters.** In a collapsible advanced-filter section, let visitors narrow results by archive collection (Lite/Full), MIDP and CLDC version, file size, and vendor. Handle missing metadata explicitly (e.g., "Unknown") and keep the default search UI uncluttered
-- [ ] **Better navigation for large result sets.** Improve handling of very broad queries
 - [ ] **Document reproducibility.** Publish or refine the indexing, extraction, hashing and metadata-join methodology, including the overlong Linux filename handled by archive streaming
 - [ ] **Metadata quality tools.** Identify conflicting or incomplete manifest fields, as well as fields that could still be added (e.g.,  screen resolution, language, device compatibility)
 - [x] **Export search results.** Add the ability for users to export the results of their current search in some form
