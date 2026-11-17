@@ -44,6 +44,8 @@
   "linuxIntro": "在 Linux 與 macOS 上：",
   "windowsIntro": "在 Windows 上：",
   "guide": "完整設定指南",
+  "downloaderGuideTitle": "JAR 下載器",
+  "downloaderGuideNotice": "下方詳細技術說明目前僅提供英文版本。所有語言使用相同的指令。",
   "guidePrefix": "更多資訊請參閱",
   "guideSuffix": "。",
   "folderOther": "其他檔案",
@@ -74,6 +76,9 @@
   "refinePlaceholder": "進一步篩選結果…",
   "refineButton": "篩選",
   "refineClear": "清除篩選",
+  "searchHelpLink": "搜尋說明",
+  "refineHelpBack": "返回搜尋",
+  "refineHelpExamples": "範例",
   "sortLabel": "排序結果",
   "sortDefault": "預設順序",
   "sortTitleAsc": "名稱 A–Z",
@@ -105,5 +110,10 @@
   "reloadPage": "重新載入頁面",
   "gzipRequired": "本站需要支援 gzip DecompressionStream 的新版瀏覽器。",
   "loadFailed": "無法載入 {path}（HTTP {status}）",
-  "schemaMismatch": "網站資料與 app.js v4 不相符。請使用 v4 建置工具重新產生資料。"
+  "schemaMismatch": "網站資料與 app.js v4 不相符。請使用 v4 建置工具重新產生資料。",
+  "searchHelpTextIntro": "此搜尋模式會傳回包含查詢中所有詞語的結果，也支援以下特殊語法：",
+  "searchHelpExclude": "排除包含該詞語的所有結果。",
+  "searchHelpExact": "只顯示包含完全相同片語的結果。",
+  "searchHelpRequiresPositive": "請至少輸入一個不少於兩個字元的詞語或加引號的片語。如果只想排除詞語，請先搜尋，再於結果中篩選。",
+  "searchHelpHashDescription": "請輸入完整的 8、40 或 64 位十六進位雜湊（CRC32、SHA-1 或 SHA-256）。SHA 雜湊可辨識特定檔案內容；CRC32 可能對應多個檔案。"
 }

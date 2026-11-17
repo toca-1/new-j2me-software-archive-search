@@ -44,6 +44,8 @@
   "linuxIntro": "W systemach Linux i macOS:",
   "windowsIntro": "W systemie Windows:",
   "guide": "Pełna instrukcja konfiguracji",
+  "downloaderGuideTitle": "Pobieranie plików JAR",
+  "downloaderGuideNotice": "Szczegółowa instrukcja techniczna poniżej jest obecnie dostępna tylko po angielsku. Polecenia są takie same we wszystkich językach.",
   "guidePrefix": "Więcej informacji znajdziesz w dokumencie ",
   "guideSuffix": ".",
   "folderOther": "Inne pliki",
@@ -74,6 +76,9 @@
   "refinePlaceholder": "Zawęź te wyniki…",
   "refineButton": "Zawęź",
   "refineClear": "Usuń zawężenie",
+  "searchHelpLink": "Pomoc wyszukiwania",
+  "refineHelpBack": "Wróć do wyszukiwania",
+  "refineHelpExamples": "Przykłady",
   "sortLabel": "Sortuj wyniki",
   "sortDefault": "Kolejność domyślna",
   "sortTitleAsc": "Tytuł A–Z",
@@ -110,5 +115,10 @@
   "reloadPage": "Odśwież stronę",
   "gzipRequired": "Ta strona wymaga aktualnej przeglądarki obsługującej gzip DecompressionStream.",
   "loadFailed": "Nie udało się wczytać {path} (HTTP {status})",
-  "schemaMismatch": "Dane witryny nie pasują do app.js v4. Przebuduj je za pomocą narzędzia v4."
+  "schemaMismatch": "Dane witryny nie pasują do app.js v4. Przebuduj je za pomocą narzędzia v4.",
+  "searchHelpTextIntro": "Ten tryb wyszukiwania zwraca wyniki zawierające każde słowo zapytania. Obsługuje również specjalną składnię, na przykład:",
+  "searchHelpExclude": "Wyklucz wszystkie wyniki zawierające to słowo.",
+  "searchHelpExact": "Pokaż tylko wyniki zawierające dokładnie tę frazę.",
+  "searchHelpRequiresPositive": "Podaj przynajmniej jedno słowo lub frazę w cudzysłowie mające co najmniej dwa znaki. Aby użyć samych wykluczeń, zawęź istniejące wyniki.",
+  "searchHelpHashDescription": "Wpisz pełny hash szesnastkowy o długości 8, 40 lub 64 znaków (CRC32, SHA-1 lub SHA-256). Hashe SHA identyfikują konkretną zawartość pliku; CRC32 może pasować do kilku plików."
 }

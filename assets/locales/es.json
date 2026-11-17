@@ -44,6 +44,8 @@
   "linuxIntro": "En Linux y macOS:",
   "windowsIntro": "En Windows:",
   "guide": "Guía completa de configuración",
+  "downloaderGuideTitle": "Descargador de JAR",
+  "downloaderGuideNotice": "Las instrucciones técnicas detalladas que aparecen abajo están por ahora solo en inglés. Los comandos son iguales en todos los idiomas.",
   "guidePrefix": "Si tienes más dudas, consulta la ",
   "downloadHelpHeading": "Descarga alternativa mediante la terminal",
   "downloadFrom": "Descargar desde {archive}",
@@ -62,6 +64,9 @@
   "refinePlaceholder": "Filtrar estos resultados…",
   "refineButton": "Filtrar",
   "refineClear": "Quitar filtro",
+  "searchHelpLink": "Ayuda de búsqueda",
+  "refineHelpBack": "Volver a la búsqueda",
+  "refineHelpExamples": "Ejemplos",
   "sortLabel": "Ordenar resultados",
   "sortDefault": "Orden predeterminado",
   "sortTitleAsc": "Título A–Z",
@@ -108,5 +113,10 @@
   "folderView": "Ver resultado",
   "folderShowMore": "Mostrar más",
   "folderLoadError": "No se pudo cargar el contenido de la carpeta:",
-  "folderCounter": "{matching} de {total} archivos adicionales"
+  "folderCounter": "{matching} de {total} archivos adicionales",
+  "searchHelpTextIntro": "Este modo de búsqueda devuelve resultados que contienen todas las palabras de la consulta. También admite una sintaxis especial, por ejemplo:",
+  "searchHelpExclude": "Excluir cualquier resultado que contenga la palabra.",
+  "searchHelpExact": "Mostrar solo resultados que contengan la frase exacta.",
+  "searchHelpRequiresPositive": "Introduce al menos una palabra o frase entre comillas de dos caracteres como mínimo. Para usar solo exclusiones, filtra los resultados existentes.",
+  "searchHelpHashDescription": "Introduce un hash hexadecimal completo de 8, 40 o 64 caracteres (CRC32, SHA-1 o SHA-256). Los hashes SHA identifican contenidos concretos; un CRC32 puede corresponder a varios archivos."
 }

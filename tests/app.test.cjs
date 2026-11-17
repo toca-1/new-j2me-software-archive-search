@@ -145,6 +145,155 @@ test('refinement checks all words while explicit sorting respects file size', ()
   assert.deepEqual(Array.from(results), [2, 1]);
 });
 
+test('refinement exclusions work with inclusion, Unicode, and original ordering', () => {
+  const {run} = loadApp();
+  run(`let sample = {
+    ids: [10, 20, 30, 40, 50],
+    summaries: new Map([
+      [10, {title: 'Sonic', bytes: 90, fields: ['sonic', 'sega', 'cldc-1.1']}],
+      [20, {title: 'Panasonic', bytes: 20, fields: ['panasonic', 'sonic', 'cldc-1.0']}],
+      [30, {title: 'Sonic demo', bytes: 70, fields: ['sonic demo', 'sega']}],
+      [40, {title: 'Pokémon', bytes: 30, fields: ['pokémon', 'nintendo']}],
+      [50, {title: 'Соник', bytes: 10, fields: ['соник', 'разработчик']}]
+    ])
+  };`);
+  const ids = (q, sort = 'default') => Array.from(run(`selectResultIds(sample, ${JSON.stringify(q)}, ${JSON.stringify(sort)})`));
+  assert.deepEqual(ids(''), [10, 20, 30, 40, 50]);
+  assert.deepEqual(ids('sonic sega'), [10, 30], 'Existing all-words behavior remains');
+  assert.deepEqual(ids('sonic -panasonic'), [10, 30]);
+  assert.deepEqual(ids('-panasonic -demo'), [10, 40, 50], 'Exclusions alone are supported');
+  assert.deepEqual(ids('sonic -panasonic -demo'), [10]);
+  assert.deepEqual(ids('sonic -panasonic', 'size-desc'), [10, 30], 'Explicit sorting still works');
+  assert.deepEqual(ids('sonic -panasonic', 'size-asc'), [30, 10]);
+  assert.deepEqual(ids('cLdC-1.1'), [10], 'Hyphens inside a word are not an exclusion operator');
+  assert.deepEqual(ids('  СОНиК  -РАЗРАБОТЧИК  '), [], 'Unicode exclusions ignore case');
+  assert.deepEqual(ids('POKÉMON'), [40], 'Accents are preserved while matching Latin letters');
+  assert.deepEqual(ids('Pokémon -DEMO'), [40], 'Unicode include terms work case-insensitively');
+  assert.deepEqual(ids('СОНИК -sega'), [50], 'Cyrillic inclusion also works');
+  assert.deepEqual(ids('sonic -sonic'), [], 'Exclusions win if both terms match');
+  assert.deepEqual(ids('-trial -demo', 'title-asc'), [20, 40, 10, 50]);
+  assert.deepEqual(Array.from(run('sample.ids')), [10, 20, 30, 40, 50], 'Original results never mutate');
+});
+
+test('quoted refinements match contiguous phrases within the same metadata field', () => {
+  const {run} = loadApp();
+  run(`let phraseSample = {
+    ids: [1, 2, 3, 4, 5, 6, 7],
+    summaries: new Map([
+      [1, {title: 'Test Game', bytes: 120, fields: ['test game deluxe', 'sega']}],
+      [2, {title: 'Separated', bytes: 40, fields: ['test', 'game', 'test big game']}],
+      [3, {title: 'Prefix', bytes: 80, fields: ['a test game v2']}],
+      [4, {title: 'Joined', bytes: 60, fields: ['testgame']}],
+      [5, {title: 'Split fields', bytes: 30, fields: ['foo test', 'game bar']}],
+      [6, {title: 'Demo', bytes: 140, fields: ['demo of test game']}],
+      [7, {title: 'Accented', bytes: 20, fields: ['tést game']}]
+    ])
+  };`);
+  const ids = (q, sort = 'default') => Array.from(run(
+    `selectResultIds(phraseSample, ${JSON.stringify(q)}, ${JSON.stringify(sort)})`));
+  assert.deepEqual(ids('test game'), [1, 2, 3, 4, 5, 6],
+    'Unquoted words may match separately and across fields');
+  assert.deepEqual(ids('"test game"'), [1, 3, 6],
+    'Quoted text is case-insensitive and contiguous within one field');
+  assert.deepEqual(ids('"test game" -demo'), [1, 3]);
+  assert.deepEqual(ids('-"test game"'), [2, 4, 5, 7], 'Negated phrases work alone');
+  assert.deepEqual(ids('test -"test game"'), [2, 4, 5], 'Words can mix with negated phrases');
+  assert.deepEqual(ids('"test game"', 'size-desc'), [6, 1, 3]);
+  assert.deepEqual(ids('"tést game"'), [7], 'Accented phrases retain their characters');
+  assert.deepEqual(ids('"test  game"'), [], 'Spaces within quotes are literal');
+  assert.deepEqual(Array.from(run('phraseSample.ids')), [1, 2, 3, 4, 5, 6, 7]);
+});
+
+test('main Text search uses inclusion/exclusion metadata rules consistently with refinement', async () => {
+  const {run, context} = loadApp();
+  const {nodes} = startupTestDom(context);
+  nodes.set('result-tools', {hidden: true});
+  nodes.get('search-form').querySelector = () => ({disabled: false});
+  run(`manifest = {record_chunk: 4096};
+       searchMode = 'name';
+       resetResultTools = () => {};
+       setResultControlsBusy = () => {};
+       let searched = [];
+       searchNames = async anchor => { searched.push(anchor); return anchor === 'prince of persia' ? [1] : [1, 2, 3, 4]; };
+       prepareResultSummaries = async (state) => {
+         state.summaries = new Map([
+           [1, {title:'Prince of Persia', bytes:50, fields:['prince of persia']}],
+           [2, {title:'Prince Adventure', bytes:40, fields:['prince adventure', 'studio']}],
+           [3, {title:'Prince of the World', bytes:30, fields:['prince of the world', 'persia studios']}],
+           [4, {title:'Prince Persia Demo', bytes:20, fields:['prince persia demo']}]
+         ]);
+         state.ready = true;
+       };
+       renderMore = async () => {};`);
+  nodes.get('query').value = 'prince -persia';
+  await run('runSearch()');
+  assert.deepEqual(Array.from(run('active')), [2]);
+  assert.deepEqual(Array.from(run('selectResultIds({ids:[1,2,3,4],summaries:originalResults.summaries}, "-persia", "default")')), [2],
+    'Main exclusions and result refinements must return the same subset');
+  assert.deepEqual(Array.from(run('searched')), ['prince']);
+  nodes.get('query').value = 'prince of persia';
+  await run('runSearch()');
+  assert.deepEqual(Array.from(run('active')), [1, 3], 'Unquoted words can match across metadata fields');
+  nodes.get('query').value = '"prince of persia"';
+  await run('runSearch()');
+  assert.equal(run('searched[2]'), 'prince of persia', 'Quoted search is an exact substring');
+  assert.deepEqual(Array.from(run('active')), [1],
+    'Quoted phrases use exact contiguous substring matching');
+  // Negative-only searches must fail fast rather than loading the entire 620k-record index.
+  nodes.get('query').value = '-persia';
+  await run('runSearch()');
+  assert.equal(run('searched.length'), 3);
+  assert.match(nodes.get('results').children[0].textContent, /Include at least one/);
+});
+
+test('main search leaves simple single-term queries on the fast shard path', async () => {
+  const {run, context} = loadApp();
+  const {nodes} = startupTestDom(context);
+  nodes.set('result-tools', {hidden: true});
+  nodes.get('search-form').querySelector = () => ({disabled: false});
+  run(`manifest = {record_chunk: 4096};
+       searchMode = 'name';
+       resetResultTools = () => {};
+       setResultControlsBusy = () => {};
+       searchNames = async anchor => { if(anchor !== 'sonic') throw Error('Bad anchor'); return [4, 2]; };
+       prepareResultSummaries = async () => { throw Error('Simple query should not fetch every summary'); };
+       renderMore = async () => {};`);
+  nodes.get('query').value = 'sonic';
+  await run('runSearch()');
+  assert.deepEqual(Array.from(run('active')), [4, 2]);
+});
+
+test('Search help link appears beneath the main form, not in the result tools', () => {
+  const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
+  const searchStart = html.indexOf('<section class="search"');
+  const resultsStart = html.indexOf('<section class="results-section"');
+  const linkStart = html.indexOf('id="search-help-link"');
+  assert.ok(linkStart > searchStart && linkStart < resultsStart,
+    'Search help is shown with the main search form before any results load');
+  assert.match(html, /id="search-help-link"[^>]+href="\.\/html\/search-help\.html"/);
+  assert.match(html, /id="search-help-link"[^>]+target="_blank"/);
+  assert.match(html, /id="search-help-link"[^>]+data-i18n="searchHelpLink"/);
+  const {run, context} = loadApp();
+  const find = downloadTestDom(context);
+  context.document.querySelector = selector => selector === '.result-heading'
+    ? {after(node) {context.resultTools = node;}} : null;
+  run('installResultTools()');
+  const sortRow = find(context.resultTools, 'result-sort-row');
+  assert.equal(sortRow.children.length, 1, 'Sort row only contains sorting controls');
+  assert.equal(sortRow.children[0].className, 'result-sort-controls');
+  assert.equal(find(context.resultTools, 'refine-help-link'), null,
+    'The old refinement-specific help link is gone');
+});
+
+test('full downloader guide link uses the local styled HTML page', () => {
+  const {run} = loadApp();
+  const script = fs.readFileSync(path.resolve(__dirname, '../assets/app.js'), 'utf8');
+  assert.match(script, /guide\.href = '\.\/html\/downloader-help\.html'/);
+  const page = fs.readFileSync(path.resolve(__dirname, '../html/downloader-help.html'), 'utf8');
+  assert.match(page, /data-i18n-title="downloaderGuideTitle"/);
+  assert.match(page, /id="errors-and-troubleshooting"/);
+});
+
 test('sorting metadata reads up to six record chunks concurrently and caches summaries', async () => {
   const {run} = loadApp();
   run(`manifest = {record_chunk: 4};
@@ -457,6 +606,72 @@ test('updated locale files bypass stale browser caches and resolve migrated labe
     }
     assert.equal(fetched.length, language === 'en' ? 1 : 2);
   }
+});
+
+test('both standalone help pages initialize localized content and language picker', async () => {
+  const localization = fs.readFileSync(path.resolve(__dirname, '../assets/i18n.js'), 'utf8');
+  const helpInit = fs.readFileSync(path.resolve(__dirname, '../assets/help.js'), 'utf8');
+  const english = JSON.parse(fs.readFileSync(
+    path.resolve(__dirname, '../assets/locales/en.json'), 'utf8'));
+  const german = JSON.parse(fs.readFileSync(
+    path.resolve(__dirname, '../assets/locales/de.json'), 'utf8'));
+  for (const [page, titleKey] of [
+    ['html/search-help.html', 'searchHelpLink'],
+    ['html/downloader-help.html', 'downloaderGuideTitle']
+  ]) {
+    const markup = fs.readFileSync(path.resolve(__dirname, '../' + page), 'utf8');
+    assert.match(markup, /\.\.\/assets\/help\.js\?v=/);
+    assert.match(markup, new RegExp('data-i18n-title="' + titleKey + '"'));
+    const title = {dataset: {i18n: titleKey}, textContent: 'English placeholder'};
+    const notice = {dataset: {i18n: page.includes('downloader')
+      ? 'downloaderGuideNotice' : 'searchHelpTextIntro'}, textContent: 'English placeholder'};
+    const picker = {value: '', setAttribute() {}, addEventListener() {}};
+    const context = vm.createContext({
+      window: {}, location: {search: '?lang=de'}, URLSearchParams, Intl,
+      localStorage: {getItem: () => null, setItem() {}},
+      document: {
+        documentElement: {lang: 'en'}, title: '',
+        querySelector: selector => selector === '[data-i18n-title]'
+          ? {dataset: {i18nTitle: titleKey}} : null,
+        querySelectorAll: selector => selector === '[data-i18n]'
+          ? [title, notice] : [],
+        getElementById: id => id === 'language-select' ? picker : null
+      },
+      fetch: async url => ({ok: true, json: async () =>
+        url.includes('/de.json') ? german : english}),
+      history: {replaceState() {}}, console: {warn() {}}
+    });
+    vm.runInContext(localization, context);
+    // help.js must initialize the page independently of app.js.
+    vm.runInContext(helpInit, context);
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(context.document.title, german[titleKey], page);
+    assert.equal(context.document.documentElement.lang, 'de', page);
+    assert.equal(title.textContent, german[titleKey], page);
+    assert.equal(notice.textContent, german[notice.dataset.i18n], page);
+    assert.equal(picker.value, 'de', page);
+  }
+});
+
+test('locale requests resolve next to i18n.js even when a page lives in html/', async () => {
+  const script = fs.readFileSync(path.resolve(__dirname, '../assets/i18n.js'), 'utf8');
+  const english = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../assets/locales/en.json'), 'utf8'));
+  const fetched = [];
+  const context = vm.createContext({
+    window: {}, URLSearchParams, Intl, location: {search: ''},
+    localStorage: {getItem: () => null},
+    document: {
+      currentScript: {src: 'https://example.org/archive/assets/i18n.js?v=test'},
+      documentElement: {lang: ''}, title: '', querySelector: () => null,
+      querySelectorAll: () => [], getElementById: () => null
+    },
+    fetch: async url => { fetched.push(url); return {ok: true, json: async () => english}; },
+    console: {warn() {}}
+  });
+  vm.runInContext(script, context);
+  await vm.runInContext('window.J2ME_I18N.init()', context);
+  assert.match(fetched[0], /^https:\/\/example\.org\/archive\/assets\/locales\/en\.json\?v=/);
+  assert.equal(context.document.title, english.pageTitle);
 });
 
 // The initial results area starts hidden. If the manifest finally fails to

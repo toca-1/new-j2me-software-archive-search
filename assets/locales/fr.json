@@ -44,6 +44,8 @@
   "linuxIntro": "Sous Linux et macOS :",
   "windowsIntro": "Sous Windows :",
   "guide": "Guide d’installation complet",
+  "downloaderGuideTitle": "Téléchargeur de JAR",
+  "downloaderGuideNotice": "Les instructions techniques détaillées ci-dessous sont actuellement disponibles uniquement en anglais. Les commandes sont identiques dans toutes les langues.",
   "guidePrefix": "Pour en savoir plus, consultez le ",
   "guideSuffix": ".",
   "folderOther": "Autres fichiers",
@@ -74,6 +76,9 @@
   "refinePlaceholder": "Affiner ces résultats…",
   "refineButton": "Affiner",
   "refineClear": "Effacer le filtre",
+  "searchHelpLink": "Aide à la recherche",
+  "refineHelpBack": "Retour à la recherche",
+  "refineHelpExamples": "Exemples",
   "sortLabel": "Trier les résultats",
   "sortDefault": "Ordre par défaut",
   "sortTitleAsc": "Titre A–Z",
@@ -108,5 +113,10 @@
   "reloadPage": "Recharger la page",
   "gzipRequired": "Ce site nécessite un navigateur récent prenant en charge gzip DecompressionStream.",
   "loadFailed": "Impossible de charger {path} (HTTP {status})",
-  "schemaMismatch": "Les données du site ne correspondent pas à app.js v4. Régénérez-les avec l’outil de construction v4."
+  "schemaMismatch": "Les données du site ne correspondent pas à app.js v4. Régénérez-les avec l’outil de construction v4.",
+  "searchHelpTextIntro": "Ce mode de recherche affiche les résultats contenant tous les mots de votre requête. Il accepte aussi une syntaxe spéciale, par exemple :",
+  "searchHelpExclude": "Exclure tout résultat contenant ce mot.",
+  "searchHelpExact": "Afficher uniquement les résultats contenant cette expression exacte.",
+  "searchHelpRequiresPositive": "Saisissez au moins un mot ou une expression entre guillemets de deux caractères minimum. Pour utiliser uniquement des exclusions, affinez les résultats existants.",
+  "searchHelpHashDescription": "Saisissez une empreinte hexadécimale complète de 8, 40 ou 64 caractères (CRC32, SHA-1 ou SHA-256). Les empreintes SHA identifient un contenu précis ; un CRC32 peut correspondre à plusieurs fichiers."
 }

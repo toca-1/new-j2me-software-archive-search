@@ -17,7 +17,7 @@ The project's software license applies only to its original code and documentati
 - Case-insensitive substring search of original filenames, MIDlet names, and vendors; default text results prioritize exact, prefix, and word-start filename/title matches over incidental substrings and vendor-only hits
 - A single Hash search mode which automatically detects complete CRC32, SHA-1, or SHA-256 checksums
 - MIDlet name, vendor, version, CLDC, and MIDP information where available
-- Search-within-results refinement, sorting by title or file size
+- Search-within-results refinement, including `-term` exclusions (see [Search help](../html/search-help.html)), and sorting by title or file size
 - Direct download links to individual JAR files on the Internet Archive and other mirror sites, together with alternative downloader instructions and copyable commands for Windows and Linux/macOS
 - Expandable manifest details and historical original-source locations
 - Expandable "Other files" browser for distinct JAR contents in the same archive folder with filtering

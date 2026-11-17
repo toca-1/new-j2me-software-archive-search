@@ -5,6 +5,7 @@ No generated index shards, downloads, or third-party Python modules required.
 Run from any directory with: python3 tests/check_repo.py
 """
 
+import hashlib
 import json
 import re
 from html.parser import HTMLParser
@@ -61,10 +62,10 @@ class RepositoryChecks(unittest.TestCase):
 
     def test_static_translation_references_exist(self):
         available = set(get_json(LOCALES / 'en.json'))
-        for relative in ('index.html', 'assets/app.js', 'assets/i18n.js'):
+        for relative in ('index.html', 'html/search-help.html', 'html/downloader-help.html', 'assets/app.js', 'assets/i18n.js'):
             contents = (ROOT / relative).read_text(encoding='utf-8')
             referenced = set(LITERAL_TRANSLATION.findall(contents))
-            if relative == 'index.html':
+            if relative.endswith('.html'):
                 referenced |= set(HTML_TRANSLATION.findall(contents))
             with self.subTest(file=relative):
                 self.assertFalse(referenced - available,
@@ -104,6 +105,90 @@ class RepositoryChecks(unittest.TestCase):
                 with self.subTest(asset=name):
                     self.assertTrue((ROOT / name.split('?', 1)[0].split('#', 1)[0]).is_file(),
                                     f'Broken homepage asset: {name}')
+
+    def test_help_pages_are_linked_localized_and_have_local_assets(self):
+        homepage = (ROOT / 'index.html').read_text(encoding='utf-8')
+        app = (ROOT / 'assets/app.js').read_text(encoding='utf-8')
+        help_page = (ROOT / 'html/search-help.html').read_text(encoding='utf-8')
+        guide_page = (ROOT / 'html/downloader-help.html').read_text(encoding='utf-8')
+        helper_script = (ROOT / 'assets/help.js').read_text(encoding='utf-8')
+        self.assertIn('id="search-help-link" href="./html/search-help.html"', homepage)
+        self.assertIn('data-i18n="searchHelpLink"', homepage)
+        self.assertIn("guide.href = './html/downloader-help.html'", app)
+        self.assertIn('data-i18n-title="searchHelpLink"', help_page)
+        self.assertIn('data-i18n-title="downloaderGuideTitle"', guide_page)
+        self.assertIn('window.J2ME_I18N.init()', helper_script)
+        self.assertIn('sonic -panasonic', help_page)
+        self.assertIn('prince -persia', help_page)
+        self.assertIn('content="Search help page for the J2ME search index"', help_page)
+        self.assertNotIn('searchHelpMainText', help_page)
+        self.assertIn('<strong data-i18n="refineHelpExamples">', help_page)
+        revision = re.search(r"const LOCALE_REVISION = '([^']+)'",
+                             (ROOT / 'assets/i18n.js').read_text(encoding='utf-8'))
+        self.assertIsNotNone(revision)
+        for name, page in [('html/search-help.html', help_page),
+                           ('html/downloader-help.html', guide_page)]:
+            with self.subTest(page=name):
+                for asset in ('assets/i18n.js', 'assets/help.js', 'assets/site.css'):
+                    self.assertIn('../' + asset + '?v=' + revision.group(1), page)
+                for attr in ('src', 'href'):
+                    for url in re.findall(rf'\b{attr}="(assets/[^"]+)"', page):
+                        self.assertTrue((ROOT / 'html' / url.split('?', 1)[0]).is_file(),
+                                        f'Broken {name} asset: {url}')
+
+    def test_help_language_menus_match_main_site(self):
+        # Keep standalone help-page language menus in the same native-name
+        # alphabetical order as the main search page.
+        class LanguageOptions(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.inside = False
+                self.options = []
+                self.code = None
+
+            def handle_starttag(self, tag, attrs):
+                attrs = dict(attrs)
+                if tag == 'select' and attrs.get('id') == 'language-select':
+                    self.inside = True
+                elif tag == 'option' and self.inside:
+                    self.code = attrs.get('value')
+
+            def handle_data(self, data):
+                if self.code is not None:
+                    self.options.append((self.code, data.strip()))
+                    self.code = None
+
+            def handle_endtag(self, tag):
+                if tag == 'select' and self.inside:
+                    self.inside = False
+
+        def menu(page):
+            parser = LanguageOptions()
+            parser.feed((ROOT / page).read_text(encoding='utf-8'))
+            return parser.options
+
+        expected = menu('index.html')
+        self.assertEqual(len(expected), 22)
+        self.assertEqual(len(set(code for code, _ in expected)), len(expected))
+        self.assertEqual(set(code for code, _ in expected),
+                         set(path.stem for path in LOCALES.glob('*.json')))
+        for page in ('html/search-help.html', 'html/downloader-help.html'):
+            with self.subTest(page=page):
+                self.assertEqual(menu(page), expected)
+
+    def test_rendered_downloader_guide_matches_markdown_source(self):
+        # The rendered HTML is a copy of the maintained Markdown guide.
+        # Detect source edits that require regenerating the static HTML page.
+        markdown = (ROOT / 'docs' / 'DOWNLOADER.md').read_bytes()
+        rendered = (ROOT / 'html/downloader-help.html').read_text(encoding='utf-8')
+        digest = hashlib.sha256(markdown).hexdigest()
+        self.assertIn(f'Source SHA-256 (docs/DOWNLOADER.md): {digest}', rendered,
+                      'The Markdown guide changed; refresh html/downloader-help.html')
+        for anchor in ('quick-start', 'how-it-works', 'full-command-line-options',
+                       'errors-and-troubleshooting', 'privacy-trust-and-rights'):
+            self.assertIn(f'id="{anchor}"', rendered)
+        self.assertIn('jarchive_download.py YOUR_SHA1_OR_SHA256', rendered)
+        self.assertIn('href="#errors-and-troubleshooting"', rendered)
 
     def test_homepage_seo_and_sharing_metadata(self):
         class HeadTags(HTMLParser):

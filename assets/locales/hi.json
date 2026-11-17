@@ -44,6 +44,8 @@
   "linuxIntro": "Linux और macOS पर:",
   "windowsIntro": "Windows पर:",
   "guide": "पूरी सेटअप मार्गदर्शिका",
+  "downloaderGuideTitle": "JAR डाउनलोडर",
+  "downloaderGuideNotice": "नीचे दिए गए विस्तृत तकनीकी निर्देश अभी केवल अंग्रेज़ी में उपलब्ध हैं। सभी भाषाओं में कमांड समान हैं।",
   "guidePrefix": "अधिक जानकारी के लिए देखें ",
   "guideSuffix": "।",
   "folderOther": "अन्य फ़ाइलें",
@@ -74,6 +76,9 @@
   "refinePlaceholder": "इन परिणामों को और छाँटें…",
   "refineButton": "छाँटें",
   "refineClear": "फ़िल्टर हटाएँ",
+  "searchHelpLink": "खोज सहायता",
+  "refineHelpBack": "खोज पर वापस जाएँ",
+  "refineHelpExamples": "उदाहरण",
   "sortLabel": "परिणाम क्रमबद्ध करें",
   "sortDefault": "डिफ़ॉल्ट क्रम",
   "sortTitleAsc": "शीर्षक A–Z",
@@ -105,5 +110,10 @@
   "reloadPage": "पृष्ठ पुनः लोड करें",
   "gzipRequired": "इस साइट के लिए gzip DecompressionStream वाला आधुनिक ब्राउज़र चाहिए।",
   "loadFailed": "{path} लोड नहीं हो सका (HTTP {status})",
-  "schemaMismatch": "साइट का डेटा app.js v4 से मेल नहीं खाता। v4 बिल्डर से डेटा फिर बनाएँ।"
+  "schemaMismatch": "साइट का डेटा app.js v4 से मेल नहीं खाता। v4 बिल्डर से डेटा फिर बनाएँ।",
+  "searchHelpTextIntro": "यह खोज मोड आपकी खोज के सभी शब्दों वाले परिणाम दिखाता है। इसमें विशेष सिंटैक्स भी उपलब्ध है, जैसे:",
+  "searchHelpExclude": "उस शब्द वाले सभी परिणामों को बाहर करें।",
+  "searchHelpExact": "केवल सटीक वाक्यांश वाले परिणाम दिखाएँ।",
+  "searchHelpRequiresPositive": "कम से कम दो अक्षरों वाला एक शब्द या उद्धरण चिह्नों में वाक्यांश जोड़ें। केवल बहिष्करण के लिए मौजूदा परिणामों को फ़िल्टर करें।",
+  "searchHelpHashDescription": "8, 40 या 64 वर्णों वाला पूरा हेक्साडेसिमल हैश डालें (CRC32, SHA-1 या SHA-256)। SHA हैश खास फ़ाइल सामग्री की पहचान करते हैं; एक CRC32 कई फ़ाइलों से मेल खा सकता है।"
 }

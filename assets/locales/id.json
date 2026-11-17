@@ -44,6 +44,8 @@
   "linuxIntro": "Di Linux & macOS:",
   "windowsIntro": "Di Windows:",
   "guide": "Panduan pengaturan lengkap",
+  "downloaderGuideTitle": "Pengunduh JAR",
+  "downloaderGuideNotice": "Petunjuk teknis lengkap di bawah ini untuk sementara hanya tersedia dalam bahasa Inggris. Perintahnya sama dalam semua bahasa.",
   "guidePrefix": "Untuk informasi lebih lanjut, lihat ",
   "downloadHelpHeading": "Unduhan alternatif melalui terminal",
   "downloadFrom": "Unduh dari {archive}",
@@ -62,6 +64,9 @@
   "refinePlaceholder": "Persempit hasil ini…",
   "refineButton": "Persempit",
   "refineClear": "Hapus penyaringan",
+  "searchHelpLink": "Bantuan pencarian",
+  "refineHelpBack": "Kembali ke pencarian",
+  "refineHelpExamples": "Contoh",
   "sortLabel": "Urutkan hasil",
   "sortDefault": "Urutan bawaan",
   "sortTitleAsc": "Judul A–Z",
@@ -108,5 +113,10 @@
   "folderView": "Lihat hasil",
   "folderShowMore": "Tampilkan lainnya",
   "folderLoadError": "Tidak dapat memuat isi folder:",
-  "folderCounter": "{matching} dari {total} file lainnya"
+  "folderCounter": "{matching} dari {total} file lainnya",
+  "searchHelpTextIntro": "Mode pencarian ini menampilkan hasil yang memuat setiap kata dalam pencarian Anda. Sintaks khusus juga didukung, seperti:",
+  "searchHelpExclude": "Kecualikan semua hasil yang memuat kata tersebut.",
+  "searchHelpExact": "Hanya tampilkan hasil yang memuat frasa persis tersebut.",
+  "searchHelpRequiresPositive": "Sertakan setidaknya satu kata atau frasa dalam tanda kutip yang terdiri dari dua karakter atau lebih. Untuk pengecualian saja, gunakan penyaringan hasil.",
+  "searchHelpHashDescription": "Masukkan hash heksadesimal lengkap sepanjang 8, 40, atau 64 karakter (CRC32, SHA-1, atau SHA-256). Hash SHA mengidentifikasi isi berkas tertentu; CRC32 dapat cocok dengan lebih dari satu berkas."
 }

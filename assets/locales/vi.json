@@ -44,6 +44,8 @@
   "linuxIntro": "Trên Linux và macOS:",
   "windowsIntro": "Trên Windows:",
   "guide": "Hướng dẫn thiết lập đầy đủ",
+  "downloaderGuideTitle": "Trình tải JAR",
+  "downloaderGuideNotice": "Hướng dẫn kỹ thuật chi tiết bên dưới hiện chỉ có bằng tiếng Anh. Các lệnh giống nhau ở mọi ngôn ngữ.",
   "guidePrefix": "Nếu cần thêm thông tin, hãy xem ",
   "guideSuffix": ".",
   "folderOther": "Tệp khác",
@@ -74,6 +76,9 @@
   "refinePlaceholder": "Lọc thêm kết quả này…",
   "refineButton": "Lọc",
   "refineClear": "Xóa bộ lọc",
+  "searchHelpLink": "Trợ giúp tìm kiếm",
+  "refineHelpBack": "Quay lại tìm kiếm",
+  "refineHelpExamples": "Ví dụ",
   "sortLabel": "Sắp xếp kết quả",
   "sortDefault": "Thứ tự mặc định",
   "sortTitleAsc": "Tên A–Z",
@@ -105,5 +110,10 @@
   "reloadPage": "Tải lại trang",
   "gzipRequired": "Trang web yêu cầu trình duyệt mới hỗ trợ gzip DecompressionStream.",
   "loadFailed": "Không thể tải {path} (HTTP {status})",
-  "schemaMismatch": "Dữ liệu trang không khớp với app.js v4. Hãy tạo lại dữ liệu bằng trình xây dựng v4."
+  "schemaMismatch": "Dữ liệu trang không khớp với app.js v4. Hãy tạo lại dữ liệu bằng trình xây dựng v4.",
+  "searchHelpTextIntro": "Chế độ tìm kiếm này trả về các kết quả chứa mọi từ trong truy vấn. Chế độ này cũng hỗ trợ cú pháp đặc biệt, chẳng hạn:",
+  "searchHelpExclude": "Loại trừ mọi kết quả chứa từ đó.",
+  "searchHelpExact": "Chỉ hiển thị kết quả chứa chính xác cụm từ đó.",
+  "searchHelpRequiresPositive": "Nhập ít nhất một từ hoặc cụm từ trong dấu ngoặc kép dài từ hai ký tự trở lên. Nếu chỉ muốn loại trừ, hãy lọc các kết quả hiện có.",
+  "searchHelpHashDescription": "Nhập mã băm thập lục phân đầy đủ gồm 8, 40 hoặc 64 ký tự (CRC32, SHA-1 hoặc SHA-256). Mã băm SHA nhận diện nội dung tệp cụ thể; một CRC32 có thể khớp nhiều tệp."
 }

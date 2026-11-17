@@ -44,6 +44,8 @@
   "linuxIntro": "Linux 和 macOS：",
   "windowsIntro": "Windows：",
   "guide": "完整设置指南",
+  "downloaderGuideTitle": "JAR 下载器",
+  "downloaderGuideNotice": "下方的详细技术说明目前仅提供英文版本。所有语言使用相同的命令。",
   "guidePrefix": "如需进一步帮助，请参阅",
   "downloadHelpHeading": "通过终端进行备用下载",
   "downloadFrom": "从 {archive} 下载",
@@ -62,6 +64,9 @@
   "refinePlaceholder": "进一步筛选结果…",
   "refineButton": "筛选",
   "refineClear": "清除筛选",
+  "searchHelpLink": "搜索帮助",
+  "refineHelpBack": "返回搜索",
+  "refineHelpExamples": "示例",
   "sortLabel": "结果排序",
   "sortDefault": "默认顺序",
   "sortTitleAsc": "标题 A–Z",
@@ -108,5 +113,10 @@
   "folderView": "查看结果",
   "folderShowMore": "显示更多",
   "folderLoadError": "无法加载文件夹内容：",
-  "folderCounter": "其他 {total} 个文件中有 {matching} 个符合条件"
+  "folderCounter": "其他 {total} 个文件中有 {matching} 个符合条件",
+  "searchHelpTextIntro": "此搜索模式会返回包含查询中所有词语的结果，还支持以下特殊语法：",
+  "searchHelpExclude": "排除包含该词语的所有结果。",
+  "searchHelpExact": "仅显示包含完全一致短语的结果。",
+  "searchHelpRequiresPositive": "请至少输入一个不少于两个字符的词语或带引号的短语。如果只想排除词语，请先搜索，再在结果中筛选。",
+  "searchHelpHashDescription": "请输入完整的 8、40 或 64 位十六进制哈希（CRC32、SHA-1 或 SHA-256）。SHA 哈希用于识别特定文件内容；CRC32 可能对应多个文件。"
 }

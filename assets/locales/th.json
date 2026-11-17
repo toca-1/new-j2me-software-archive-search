@@ -44,6 +44,8 @@
   "linuxIntro": "บน Linux และ macOS:",
   "windowsIntro": "บน Windows:",
   "guide": "คู่มือการตั้งค่าโดยละเอียด",
+  "downloaderGuideTitle": "ตัวดาวน์โหลด JAR",
+  "downloaderGuideNotice": "คำแนะนำทางเทคนิคโดยละเอียดด้านล่างขณะนี้มีเฉพาะภาษาอังกฤษ คำสั่งใช้เหมือนกันในทุกภาษา",
   "guidePrefix": "สำหรับข้อมูลเพิ่มเติม โปรดดู",
   "guideSuffix": ".",
   "folderOther": "ไฟล์อื่น",
@@ -74,6 +76,9 @@
   "refinePlaceholder": "กรองผลลัพธ์เหล่านี้…",
   "refineButton": "กรอง",
   "refineClear": "ล้างตัวกรอง",
+  "searchHelpLink": "วิธีใช้การค้นหา",
+  "refineHelpBack": "กลับไปค้นหา",
+  "refineHelpExamples": "ตัวอย่าง",
   "sortLabel": "เรียงลำดับผลลัพธ์",
   "sortDefault": "ลำดับเริ่มต้น",
   "sortTitleAsc": "ชื่อ A–Z",
@@ -105,5 +110,10 @@
   "reloadPage": "โหลดหน้าเว็บใหม่",
   "gzipRequired": "เว็บไซต์นี้ต้องใช้เบราว์เซอร์รุ่นใหม่ที่รองรับ gzip DecompressionStream",
   "loadFailed": "โหลด {path} ไม่สำเร็จ (HTTP {status})",
-  "schemaMismatch": "ข้อมูลเว็บไซต์ไม่ตรงกับ app.js v4 โปรดสร้างข้อมูลใหม่ด้วยตัวสร้าง v4"
+  "schemaMismatch": "ข้อมูลเว็บไซต์ไม่ตรงกับ app.js v4 โปรดสร้างข้อมูลใหม่ด้วยตัวสร้าง v4",
+  "searchHelpTextIntro": "โหมดค้นหานี้แสดงผลลัพธ์ที่มีทุกคำในคำค้น และยังรองรับไวยากรณ์พิเศษ เช่น:",
+  "searchHelpExclude": "ยกเว้นผลลัพธ์ทั้งหมดที่มีคำนั้น",
+  "searchHelpExact": "แสดงเฉพาะผลลัพธ์ที่มีวลีตรงกันทุกตัวอักษร",
+  "searchHelpRequiresPositive": "ระบุอย่างน้อยหนึ่งคำหรือวลีในเครื่องหมายอัญประกาศที่มีตั้งแต่สองอักขระขึ้นไป หากต้องการใช้เฉพาะการยกเว้น ให้กรองผลลัพธ์เดิม",
+  "searchHelpHashDescription": "ป้อนแฮชเลขฐานสิบหกที่ครบ 8, 40 หรือ 64 อักขระ (CRC32, SHA-1 หรือ SHA-256) แฮช SHA ระบุเนื้อหาไฟล์เฉพาะได้ ส่วน CRC32 อาจตรงกับหลายไฟล์"
 }

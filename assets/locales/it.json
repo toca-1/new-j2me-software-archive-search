@@ -44,6 +44,8 @@
   "linuxIntro": "Su Linux e macOS:",
   "windowsIntro": "Su Windows:",
   "guide": "Guida completa alla configurazione",
+  "downloaderGuideTitle": "Downloader JAR",
+  "downloaderGuideNotice": "Le istruzioni tecniche dettagliate qui sotto sono attualmente disponibili solo in inglese. I comandi sono uguali in tutte le lingue.",
   "guidePrefix": "Per ulteriori informazioni consulta la ",
   "guideSuffix": ".",
   "folderOther": "Altri file",
@@ -74,6 +76,9 @@
   "refinePlaceholder": "Affina questi risultati…",
   "refineButton": "Affina",
   "refineClear": "Cancella il filtro",
+  "searchHelpLink": "Guida alla ricerca",
+  "refineHelpBack": "Torna alla ricerca",
+  "refineHelpExamples": "Esempi",
   "sortLabel": "Ordina i risultati",
   "sortDefault": "Ordine predefinito",
   "sortTitleAsc": "Titolo A–Z",
@@ -108,5 +113,10 @@
   "reloadPage": "Ricarica la pagina",
   "gzipRequired": "Questo sito richiede un browser aggiornato che supporti gzip DecompressionStream.",
   "loadFailed": "Impossibile caricare {path} (HTTP {status})",
-  "schemaMismatch": "I dati del sito non corrispondono a app.js v4. Rigenerali con il builder v4."
+  "schemaMismatch": "I dati del sito non corrispondono a app.js v4. Rigenerali con il builder v4.",
+  "searchHelpTextIntro": "Questa modalità di ricerca restituisce risultati contenenti tutte le parole della ricerca. Supporta anche una sintassi speciale, ad esempio:",
+  "searchHelpExclude": "Escludi ogni risultato che contiene la parola.",
+  "searchHelpExact": "Mostra solo i risultati che contengono la frase esatta.",
+  "searchHelpRequiresPositive": "Inserisci almeno una parola o frase tra virgolette di due o più caratteri. Per usare solo esclusioni, filtra i risultati esistenti.",
+  "searchHelpHashDescription": "Inserisci un hash esadecimale completo di 8, 40 o 64 caratteri (CRC32, SHA-1 o SHA-256). Gli hash SHA identificano contenuti specifici; un CRC32 può corrispondere a più file."
 }

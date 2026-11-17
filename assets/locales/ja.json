@@ -44,6 +44,8 @@
   "linuxIntro": "Linux・macOS の場合：",
   "windowsIntro": "Windows の場合：",
   "guide": "詳しいセットアップガイド",
+  "downloaderGuideTitle": "JAR ダウンローダー",
+  "downloaderGuideNotice": "以下の詳しい技術手順は現在英語のみです。コマンドはどの言語でも同じです。",
   "guidePrefix": "詳しくは",
   "guideSuffix": "をご覧ください。",
   "folderOther": "ほかのファイル",
@@ -74,6 +76,9 @@
   "refinePlaceholder": "結果をさらに絞り込む…",
   "refineButton": "絞り込む",
   "refineClear": "絞り込みを解除",
+  "searchHelpLink": "検索ヘルプ",
+  "refineHelpBack": "検索に戻る",
+  "refineHelpExamples": "例",
   "sortLabel": "結果を並べ替え",
   "sortDefault": "標準の順序",
   "sortTitleAsc": "タイトル A–Z",
@@ -105,5 +110,10 @@
   "reloadPage": "ページを再読み込み",
   "gzipRequired": "このサイトには gzip DecompressionStream に対応した新しいブラウザーが必要です。",
   "loadFailed": "{path} を読み込めませんでした（HTTP {status}）",
-  "schemaMismatch": "サイトデータが app.js v4 と一致しません。v4 ビルダーでデータを再生成してください。"
+  "schemaMismatch": "サイトデータが app.js v4 と一致しません。v4 ビルダーでデータを再生成してください。",
+  "searchHelpTextIntro": "この検索モードでは、入力したすべての単語を含む結果が表示されます。次のような特別な構文も使えます：",
+  "searchHelpExclude": "その単語を含む結果をすべて除外します。",
+  "searchHelpExact": "そのフレーズが完全に一致する結果だけを表示します。",
+  "searchHelpRequiresPositive": "2文字以上の単語、または引用符で囲んだフレーズを1つ以上入力してください。除外条件だけを使う場合は、検索結果内で絞り込んでください。",
+  "searchHelpHashDescription": "8桁、40桁、または64桁の完全な16進数ハッシュ（CRC32、SHA-1、SHA-256）を入力してください。SHAハッシュは特定のファイル内容を識別しますが、CRC32は複数のファイルに一致することがあります。"
 }

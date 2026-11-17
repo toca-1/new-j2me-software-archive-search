@@ -44,6 +44,8 @@
   "linuxIntro": "Pe Linux și macOS:",
   "windowsIntro": "Pe Windows:",
   "guide": "Ghid complet de configurare",
+  "downloaderGuideTitle": "Descărcător JAR",
+  "downloaderGuideNotice": "Instrucțiunile tehnice detaliate de mai jos sunt momentan disponibile doar în engleză. Comenzile sunt identice în toate limbile.",
   "guidePrefix": "Pentru mai multe informații consultă ",
   "guideSuffix": ".",
   "folderOther": "Alte fișiere",
@@ -74,6 +76,9 @@
   "refinePlaceholder": "Restrânge aceste rezultate…",
   "refineButton": "Restrânge",
   "refineClear": "Șterge filtrul",
+  "searchHelpLink": "Ajutor pentru căutare",
+  "refineHelpBack": "Înapoi la căutare",
+  "refineHelpExamples": "Exemple",
   "sortLabel": "Sortează rezultatele",
   "sortDefault": "Ordine implicită",
   "sortTitleAsc": "Titlu A–Z",
@@ -109,5 +114,10 @@
   "reloadPage": "Reîncarcă pagina",
   "gzipRequired": "Acest site necesită un browser actualizat cu suport pentru gzip DecompressionStream.",
   "loadFailed": "Nu se poate încărca {path} (HTTP {status})",
-  "schemaMismatch": "Datele site-ului nu corespund cu app.js v4. Regenerează-le cu instrumentul v4."
+  "schemaMismatch": "Datele site-ului nu corespund cu app.js v4. Regenerează-le cu instrumentul v4.",
+  "searchHelpTextIntro": "Acest mod de căutare returnează rezultate care conțin toate cuvintele din interogare. Acceptă și o sintaxă specială, de exemplu:",
+  "searchHelpExclude": "Exclude orice rezultat care conține cuvântul.",
+  "searchHelpExact": "Afișează numai rezultatele care conțin expresia exactă.",
+  "searchHelpRequiresPositive": "Include cel puțin un cuvânt sau o expresie între ghilimele cu minimum două caractere. Pentru a folosi doar excluderi, filtrează rezultatele existente.",
+  "searchHelpHashDescription": "Introdu un hash hexazecimal complet de 8, 40 sau 64 de caractere (CRC32, SHA-1 sau SHA-256). Hashurile SHA identifică un conținut precis; CRC32 poate corespunde mai multor fișiere."
 }

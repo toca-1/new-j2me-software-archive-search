@@ -44,6 +44,8 @@
   "linuxIntro": "Unter Linux und macOS:",
   "windowsIntro": "Unter Windows:",
   "guide": "Vollständige Anleitung",
+  "downloaderGuideTitle": "JAR-Downloader",
+  "downloaderGuideNotice": "Die ausführliche technische Anleitung unten ist derzeit nur auf Englisch verfügbar. Die Befehle sind in allen Sprachen gleich.",
   "guidePrefix": "Weitere Informationen findest du in der ",
   "downloadHelpHeading": "Alternativer Download über das Terminal",
   "downloadFrom": "Von {archive} herunterladen",
@@ -62,6 +64,9 @@
   "refinePlaceholder": "Ergebnisse weiter eingrenzen…",
   "refineButton": "Eingrenzen",
   "refineClear": "Eingrenzung aufheben",
+  "searchHelpLink": "Suchhilfe",
+  "refineHelpBack": "Zurück zur Suche",
+  "refineHelpExamples": "Beispiele",
   "sortLabel": "Ergebnisse sortieren",
   "sortDefault": "Standardreihenfolge",
   "sortTitleAsc": "Titel A–Z",
@@ -108,5 +113,10 @@
   "folderView": "Ergebnis öffnen",
   "folderShowMore": "Mehr anzeigen",
   "folderLoadError": "Ordnerinhalt konnte nicht geladen werden:",
-  "folderCounter": "{matching} von {total} weiteren Dateien"
+  "folderCounter": "{matching} von {total} weiteren Dateien",
+  "searchHelpTextIntro": "Diese Suchart zeigt Ergebnisse, die jedes eingegebene Wort enthalten. Sie unterstützt außerdem eine besondere Syntax, zum Beispiel:",
+  "searchHelpExclude": "Ergebnisse ausschließen, die dieses Wort enthalten.",
+  "searchHelpExact": "Nur Ergebnisse mit genau dieser zusammenhängenden Wortfolge anzeigen.",
+  "searchHelpRequiresPositive": "Gib mindestens ein Suchwort oder eine Wortfolge in Anführungszeichen mit mindestens zwei Zeichen ein. Für ausschließlich ausschließende Begriffe verwende die Ergebnisverfeinerung.",
+  "searchHelpHashDescription": "Gib einen vollständigen Hexadezimal-Hash mit 8, 40 oder 64 Zeichen ein (CRC32, SHA-1 oder SHA-256). SHA-Hashes identifizieren bestimmte Dateiinhalte; CRC32 kann mehreren Dateien entsprechen."
 }

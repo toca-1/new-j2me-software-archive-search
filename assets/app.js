@@ -389,7 +389,7 @@ function fallbackDownloadAction(sha256) {
 
   const links = elem('p', undefined, 'fallback-help-links');
   const guide = elem('a', t('guide'));
-  guide.href = 'https://github.com/toca-1/new-j2me-software-archive-search/blob/main/docs/DOWNLOADER.md';
+  guide.href = './html/downloader-help.html';
   guide.target = '_blank';
   guide.rel = 'noopener noreferrer';
   links.append(document.createTextNode(t('guidePrefix')),
@@ -874,7 +874,11 @@ function installResultTools() {
     const option = elem('option', text); option.value = value; sort.append(option);
   }
    
-  tools.append(form, sortLabel, sort);
+  const sortRow = elem('div', undefined, 'result-sort-row');
+  const sortControls = elem('div', undefined, 'result-sort-controls');
+  sortControls.append(sortLabel, sort);
+  sortRow.append(sortControls);
+  tools.append(form, sortRow);
   document.querySelector('.result-heading').after(tools);
   form.addEventListener('submit', event => { event.preventDefault(); applyResultTools(); });
   clear.addEventListener('click', () => { input.value = ''; applyResultTools(); });
@@ -915,10 +919,27 @@ async function prepareResultSummaries(state, current) {
   if (failed) throw failed.reason;
   if (current === generation && originalResults === state) state.ready = true;
 }
+function parseRefinementTerms(query) {
+  // Double quotes keep a multi-word phrase together. A leading minus excludes
+  // the word or phrase; hyphens inside terms (CLDC-1.1) remain literal.
+  const included = [], excluded = [];
+  const tokens = query.toLowerCase().match(/-?"[^"]*"|\S+/g) || [];
+  for (const token of tokens) {
+    const negative = token.startsWith('-') && token.length > 1;
+    const raw = negative ? token.slice(1) : token;
+    const term = raw.startsWith('"') && raw.endsWith('"') && raw.length >= 2
+      ? raw.slice(1, -1) : raw;
+    if (term) (negative ? excluded : included).push(term);
+  }
+  return {included, excluded};
+}
 function selectResultIds(state, query, order) {
-  const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
-  let ids = words.length ? state.ids.filter(id => words.every(word =>
-    state.summaries.get(id).fields.some(field => field.includes(word)))) : [...state.ids];
+  const {included, excluded} = parseRefinementTerms(query);
+  let ids = included.length || excluded.length ? state.ids.filter(id => {
+    const fields = state.summaries.get(id).fields;
+    return included.every(word => fields.some(field => field.includes(word))) &&
+      excluded.every(word => fields.every(field => !field.includes(word)));
+  }) : [...state.ids];
   if (order !== 'default') {
     const collator = new Intl.Collator(I18N.numberLocale(), {numeric: true, sensitivity: 'base'});
     ids.sort((a, b) => {
@@ -1013,7 +1034,13 @@ async function runSearch() {
   document.querySelector('.results-section').hidden = false;
   const current = ++generation;
   resetResultTools();
-  const term = $('query').value.trim();
+  const rawTerm = $('query').value.trim();
+  const term = rawTerm;
+  const textTerms = searchMode === 'name' ? parseRefinementTerms(rawTerm) : null;
+  // Use an included word/phrase to shortlist names, then check all metadata
+  // for the remaining words and exclusions. A whole-index negative-only scan
+  // would force hundreds of thousands of records to be downloaded.
+  const anchor = textTerms?.included.find(word => Array.from(word).length >= 2);
   $('results').replaceChildren(); $('more').hidden = true; $('show-all').hidden = true; labelsForMatches = new Map();
   showAllBusy = false;
   if (!manifest) { status(t('indexNotLoaded')); return; }
@@ -1022,7 +1049,8 @@ async function runSearch() {
   // retryable error shown when an index shard or record cannot be loaded.
   const hashType = searchMode === 'name' ? null : detectHashType(term);
   const invalid = searchMode === 'name'
-    ? (Array.from(term).length < 2 ? t('enterName') : null)
+    ? (!textTerms.included.length ? t('searchHelpRequiresPositive') :
+       !anchor ? t('enterName') : null)
     : (!hashType ? t('enterAnyHash') : null);
   if (invalid) {
     status(t('searchError'));
@@ -1032,8 +1060,20 @@ async function runSearch() {
   $('search-form').querySelector('button').disabled = true;
   try {
     let ids = [];
+    let preparedSummaries = null;
     if (searchMode === 'name') {
-      ids = await searchNames(term.toLowerCase(), current);
+      ids = await searchNames(anchor, current);
+      if (current !== generation) return;
+      if (ids.length && (textTerms.included.length > 1 || textTerms.excluded.length)) {
+        // Filter with exactly the same metadata rules as Search within results,
+        // so 'prince -persia' agrees with searching 'prince' then refining.
+        const initial = {ids, summaries: new Map(), ready: false, busy: false};
+        originalResults = initial;
+        await prepareResultSummaries(initial, current);
+        if (current !== generation || originalResults !== initial) return;
+        ids = selectResultIds(initial, term, 'default');
+        preparedSummaries = initial.summaries;
+      }
     } else {
       if (hashType === 'crc32') {
         status(t('lookingUpCrc'));
@@ -1045,7 +1085,8 @@ async function runSearch() {
     }
     if (current !== generation) return;
     active = ids; shown = 0;
-    originalResults = {ids: [...ids], summaries: new Map(), ready: false, busy: false};
+    originalResults = {ids: [...ids], summaries: preparedSummaries || new Map(),
+      ready: Boolean(preparedSummaries), busy: false};
     $('result-tools').hidden = ids.length === 0;
     setResultControlsBusy(false);
     if (!ids.length) {

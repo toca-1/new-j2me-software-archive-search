@@ -44,6 +44,8 @@
   "linuxIntro": "Na Linuxu a macOS:",
   "windowsIntro": "Ve Windows:",
   "guide": "Úplný návod k nastavení",
+  "downloaderGuideTitle": "Stahovač JAR",
+  "downloaderGuideNotice": "Podrobné technické pokyny níže jsou zatím dostupné pouze anglicky. Příkazy jsou ve všech jazycích stejné.",
   "guidePrefix": "Další informace najdete v ",
   "guideSuffix": ".",
   "folderOther": "Další soubory",
@@ -74,6 +76,9 @@
   "refinePlaceholder": "Upřesnit tyto výsledky…",
   "refineButton": "Upřesnit",
   "refineClear": "Zrušit upřesnění",
+  "searchHelpLink": "Nápověda k hledání",
+  "refineHelpBack": "Zpět na hledání",
+  "refineHelpExamples": "Příklady",
   "sortLabel": "Řadit výsledky",
   "sortDefault": "Výchozí pořadí",
   "sortTitleAsc": "Název A–Z",
@@ -109,5 +114,10 @@
   "reloadPage": "Znovu načíst stránku",
   "gzipRequired": "Tento web vyžaduje aktuální prohlížeč podporující gzip DecompressionStream.",
   "loadFailed": "Nepodařilo se načíst {path} (HTTP {status})",
-  "schemaMismatch": "Data webu neodpovídají app.js v4. Znovu je sestavte pomocí nástroje v4."
+  "schemaMismatch": "Data webu neodpovídají app.js v4. Znovu je sestavte pomocí nástroje v4.",
+  "searchHelpTextIntro": "Tento režim vyhledávání vrací výsledky obsahující všechna slova dotazu. Podporuje také speciální syntaxi, například:",
+  "searchHelpExclude": "Vyloučit všechny výsledky obsahující dané slovo.",
+  "searchHelpExact": "Zobrazit jen výsledky obsahující přesně tuto frázi.",
+  "searchHelpRequiresPositive": "Zadejte alespoň jedno slovo nebo frázi v uvozovkách o nejméně dvou znacích. Chcete-li použít jen vyloučení, filtrujte existující výsledky.",
+  "searchHelpHashDescription": "Zadejte úplný hexadecimální hash o délce 8, 40 nebo 64 znaků (CRC32, SHA-1 nebo SHA-256). Hash SHA identifikuje konkrétní obsah souboru; CRC32 může odpovídat více souborům."
 }

@@ -44,6 +44,8 @@
   "linuxIntro": "On Linux & macOS:",
   "windowsIntro": "On Windows:",
   "guide": "Full setup guide",
+  "downloaderGuideTitle": "JAR downloader",
+  "downloaderGuideNotice": "The detailed technical instructions below are currently in English. Commands work the same in every language.",
   "guidePrefix": "For further questions refer to the ",
   "downloadHelpHeading": "Alternative download using the terminal",
   "downloadFrom": "Download from {archive}",
@@ -62,6 +64,9 @@
   "refinePlaceholder": "Refine these results…",
   "refineButton": "Refine",
   "refineClear": "Clear refinement",
+  "searchHelpLink": "Search help",
+  "refineHelpBack": "Back to search",
+  "refineHelpExamples": "Examples",
   "sortLabel": "Sort results",
   "sortDefault": "Default order",
   "sortTitleAsc": "Title A–Z",
@@ -108,5 +113,10 @@
   "folderView": "View result",
   "folderShowMore": "Show more",
   "folderLoadError": "Could not load folder contents:",
-  "folderCounter": "{matching} of {total} other files"
+  "folderCounter": "{matching} of {total} other files",
+  "searchHelpTextIntro": "This search mode returns results containing every word of your search. It also supports special syntax, like:",
+  "searchHelpExclude": "Exclude any result containing the word.",
+  "searchHelpExact": "Only show results containing the exact phrase.",
+  "searchHelpRequiresPositive": "Include at least one search word or quoted phrase of two or more characters. To use exclusions alone, refine existing results.",
+  "searchHelpHashDescription": "Enter a complete 8-, 40- or 64-character hexadecimal hash (CRC32, SHA-1 or SHA-256). SHA hashes identify specific file contents; CRC32 may match more than one file."
 }
