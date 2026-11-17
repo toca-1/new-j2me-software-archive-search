@@ -15,7 +15,7 @@ This document records which Internet Archive collections and which files within 
 | [Ovi Store Panic (2015)](https://archive.org/details/2015_ovi_store_panic) | Not processed; downloads unavailable |
 | [Ovi Store Panic 2 (2015)](https://archive.org/details/2015_ovi_store_panic_2) | Not processed; downloads unavailable |
 
-Additionally, the third-party mirror [nnproject](https://f.nnproject.cc/jarchive/) has been incorporated into the site. For rebuilding, reference-backed limitations, and the archive-member streaming workaround, see [REBUILD_ALL.md](REBUILD_ALL.md).
+Additionally, the third-party mirror [nnproject](https://f.nnproject.cc/jarchive/) has been incorporated into the site. For rebuilding, reference-backed limitations, and the archive-member streaming workaround, see [`REBUILD_ALL.md`](REBUILD_ALL.md).
 
 # Matching and publication methodology
 
