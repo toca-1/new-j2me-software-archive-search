@@ -1,5 +1,4 @@
 - [ ] **Search improvements.** Search paths as well as filenames and metadata
-- [ ] **Optional J2ME-specific search operators (deferred).** If added later, prefer explicit syntax (e.g. `@version=1.0`, `@midp=2.0`, `@size>100KB`) over an advanced-filter UI. Require a normal positive search term, preserve quoted literal searches, reject malformed operators, handle unknown metadata explicitly, and avoid ambiguous interpretation of ordinary text
 - [ ] **Document reproducibility.** Publish or refine the indexing, extraction, hashing and metadata-join methodology, including the overlong Linux filename handled by archive streaming
 - [ ] **Metadata quality tools.** Identify conflicting or incomplete manifest fields, as well as fields that could still be added (e.g.,  screen resolution, language, device compatibility)
 - [ ] **Check docs.** Make sure that everything is accurate and up-to-date
