@@ -119,4 +119,4 @@ When choosing `--chunk-kib`, smaller chunks can reduce wasted data on a failed r
 
 The downloader sends archive range requests to the Internet Archive, and index lookups to the public project's GitHub Pages site. These services can see the requests and IP address; the requested hash prefix is part of the index shard URL. Index metadata and individual archive JARs come from third-party resources. Integrity checks confirm the file matches the published hash; they cannot make untrusted game software safe to execute. Use an appropriate sandbox for unknown software. Most importantly, no original JARs are hosted in this repository. Rights to archived software remain with their respective rights holders.
 
-This is an independently built community tool, not an official Internet Archive feature. See [ATTRIBUTION.md](ATTRIBUTION.md) for technical references and attribution notes.
+This is an independently built community tool, not an official Internet Archive feature. See [`ATTRIBUTION.md`](ATTRIBUTION.md) for technical references and attribution notes.
