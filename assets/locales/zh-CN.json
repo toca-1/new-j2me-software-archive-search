@@ -122,5 +122,10 @@
   "searchHelpMetaDescription": "J2ME 存档搜索帮助",
   "downloaderGuideMetaDescription": "从 New J2ME Software Archive 恢复单个 JAR 文件的完整指南和故障排除说明。",
   "folderIndexOutdated": "文件夹索引已过期；请重新生成 data/folders/。",
-  "folderInvalidMembers": "文件夹文件列表无效"
+  "folderInvalidMembers": "文件夹文件列表无效",
+  "exportCsv": "导出 CSV",
+  "exportLimit": "请将结果缩小至 {limit} 条或更少后再导出。",
+  "exportWorking": "正在准备 CSV… {done}/{total} 个文件",
+  "exportReady": "CSV 已准备好下载：{count} 个文件。",
+  "exportError": "无法导出 CSV，请重试。"
 }

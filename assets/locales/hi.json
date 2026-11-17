@@ -119,5 +119,10 @@
   "searchHelpMetaDescription": "J2ME संग्रह में खोजने के लिए सहायता",
   "downloaderGuideMetaDescription": "New J2ME Software Archive से अलग-अलग JAR फ़ाइलें प्राप्त करने के विस्तृत निर्देश और समस्या निवारण।",
   "folderIndexOutdated": "फ़ोल्डर इंडेक्स पुराना है; data/folders/ को फिर से बनाएँ।",
-  "folderInvalidMembers": "फ़ोल्डर की फ़ाइल सूची अमान्य है"
+  "folderInvalidMembers": "फ़ोल्डर की फ़ाइल सूची अमान्य है",
+  "exportCsv": "CSV निर्यात करें",
+  "exportLimit": "निर्यात करने से पहले परिणामों को {limit} या उससे कम करें।",
+  "exportWorking": "CSV तैयार हो रहा है… {done}/{total} फ़ाइलें",
+  "exportReady": "CSV डाउनलोड के लिए तैयार है: {count} फ़ाइलें।",
+  "exportError": "CSV निर्यात नहीं हो सका। कृपया फिर प्रयास करें।"
 }

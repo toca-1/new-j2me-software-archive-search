@@ -281,10 +281,83 @@ test('Search help link appears beneath the main form, not in the result tools', 
     ? {after(node) {context.resultTools = node;}} : null;
   run('installResultTools()');
   const sortRow = find(context.resultTools, 'result-sort-row');
-  assert.equal(sortRow.children.length, 1, 'Sort row only contains sorting controls');
+  assert.equal(sortRow.children.length, 2, 'Sort row contains sorting and CSV export');
   assert.equal(sortRow.children[0].className, 'result-sort-controls');
+  assert.equal(sortRow.children[1].className, 'export-csv');
+  assert.equal(sortRow.children[1].textContent, 'exportCsv');
   assert.equal(find(context.resultTools, 'refine-help-link'), null,
     'The old refinement-specific help link is gone');
+});
+
+test('CSV export escapes quotes, Unicode, delimiters and spreadsheet formulas', () => {
+  const {run} = loadApp();
+  run(`manifest = {record_chunk: 2};`);
+  assert.equal(run(`csvCell('A,"B"')`), '"A,""B"""');
+  assert.equal(run(`csvCell('=HYPERLINK("bad")')`), `"'=HYPERLINK(""bad"")"`);
+  assert.equal(run(`csvCell('  +123')`), "'  +123");
+  assert.equal(run(`csvCell('@cmd')`), "'@cmd");
+  assert.equal(run(`csvCell('Ångström')`), 'Ångström');
+  const row = run(`exportRecordRow(7, [
+    '${'a'.repeat(64)}', '${'b'.repeat(40)}', 1500,
+    [[0,'A.jar','Dir/A.jar','a1b2c3d4'], [1,'B.jar','Elsewhere/B.jar','a1b2c3d4']],
+    ['=DANGER','Vendor, Inc.','1.0','CLDC-1.1','MIDP-2.0']
+  ])`);
+  const fields = String(row).split(',');
+  assert.match(row, /^7,'=DANGER,"Vendor, Inc\.",1\.0,CLDC-1\.1,MIDP-2\.0,1500,/);
+  assert.match(row, /A1B2C3D4/);
+  assert.match(row, /"Lite\nFull"/);
+  assert.match(row, /"Dir\/A\.jar\nElsewhere\/B\.jar"/);
+  assert.match(row, /archive\.org\/download\/96x65pixels_j2me/);
+  assert.ok(fields.length >= 14);
+});
+
+test('CSV export respects the cap and uses the active result order', async () => {
+  const {run, context} = loadApp();
+  const elements = new Map();
+  const get = id => {
+    if (!elements.has(id)) elements.set(id, {textContent: '', disabled: false});
+    return elements.get(id);
+  };
+  context.document.getElementById = get;
+  let clicked = false, exportedBlob, revoked = false;
+  context.Blob = Blob;
+  context.URL = {
+    createObjectURL(blob) { exportedBlob = blob; return 'blob:test'; },
+    revokeObjectURL(url) { assert.equal(url, 'blob:test'); revoked = true; }
+  };
+  context.document.body = {append(link) {assert.equal(link.download, 'j2me-search-results.csv');}};
+  context.document.createElement = () => ({click() {clicked = true;}, remove() {}});
+  run(`manifest = {record_chunk: 2};
+       originalResults = {busy: false};
+       active = Array.from({length: EXPORT_MAX_RECORDS + 1}, (_, i) => i);`);
+  await run('exportCurrentResults()');
+  assert.equal(clicked, false);
+  assert.equal(get('export-status').textContent, 'exportLimit');
+
+  context.testChunks = {
+    'records/0000.json.gz': [
+      ['a'.repeat(64), 'b'.repeat(40), 200, [[0,'A.jar','Folder/A.jar','deadbeef']], ['Alpha','','','','']],
+      ['c'.repeat(64), 'd'.repeat(40), 300, [[1,'B.jar','Folder/B.jar','feedbeef']], ['Bravo','','','','']]
+    ],
+    'records/0001.json.gz': [
+      ['e'.repeat(64), 'f'.repeat(40), 400, [[0,'C.jar','Folder/C.jar','cafebabe']], ['Charlie','','','','']]
+    ]
+  };
+  run(`readGzipJson = async path => testChunks[path];
+       active = [2,0,1];`);
+  await run('exportCurrentResults()');
+  assert.equal(clicked, true);
+  assert.equal(revoked, true);
+  const content = await exportedBlob.text();
+  assert.deepEqual(Array.from(new Uint8Array(await exportedBlob.arrayBuffer()).slice(0, 3)), [239, 187, 191]);
+  assert.ok(content.startsWith('ID,Title,Vendor,Version,CLDC,MIDP,'));
+  const lines = content.trim().split('\r\n');
+  assert.equal(lines.length, 4);
+  assert.match(lines[1], /^2,Charlie,/);
+  assert.match(lines[2], /^0,Alpha,/);
+  assert.match(lines[3], /^1,Bravo,/);
+  assert.equal(get('export-status').textContent, 'exportReady');
+  assert.equal(get('export-csv').disabled, false);
 });
 
 test('full downloader guide link uses the local styled HTML page', () => {

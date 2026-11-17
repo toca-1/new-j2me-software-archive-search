@@ -122,5 +122,10 @@
   "searchHelpMetaDescription": "Hulp bij zoeken in het J2ME-archief",
   "downloaderGuideMetaDescription": "Volledige instructies en probleemoplossing voor het herstellen van afzonderlijke JAR-bestanden uit het New J2ME Software Archive.",
   "folderIndexOutdated": "De mapindex is verouderd; bouw data/folders/ opnieuw op.",
-  "folderInvalidMembers": "Ongeldige lijst met mapbestanden"
+  "folderInvalidMembers": "Ongeldige lijst met mapbestanden",
+  "exportCsv": "CSV exporteren",
+  "exportLimit": "Beperk de resultaten tot maximaal {limit} voordat je exporteert.",
+  "exportWorking": "CSV voorbereiden… {done}/{total} bestanden",
+  "exportReady": "CSV klaar om te downloaden: {count} bestanden.",
+  "exportError": "CSV exporteren mislukt. Probeer opnieuw."
 }

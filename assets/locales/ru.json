@@ -124,5 +124,10 @@
   "searchHelpMetaDescription": "Справка по поиску в архиве J2ME",
   "downloaderGuideMetaDescription": "Подробное руководство и устранение неполадок при восстановлении отдельных JAR-файлов из New J2ME Software Archive.",
   "folderIndexOutdated": "Индекс папок устарел; пересоздайте data/folders/.",
-  "folderInvalidMembers": "Недопустимый список файлов папки"
+  "folderInvalidMembers": "Недопустимый список файлов папки",
+  "exportCsv": "Экспорт CSV",
+  "exportLimit": "Для экспорта сократите результаты до {limit} или меньше.",
+  "exportWorking": "Подготовка CSV… {done}/{total} файлов",
+  "exportReady": "CSV готов к скачиванию: {count} файлов.",
+  "exportError": "Не удалось экспортировать CSV. Попробуйте снова."
 }

@@ -15,6 +15,9 @@ const WORKERS = 8;
 // Sorting/refining needs metadata from record chunks spread across the archive.
 // Use more concurrent reads than before (2) without fetching every chunk at once.
 const SUMMARY_WORKERS = 6;
+// Keep browser-side CSV exports bounded; users can refine very broad searches.
+const EXPORT_MAX_RECORDS = 10000;
+const EXPORT_WORKERS = 4;
 const MAX_CACHED_SEARCH_SHARDS = 12;
 // Read the search-only index settings from data/manifest.json.
 function nameIndexConfig(index) {
@@ -851,6 +854,7 @@ function renderResult(id, record) {
 }
 // Search within all original matches, with metadata loaded only on demand.
 let originalResults = null, resultViewVersion = 0, moreLoadingVersion = null;
+let exportBusy = false;
 function resultTitle(id, record) {
   const match = labelsForMatches.get(id);
   return record[4][0] || (match && match[1] === 0 ? match[0] : record[3][0][1]);
@@ -863,6 +867,8 @@ function resetResultTools() {
   originalResults = null; resultViewVersion++;
   $('result-tools').hidden = true;
   $('refine-query').value = ''; $('result-sort').value = 'default';
+  $('export-status').textContent = '';
+  $('export-csv').disabled = false;
 }
 function installResultTools() {
   const tools = elem('div', undefined, 'result-tools');
@@ -885,13 +891,19 @@ function installResultTools() {
   const sortRow = elem('div', undefined, 'result-sort-row');
   const sortControls = elem('div', undefined, 'result-sort-controls');
   sortControls.append(sortLabel, sort);
-  sortRow.append(sortControls);
-  tools.append(form, sortRow);
+  const exportButton = elem('button', t('exportCsv'), 'export-csv');
+  exportButton.id = 'export-csv'; exportButton.type = 'button';
+  const exportStatus = elem('span', undefined, 'export-status');
+  exportStatus.id = 'export-status'; exportStatus.setAttribute('role', 'status');
+  exportStatus.setAttribute('aria-live', 'polite');
+  sortRow.append(sortControls, exportButton);
+  tools.append(form, sortRow, exportStatus);
   document.querySelector('.result-heading').after(tools);
   form.addEventListener('submit', event => { event.preventDefault(); applyResultTools(); });
   clear.addEventListener('click', () => { input.value = ''; applyResultTools(); });
   input.addEventListener('search', () => { if (!input.value) applyResultTools(); });
   sort.addEventListener('change', () => applyResultTools());
+  exportButton.addEventListener('click', () => exportCurrentResults());
 }
 // Supplemental, name-shard-aligned metadata for fast first-time refinement and sorting.
 // Its files contain compact metadata only, not the large records/download paths.
@@ -1055,6 +1067,7 @@ async function applyResultTools() {
     if (query || order !== 'default') await prepareResultSummaries(state, current);
     if (current !== generation || originalResults !== state) return;
     active = selectResultIds(state, query, order); shown = 0; resultViewVersion++;
+    $('export-status').textContent = '';
     $('results').replaceChildren(); $('more').hidden = true; $('show-all').hidden = true;
     status(query ? t('subsetCount', {count: fmt(active.length), total: fmt(state.ids.length)}) :
       t('matchingFiles', {count: fmt(active.length), pluralCount: active.length}));
@@ -1068,9 +1081,109 @@ async function applyResultTools() {
     state.busy = false;
     if (current === generation && originalResults === state) {
       setResultControlsBusy(false); $('more').disabled = false; $('show-all').disabled = false;
+      $('export-csv').disabled = exportBusy;
     }
   }
 }
+// One CSV row represents one unique file content, with all original archive
+// locations in multiline cells. Spreadsheet formula-looking metadata is quoted
+// as text so that untrusted manifest values never execute as formulas.
+const EXPORT_COLUMNS = ['ID', 'Title', 'Vendor', 'Version', 'CLDC', 'MIDP',
+  'Size (bytes)', 'CRC32', 'SHA-1', 'SHA-256', 'Collections',
+  'Source filenames', 'Archive paths', 'Internet Archive URLs'];
+function csvCell(value) {
+  let text = String(value ?? '');
+  if (/^[\s\u0000-\u001f]*[=+\-@]/.test(text) || /^[\t\r\n]/.test(text))
+    text = "'" + text;
+  return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+function exportRecordRow(id, record) {
+  if (!Array.isArray(record) || record.length !== 5 || !Array.isArray(record[3]) ||
+      !Array.isArray(record[4]) || !record[3].length)
+    throw new Error(`Invalid record for CSV export: ${id}`);
+  const [sha256, sha1, bytes, sources, quick] = record;
+  const [title, vendor, version, cldc, midp] = quick;
+  const locations = sources.map(source => {
+    if (!Array.isArray(source) || (source[0] !== 0 && source[0] !== 1))
+      throw new Error(`Invalid archive source for CSV export: ${id}`);
+    return source;
+  });
+  const values = [id, title || resultTitle(id, record), vendor, version, cldc,
+    midp, bytes, [...new Set(locations.map(source => String(source[3] || '').toUpperCase()).filter(Boolean))].join('\n'),
+    sha1, sha256,
+    [...new Set(locations.map(source => source[0] === 0 ? 'Lite' : 'Full'))].join('\n'),
+    locations.map(source => source[1]).join('\n'),
+    locations.map(source => source[2]).join('\n'),
+    locations.map(source => urlFor(source[0], source[2])).join('\n')];
+  return values.map(csvCell).join(',');
+}
+async function exportCurrentResults() {
+  const state = originalResults;
+  if (!state || state.busy || exportBusy || !active.length) return;
+  const output = $('export-status');
+  if (active.length > EXPORT_MAX_RECORDS) {
+    output.textContent = t('exportLimit', {limit: fmt(EXPORT_MAX_RECORDS)});
+    return;
+  }
+  const current = generation, view = resultViewVersion;
+  const ids = [...active]; // Snapshot the current refinement and sort order.
+  const stillCurrent = () => current === generation && view === resultViewVersion && originalResults === state;
+  const groups = new Map();
+  for (let index = 0; index < ids.length; index++) {
+    const chunk = Math.floor(ids[index] / manifest.record_chunk);
+    if (!groups.has(chunk)) groups.set(chunk, []);
+    groups.get(chunk).push([index, ids[index]]);
+  }
+  const batches = [...groups];
+  const rows = new Array(ids.length);
+  let next = 0, done = 0;
+  exportBusy = true;
+  $('export-csv').disabled = true;
+  output.textContent = t('exportWorking', {done: 0, total: fmt(ids.length)});
+  try {
+    const worker = async () => {
+      while (stillCurrent()) {
+        const batch = batches[next++];
+        if (!batch) return;
+        const [chunk, entries] = batch;
+        const records = await memoized(recordsCache, chunk,
+          () => readGzipJson(`records/${String(chunk).padStart(4, '0')}.json.gz`), 12);
+        if (!stillCurrent()) return;
+        for (const [index, id] of entries) {
+          rows[index] = exportRecordRow(id, records[id % manifest.record_chunk]);
+        }
+        done += entries.length;
+        output.textContent = t('exportWorking', {done: fmt(done), total: fmt(ids.length)});
+      }
+    };
+    await Promise.all(Array.from({length: Math.min(EXPORT_WORKERS, batches.length)}, worker));
+    if (!stillCurrent()) return;
+    if (rows.some(row => row === undefined)) throw new Error('Incomplete CSV export');
+    const csv = '\uFEFF' + EXPORT_COLUMNS.map(csvCell).join(',') + '\r\n' + rows.join('\r\n') + '\r\n';
+    const blobUrl = URL.createObjectURL(new Blob([csv], {type: 'text/csv;charset=utf-8'}));
+    try {
+      const link = elem('a');
+      link.href = blobUrl;
+      link.download = 'j2me-search-results.csv';
+      document.body.append(link);
+      link.click();
+      link.remove();
+    } finally {
+      // Give the browser a chance to start the download before releasing the URL.
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    }
+    output.textContent = t('exportReady', {count: fmt(ids.length)});
+  } catch (error) {
+    if (stillCurrent()) {
+      output.textContent = t('exportError');
+      console.error('[J2ME] CSV export failed:', error);
+    }
+  } finally {
+    exportBusy = false;
+    if (stillCurrent()) $('export-csv').disabled = Boolean(state.busy);
+  }
+}
+
 function updatePaginationButtons() {
   const remaining = Math.max(0, active.length - shown);
   const more = $('more'), all = $('show-all');

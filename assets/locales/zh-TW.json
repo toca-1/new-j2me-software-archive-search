@@ -119,5 +119,10 @@
   "searchHelpMetaDescription": "J2ME 封存庫搜尋說明",
   "downloaderGuideMetaDescription": "從 New J2ME Software Archive 取回個別 JAR 檔案的完整指南及疑難排解說明。",
   "folderIndexOutdated": "資料夾索引已過期；請重新建立 data/folders/。",
-  "folderInvalidMembers": "資料夾檔案清單無效"
+  "folderInvalidMembers": "資料夾檔案清單無效",
+  "exportCsv": "匯出 CSV",
+  "exportLimit": "請將結果縮小至 {limit} 筆或更少後再匯出。",
+  "exportWorking": "正在準備 CSV… {done}/{total} 個檔案",
+  "exportReady": "CSV 已準備好下載：{count} 個檔案。",
+  "exportError": "無法匯出 CSV，請重試。"
 }

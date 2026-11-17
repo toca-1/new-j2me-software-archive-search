@@ -119,5 +119,10 @@
   "searchHelpMetaDescription": "J2ME arşivinde arama yardımı",
   "downloaderGuideMetaDescription": "New J2ME Software Archive içinden tek tek JAR dosyalarını kurtarma ve sorun giderme kılavuzu.",
   "folderIndexOutdated": "Klasör dizini güncel değil; data/folders/ dizinini yeniden oluşturun.",
-  "folderInvalidMembers": "Geçersiz klasör dosyası listesi"
+  "folderInvalidMembers": "Geçersiz klasör dosyası listesi",
+  "exportCsv": "CSV dışa aktar",
+  "exportLimit": "Dışa aktarmak için sonuçları {limit} veya altına daraltın.",
+  "exportWorking": "CSV hazırlanıyor… {done}/{total} dosya",
+  "exportReady": "CSV indirilmeye hazır: {count} dosya.",
+  "exportError": "CSV dışa aktarılamadı. Tekrar deneyin."
 }

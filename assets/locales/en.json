@@ -122,5 +122,10 @@
   "searchHelpMetaDescription": "Search help page for the J2ME search index",
   "downloaderGuideMetaDescription": "Full instructions and troubleshooting for recovering individual JARs from the New J2ME Software Archive.",
   "folderIndexOutdated": "Folder index is out of date; rebuild data/folders/.",
-  "folderInvalidMembers": "Invalid folder member list"
+  "folderInvalidMembers": "Invalid folder member list",
+  "exportCsv": "Export CSV",
+  "exportLimit": "Refine to {limit} results or fewer before exporting.",
+  "exportWorking": "Preparing CSV… {done}/{total} files",
+  "exportReady": "CSV prepared for download: {count} files.",
+  "exportError": "Could not export CSV. Please try again."
 }

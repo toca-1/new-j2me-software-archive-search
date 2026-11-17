@@ -119,5 +119,10 @@
   "searchHelpMetaDescription": "J2ME アーカイブの検索ヘルプ",
   "downloaderGuideMetaDescription": "New J2ME Software Archive から個別の JAR ファイルを復元するための詳しい手順とトラブルシューティング。",
   "folderIndexOutdated": "フォルダー索引が古くなっています。data/folders/ を再生成してください。",
-  "folderInvalidMembers": "フォルダー内のファイル一覧が無効です"
+  "folderInvalidMembers": "フォルダー内のファイル一覧が無効です",
+  "exportCsv": "CSV を出力",
+  "exportLimit": "出力するには結果を {limit} 件以下に絞り込んでください。",
+  "exportWorking": "CSV を準備中… {done}/{total} ファイル",
+  "exportReady": "CSV のダウンロード準備ができました: {count} ファイル。",
+  "exportError": "CSV を出力できませんでした。もう一度お試しください。"
 }

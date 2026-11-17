@@ -123,5 +123,10 @@
   "searchHelpMetaDescription": "Nápověda k hledání v archivu J2ME",
   "downloaderGuideMetaDescription": "Podrobný návod a řešení problémů při obnově jednotlivých souborů JAR z New J2ME Software Archive.",
   "folderIndexOutdated": "Index složek je zastaralý; znovu vytvořte data/folders/.",
-  "folderInvalidMembers": "Neplatný seznam souborů ve složce"
+  "folderInvalidMembers": "Neplatný seznam souborů ve složce",
+  "exportCsv": "Exportovat CSV",
+  "exportLimit": "Před exportem omezte výsledky na nejvýše {limit}.",
+  "exportWorking": "Příprava CSV… {done}/{total} souborů",
+  "exportReady": "CSV připraveno ke stažení: {count} souborů.",
+  "exportError": "Export CSV se nezdařil. Zkuste to znovu."
 }

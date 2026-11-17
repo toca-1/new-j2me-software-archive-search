@@ -119,5 +119,10 @@
   "searchHelpMetaDescription": "วิธีใช้การค้นหาในคลัง J2ME",
   "downloaderGuideMetaDescription": "คำแนะนำฉบับสมบูรณ์และวิธีแก้ปัญหาในการกู้คืนไฟล์ JAR แต่ละไฟล์จาก New J2ME Software Archive",
   "folderIndexOutdated": "ดัชนีโฟลเดอร์ล้าสมัยแล้ว โปรดสร้าง data/folders/ ใหม่",
-  "folderInvalidMembers": "รายการไฟล์ในโฟลเดอร์ไม่ถูกต้อง"
+  "folderInvalidMembers": "รายการไฟล์ในโฟลเดอร์ไม่ถูกต้อง",
+  "exportCsv": "ส่งออก CSV",
+  "exportLimit": "กรองผลลัพธ์ให้เหลือไม่เกิน {limit} รายการก่อนส่งออก",
+  "exportWorking": "กำลังเตรียม CSV… {done}/{total} ไฟล์",
+  "exportReady": "CSV พร้อมดาวน์โหลด: {count} ไฟล์",
+  "exportError": "ไม่สามารถส่งออก CSV ได้ โปรดลองอีกครั้ง"
 }

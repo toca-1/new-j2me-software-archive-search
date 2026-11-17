@@ -123,5 +123,10 @@
   "searchHelpMetaDescription": "Ajutor pentru căutarea în arhiva J2ME",
   "downloaderGuideMetaDescription": "Instrucțiuni complete și depanare pentru recuperarea fișierelor JAR individuale din New J2ME Software Archive.",
   "folderIndexOutdated": "Indexul dosarelor este învechit; reconstruiește data/folders/.",
-  "folderInvalidMembers": "Listă de fișiere din dosar nevalidă"
+  "folderInvalidMembers": "Listă de fișiere din dosar nevalidă",
+  "exportCsv": "Exportă CSV",
+  "exportLimit": "Restrânge rezultatele la cel mult {limit} înainte de export.",
+  "exportWorking": "Se pregătește CSV… {done}/{total} fișiere",
+  "exportReady": "CSV pregătit pentru descărcare: {count} fișiere.",
+  "exportError": "Nu s-a putut exporta CSV. Încearcă din nou."
 }

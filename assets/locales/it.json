@@ -122,5 +122,10 @@
   "searchHelpMetaDescription": "Guida alla ricerca nell’archivio J2ME",
   "downloaderGuideMetaDescription": "Istruzioni complete e risoluzione dei problemi per recuperare singoli file JAR dal New J2ME Software Archive.",
   "folderIndexOutdated": "L’indice delle cartelle non è aggiornato; rigenera data/folders/.",
-  "folderInvalidMembers": "Elenco dei file della cartella non valido"
+  "folderInvalidMembers": "Elenco dei file della cartella non valido",
+  "exportCsv": "Esporta CSV",
+  "exportLimit": "Riduci i risultati a {limit} o meno prima di esportare.",
+  "exportWorking": "Preparazione CSV… {done}/{total} file",
+  "exportReady": "CSV pronto per il download: {count} file.",
+  "exportError": "Impossibile esportare il CSV. Riprova."
 }

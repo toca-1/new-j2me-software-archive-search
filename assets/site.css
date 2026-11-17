@@ -114,10 +114,15 @@
   font:inherit;
   font-size:15px;
 }
+.export-csv{background:var(--panel2);color:var(--text);border:1px solid #58696c;
+  border-radius:8px;padding:10px 15px;font:inherit;font-size:15px;cursor:pointer;white-space:nowrap}
+.export-csv:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.export-status{display:block;color:var(--muted);font-size:13px;line-height:1.5}
+.export-status:empty{display:none}
 .result-tools .small{margin:12px 0 0;line-height:1.5}
 .result-tools button:focus-visible,#result-sort:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .result-tools :disabled{opacity:.6}
-@media(max-width:650px){.refine-form{align-items:stretch}.refine-form input{flex-basis:auto;width:100%}.refine-form>button{width:100%}.result-sort-controls{width:100%;align-items:stretch;flex-direction:column}#result-sort{width:100%}}
+@media(max-width:650px){.refine-form{align-items:stretch}.refine-form input{flex-basis:auto;width:100%}.refine-form>button{width:100%}.result-sort-controls{width:100%;align-items:stretch;flex-direction:column}#result-sort{width:100%}.export-csv{width:100%}}
 
 /* BEGIN compact download list (v2) */
 .download-section { margin-top:20px; border-top:1px solid var(--edge); padding-top:16px; }

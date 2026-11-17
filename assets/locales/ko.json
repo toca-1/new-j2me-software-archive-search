@@ -119,5 +119,10 @@
   "searchHelpMetaDescription": "J2ME 아카이브 검색 도움말",
   "downloaderGuideMetaDescription": "New J2ME Software Archive에서 개별 JAR 파일을 복구하는 방법과 문제 해결을 위한 전체 안내입니다.",
   "folderIndexOutdated": "폴더 색인이 오래되었습니다. data/folders/를 다시 생성하세요.",
-  "folderInvalidMembers": "잘못된 폴더 파일 목록"
+  "folderInvalidMembers": "잘못된 폴더 파일 목록",
+  "exportCsv": "CSV 내보내기",
+  "exportLimit": "내보내려면 결과를 {limit}개 이하로 좁히세요.",
+  "exportWorking": "CSV 준비 중… {done}/{total}개 파일",
+  "exportReady": "CSV 다운로드 준비 완료: {count}개 파일.",
+  "exportError": "CSV를 내보내지 못했습니다. 다시 시도하세요."
 }

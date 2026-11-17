@@ -122,5 +122,10 @@
   "searchHelpMetaDescription": "Bantuan pencarian arsip J2ME",
   "downloaderGuideMetaDescription": "Petunjuk lengkap dan pemecahan masalah untuk memulihkan berkas JAR dari New J2ME Software Archive.",
   "folderIndexOutdated": "Indeks folder sudah usang; buat ulang data/folders/.",
-  "folderInvalidMembers": "Daftar berkas folder tidak valid"
+  "folderInvalidMembers": "Daftar berkas folder tidak valid",
+  "exportCsv": "Ekspor CSV",
+  "exportLimit": "Persempit hasil menjadi {limit} atau kurang sebelum mengekspor.",
+  "exportWorking": "Menyiapkan CSV… {done}/{total} berkas",
+  "exportReady": "CSV siap diunduh: {count} berkas.",
+  "exportError": "Gagal mengekspor CSV. Coba lagi."
 }

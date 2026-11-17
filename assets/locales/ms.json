@@ -119,5 +119,10 @@
   "searchHelpMetaDescription": "Bantuan carian arkib J2ME",
   "downloaderGuideMetaDescription": "Panduan lengkap dan penyelesaian masalah untuk memulihkan fail JAR individu daripada New J2ME Software Archive.",
   "folderIndexOutdated": "Indeks folder telah lapuk; bina semula data/folders/.",
-  "folderInvalidMembers": "Senarai fail folder tidak sah"
+  "folderInvalidMembers": "Senarai fail folder tidak sah",
+  "exportCsv": "Eksport CSV",
+  "exportLimit": "Kecilkan hasil kepada {limit} atau kurang sebelum mengeksport.",
+  "exportWorking": "Menyediakan CSV… {done}/{total} fail",
+  "exportReady": "CSV sedia untuk dimuat turun: {count} fail.",
+  "exportError": "Gagal mengeksport CSV. Cuba lagi."
 }

@@ -119,5 +119,10 @@
   "searchHelpMetaDescription": "Trợ giúp tìm kiếm kho lưu trữ J2ME",
   "downloaderGuideMetaDescription": "Hướng dẫn đầy đủ và cách khắc phục sự cố khi khôi phục từng tệp JAR từ New J2ME Software Archive.",
   "folderIndexOutdated": "Chỉ mục thư mục đã lỗi thời; hãy tạo lại data/folders/.",
-  "folderInvalidMembers": "Danh sách tệp trong thư mục không hợp lệ"
+  "folderInvalidMembers": "Danh sách tệp trong thư mục không hợp lệ",
+  "exportCsv": "Xuất CSV",
+  "exportLimit": "Thu hẹp kết quả xuống tối đa {limit} trước khi xuất.",
+  "exportWorking": "Đang chuẩn bị CSV… {done}/{total} tệp",
+  "exportReady": "CSV đã sẵn sàng tải xuống: {count} tệp.",
+  "exportError": "Không thể xuất CSV. Vui lòng thử lại."
 }
