@@ -473,3 +473,8 @@
 .help-article .syntax-list{margin-top:4px;margin-bottom:18px}
 .help-article .syntax-list code{white-space:nowrap}
 .help-article .syntax-note{font-size:14px}
+
+/* Operator syntax errors link directly to localized Search help. */
+.results .empty a,.result-heading #status a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.results .empty a:hover,.result-heading #status a:hover{color:var(--text)}
+.results .empty a:focus-visible,.result-heading #status a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}

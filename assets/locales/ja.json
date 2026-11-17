@@ -133,5 +133,8 @@
   "pageSize": "1ページあたりの結果数",
   "pageJump": "ページへ移動",
   "pageInvalid": "1～{total}のページ番号を入力してください。",
-  "pageLoadError": "このページを読み込めませんでした。もう一度お試しください。"
+  "pageLoadError": "このページを読み込めませんでした。もう一度お試しください。",
+  "searchOperatorInvalid": "@ 演算子が無効です。構文は{help}を参照してください（文字列として検索する場合は引用符で囲みます）。",
+  "searchHelpOperatorsIntro": "通常の検索語の後に @ 演算子を付けてメタデータを絞り込めます（最初の検索では2文字以上必要です）：",
+  "searchHelpMissingMetadata": "（メタデータなし）"
 }

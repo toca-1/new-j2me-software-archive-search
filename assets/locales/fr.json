@@ -136,5 +136,8 @@
   "pageSize": "Résultats par page",
   "pageJump": "Aller à la page",
   "pageInvalid": "Saisissez une page entre 1 et {total}.",
-  "pageLoadError": "Impossible de charger cette page. Réessayez."
+  "pageLoadError": "Impossible de charger cette page. Réessayez.",
+  "searchOperatorInvalid": "Opérateur @ invalide. Consultez {help} pour la syntaxe (ou mettez-le entre guillemets pour une recherche littérale).",
+  "searchHelpOperatorsIntro": "Vous pouvez filtrer les métadonnées avec des opérateurs @ après un terme de recherche normal (au moins 2 caractères lors de la recherche initiale) :",
+  "searchHelpMissingMetadata": "(métadonnées manquantes)"
 }

@@ -136,5 +136,8 @@
   "pageSize": "Ergebnisse pro Seite",
   "pageJump": "Zu Seite",
   "pageInvalid": "Bitte eine Seite zwischen 1 und {total} eingeben.",
-  "pageLoadError": "Diese Seite konnte nicht geladen werden. Bitte erneut versuchen."
+  "pageLoadError": "Diese Seite konnte nicht geladen werden. Bitte erneut versuchen.",
+  "searchOperatorInvalid": "Ungültiger @-Operator. {help} erklärt die Syntax (oder setze ihn für eine wörtliche Suche in Anführungszeichen).",
+  "searchHelpOperatorsIntro": "Mit @-Operatoren kannst du Metadaten nach einem normalen Suchbegriff filtern (bei der ersten Suche mindestens 2 Zeichen):",
+  "searchHelpMissingMetadata": "(fehlende Metadaten)"
 }

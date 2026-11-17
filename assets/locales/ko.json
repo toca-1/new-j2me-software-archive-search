@@ -133,5 +133,8 @@
   "pageSize": "페이지당 결과 수",
   "pageJump": "페이지로 이동",
   "pageInvalid": "1부터 {total}까지의 페이지 번호를 입력하세요.",
-  "pageLoadError": "페이지를 불러오지 못했습니다. 다시 시도하세요."
+  "pageLoadError": "페이지를 불러오지 못했습니다. 다시 시도하세요.",
+  "searchOperatorInvalid": "잘못된 @ 연산자입니다. {help}에서 구문을 확인하거나 따옴표로 감싸 문자 그대로 검색하세요.",
+  "searchHelpOperatorsIntro": "일반 검색어 뒤에 @ 연산자를 사용해 메타데이터를 필터링할 수 있습니다(첫 검색은 최소 2자):",
+  "searchHelpMissingMetadata": "(메타데이터 없음)"
 }

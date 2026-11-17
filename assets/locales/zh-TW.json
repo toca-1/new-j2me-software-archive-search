@@ -133,5 +133,8 @@
   "pageSize": "每頁結果數",
   "pageJump": "跳至頁面",
   "pageInvalid": "請輸入 1 到 {total} 之間的頁碼。",
-  "pageLoadError": "無法載入此頁，請重試。"
+  "pageLoadError": "無法載入此頁，請重試。",
+  "searchOperatorInvalid": "無效的 @ 運算子。請參閱{help}了解語法（或用引號包住以依字面搜尋）。",
+  "searchHelpOperatorsIntro": "在一般搜尋字詞後，可以使用 @ 運算子篩選中繼資料（首次搜尋至少需要 2 個字元）：",
+  "searchHelpMissingMetadata": "（缺少中繼資料）"
 }

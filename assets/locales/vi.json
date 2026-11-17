@@ -133,5 +133,8 @@
   "pageSize": "Kết quả mỗi trang",
   "pageJump": "Đến trang",
   "pageInvalid": "Nhập số trang từ 1 đến {total}.",
-  "pageLoadError": "Không thể tải trang này. Vui lòng thử lại."
+  "pageLoadError": "Không thể tải trang này. Vui lòng thử lại.",
+  "searchOperatorInvalid": "Toán tử @ không hợp lệ. Xem {help} để biết cú pháp (hoặc đặt trong dấu ngoặc kép để tìm nguyên văn).",
+  "searchHelpOperatorsIntro": "Bạn có thể lọc siêu dữ liệu bằng toán tử @ sau một từ khóa tìm kiếm thông thường (ít nhất 2 ký tự trong lần tìm kiếm đầu):",
+  "searchHelpMissingMetadata": "(thiếu siêu dữ liệu)"
 }

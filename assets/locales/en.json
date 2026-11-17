@@ -136,5 +136,8 @@
   "pageSize": "Results per page",
   "pageJump": "Go to page",
   "pageInvalid": "Enter a page from 1 to {total}.",
-  "pageLoadError": "Could not load that page. Try again."
+  "pageLoadError": "Could not load that page. Try again.",
+  "searchOperatorInvalid": "Invalid @ operator. See {help} for supported syntax (or quote it to search literally).",
+  "searchHelpOperatorsIntro": "You can filter metadata with @ operators after a normal search term (at least 2 characters in the initial search):",
+  "searchHelpMissingMetadata": "(missing metadata)"
 }

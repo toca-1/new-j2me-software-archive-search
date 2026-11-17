@@ -133,5 +133,8 @@
   "pageSize": "Sayfa başına sonuç",
   "pageJump": "Sayfaya git",
   "pageInvalid": "1 ile {total} arasında bir sayfa girin.",
-  "pageLoadError": "Bu sayfa yüklenemedi. Tekrar deneyin."
+  "pageLoadError": "Bu sayfa yüklenemedi. Tekrar deneyin.",
+  "searchOperatorInvalid": "Geçersiz @ işleci. Sözdizimi için {help} bölümüne bakın (veya düz metin olarak aramak için tırnak kullanın).",
+  "searchHelpOperatorsIntro": "Normal bir arama teriminden sonra @ işleçleriyle meta verileri filtreleyebilirsiniz (ilk aramada en az 2 karakter):",
+  "searchHelpMissingMetadata": "(eksik meta veri)"
 }

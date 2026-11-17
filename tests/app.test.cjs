@@ -206,6 +206,249 @@ test('quoted refinements match contiguous phrases within the same metadata field
   assert.deepEqual(Array.from(run('phraseSample.ids')), [1, 2, 3, 4, 5, 6, 7]);
 });
 
+test('@ operators parse strictly and quoted tokens remain literal', () => {
+  const {run} = loadApp();
+  const parse = text => run(`parseSearchQuery(${JSON.stringify(text)})`);
+  const normal = parse('sonic @version=1.0.0 @midp=2.0 @cldc=1.1 @size>1.5KiB');
+  assert.deepEqual(Array.from(normal.included), ['sonic']);
+  assert.deepEqual(Array.from(normal.filters, x => [x.field, x.operator, x.value]), [
+    ['version', '=', '1.0.0'], ['midp', '=', '2.0'], ['cldc', '=', '1.1'], ['size', '>', 1536]
+  ]);
+  assert.deepEqual(Array.from(parse('sonic @vendor="Some Studio"').filters, x => x.value), ['some studio']);
+  assert.deepEqual(Array.from(parse('sonic "@version=1.0.0" -"@midp=2.0"').included),
+    ['sonic', '@version=1.0.0']);
+  assert.deepEqual(Array.from(parse('sonic "@version=1.0.0" -"@midp=2.0"').excluded), ['@midp=2.0']);
+  assert.deepEqual(Array.from(parse('"@vendor=foo"').included), ['@vendor=foo']);
+  assert.deepEqual(Array.from(parse('sonic @CLDC=CLDC-1.1').filters, x => x.value), ['1.1']);
+  assert.deepEqual(Array.from(parse('sonic @midp=MIDP-2.0').filters, x => x.value), ['2.0']);
+  assert.deepEqual(Array.from(parse('sonic @size<100KB').filters, x => x.value), [100000]);
+  assert.deepEqual(Array.from(parse('sonic @size=1MB').filters, x => x.value), [1000000]);
+  for (const query of ['sonic @version=', 'sonic @version>1.0', 'sonic @vendor="Some',
+    'sonic @size>3', 'sonic @size>1XB', 'sonic @size=0.1B', 'sonic @vendor="',
+    'sonic @unknown=abc', 'sonic @midp!=2.0', 'sonic -@version=1.0', 'sonic @version',
+    'sonic @size<=100KB', 'sonic @size>=100KB', 'sonic @size=<100KB',
+    'sonic @size=>100KB']) {
+    assert.equal(parse(query).error, true, `Operator ${query} must be rejected`);
+  }
+  assert.equal(parse('sonic @version=?').error, false);
+  assert.equal(parse('user@example.com').error, false, 'Embedded @ remains a literal');
+  assert.deepEqual(Array.from(parse('prince -persia "test game"').included), ['prince', 'test game']);
+});
+
+test('@ operators filter exact compact metadata, size and missing values without changing relevance', () => {
+  const {run} = loadApp();
+  run(`let operatorSample = {
+    ids: [7, 2, 8, 3, 9],
+    summaries: new Map([
+      [7, {title: 'Sonic', bytes: 100001, fields: ['sonic','gameloft'], quick: ['Sonic','Gameloft','1.0.0','CLDC-1.1','MIDP-2.0']}],
+      [2, {title: 'Sonic', bytes: 99999, fields: ['sonic','some studio'], quick: ['Sonic','Some Studio','1.0','CLDC-1.0','MIDP-1.0']}],
+      [8, {title: 'Sonic', bytes: 300000, fields: ['sonic','gameloft'], quick: ['Sonic','Gameloft','1.0.0','CLDC-1.1','MIDP-2.0']}],
+      [3, {title: 'Sonic', bytes: 4096, fields: ['sonic'], quick: ['Sonic','','','','']}],
+      [9, {title: 'Sonic', bytes: 100001, fields: ['sonic','gameloft'], quick: ['Sonic','Gameloft','1.0.0','CLDC-1.0','MIDP-2.0']}]
+    ])
+  };`);
+  const ids = q => Array.from(run(`selectResultIds(operatorSample, ${JSON.stringify(q)}, 'default')`));
+  assert.deepEqual(ids('sonic @version=1.0.0'), [7, 8, 9]);
+  assert.deepEqual(ids('sonic @version=1.0'), [2]);
+  assert.deepEqual(ids('sonic @midp=2.0 @cldc=1.1'), [7, 8]);
+  assert.deepEqual(ids('sonic @vendor=GAMELOFT @size>100KB'), [7, 8, 9]);
+  assert.deepEqual(ids('sonic @vendor="Some Studio"'), [2]);
+  assert.deepEqual(ids('sonic @size<100KB'), [2, 3]);
+  assert.deepEqual(ids('sonic @version=?'), [3]);
+  assert.deepEqual(ids('sonic @midp=?'), [3]);
+  assert.deepEqual(ids('sonic @vendor=?'), [3]);
+  assert.deepEqual(ids('sonic @size>10MiB'), []);
+  assert.deepEqual(ids('sonic -gameloft @version=1.0'), [2]);
+  assert.deepEqual(Array.from(run('operatorSample.ids')), [7, 2, 8, 3, 9],
+    'Filtering cannot reorder/mutate the base result set');
+  assert.throws(() => ids('sonic @midp>1.0'), /searchOperatorInvalid/);
+});
+
+test('@ operators are supported by compact summaries and record fallback', () => {
+  const {run} = loadApp();
+  run(`labelsForMatches = new Map([[2, ['sonic.jar', 0]]]);`);
+  const compact = run(`resultSummaryFromCompact(2, [2, 123456, ['Sonic','Gameloft','1.0.0','CLDC-1.1','MIDP-2.0'], ['sonic.jar']])`);
+  assert.equal(compact.quick[2], '1.0.0');
+  assert.equal(compact.bytes, 123456);
+  assert.deepEqual(Array.from(run(`selectResultIds({ids: [2], summaries: new Map([[2, resultSummaryFromCompact(2,
+    [2,123456,['Sonic','Gameloft','1.0.0','CLDC-1.1','MIDP-2.0'],['sonic.jar']])]])},
+    'sonic @version=1.0.0 @size>100KiB', 'default')`)), [2]);
+});
+
+
+test('@version uses the compact search metadata on the first request, not full record shards', async () => {
+  const {run, context} = loadApp();
+  const {nodes} = startupTestDom(context);
+  nodes.set('result-tools', {hidden: true});
+  nodes.get('search-form').querySelector = () => ({disabled: false});
+  run(`manifest = {record_chunk: 4};
+       searchMode = 'name';
+       resetResultTools = () => {};
+       setResultControlsBusy = () => {};
+       setPaginationBusy = () => {};
+       renderPage = async () => {};
+       searchNames = async anchor => {
+         if (anchor !== 'forgotten') throw Error('Wrong search anchor');
+         summaryShardsForMatches = new Map([[0, 5], [1, 6]]);
+         labelsForMatches = new Map([[0, ['pop the forgotten sands.jar', 0]],
+           [1, ['forgotten sands demo.jar', 0]]]);
+         return [0, 1];
+       };
+       let compactReads = 0, recordReads = 0;
+       searchSummaryCatalog = async () => ({schema_version: 1});
+       nameSummaryShard = async shard => {
+         compactReads++;
+         return shard === 5
+           ? new Map([[0, [0, 275763, ['POP The Forgotten Sands', 'Gameloft SA',
+               '1.1.7', 'CLDC-1.0', 'MIDP-2.0'], ['POP The Forgotten Sands.jar']]]])
+           : new Map([[1, [1, 50000, ['Forgotten Sands demo', 'Studio',
+               '1.0.0', 'CLDC-1.1', 'MIDP-2.0'], ['Forgotten Sands demo.jar']]]]);
+       };
+       readGzipJson = async () => {recordReads++; throw Error('Unnecessary full record download');};`);
+  nodes.get('query').value = 'forgotten sands @version=1.1.7';
+  await run('runSearch()');
+  assert.deepEqual(Array.from(run('active')), [0]);
+  assert.equal(run('compactReads'), 2, 'Only small metadata shards are fetched');
+  assert.equal(run('recordReads'), 0, 'The expensive record-shard path is not used');
+  assert.equal(run('originalResults.ready'), true);
+  assert.equal(run('originalResults.summaries.get(0).quick[2]'), '1.1.7');
+});
+
+test('@ refinement and sorting reuse fast metadata without extra downloads', async () => {
+  const {run, context} = loadApp();
+  const {nodes} = startupTestDom(context);
+  nodes.set('result-tools', {hidden: true});
+  nodes.set('refine-query', {value: ''});
+  nodes.set('result-sort', {value: 'default'});
+  nodes.set('export-status', {textContent: ''});
+  nodes.set('export-csv', {disabled: false});
+  nodes.get('search-form').querySelector = () => ({disabled: false});
+  run(`manifest = {record_chunk: 4};
+       searchMode = 'name';
+       resetResultTools = () => {};
+       setResultControlsBusy = () => {};
+       setPaginationBusy = () => {};
+       renderPage = async () => {};
+       searchNames = async anchor => {
+         if (anchor !== 'forgotten') throw Error('Wrong search anchor');
+         summaryShardsForMatches = new Map([[0, 5], [1, 6]]);
+         labelsForMatches = new Map([[0, ['pop the forgotten sands.jar', 0]],
+           [1, ['forgotten sands demo.jar', 0]]]);
+         return [0, 1];
+       };
+       let compactReads = 0, recordReads = 0;
+       searchSummaryCatalog = async () => ({schema_version: 1});
+       nameSummaryShard = async shard => {
+         compactReads++;
+         return shard === 5
+           ? new Map([[0, [0, 275763, ['POP The Forgotten Sands', 'Gameloft SA',
+               '1.1.7', 'CLDC-1.0', 'MIDP-2.0'], ['POP The Forgotten Sands.jar']]]])
+           : new Map([[1, [1, 50000, ['Forgotten Sands demo', 'Studio',
+               '1.0.0', 'CLDC-1.1', 'MIDP-2.0'], ['Forgotten Sands demo.jar']]]]);
+       };
+       readGzipJson = async () => {recordReads++; throw Error('Unnecessary full record download');};`);
+  nodes.get('query').value = 'forgotten';
+  await run('runSearch()');
+  assert.equal(run('compactReads'), 0, 'Plain searches must remain lazy');
+  nodes.get('refine-query').value = '@version=1.1.7';
+  await run('applyResultTools()');
+  assert.deepEqual(Array.from(run('active')), [0]);
+  assert.equal(run('compactReads'), 2, 'First refinement loads only small metadata shards');
+  assert.equal(run('recordReads'), 0);
+  nodes.get('refine-query').value = '';
+  nodes.get('result-sort').value = 'size-asc';
+  await run('applyResultTools()');
+  assert.deepEqual(Array.from(run('active')), [1, 0]);
+  assert.equal(run('compactReads'), 2, 'Sorting reuses the first refinement download');
+  nodes.get('refine-query').value = '@midp=2.0 @vendor="Gameloft SA"';
+  await run('applyResultTools()');
+  assert.deepEqual(Array.from(run('active')), [0]);
+  assert.equal(run('compactReads'), 2, 'Additional @ filters reuse the summary cache');
+  assert.equal(run('recordReads'), 0);
+});
+
+test('Search Help documents the supported @ operators without inclusive size comparisons', () => {
+  const markup = fs.readFileSync(path.resolve(__dirname, '../html/search-help.html'), 'utf8');
+  for (const operator of ['@version=', '@midp=', '@cldc=', '@vendor=', '@size&gt;', '@size&lt;'])
+    assert.ok(markup.includes(operator), `Missing ${operator} from Search Help`);
+  assert.ok(!markup.includes('@size&lt;='));
+  assert.ok(!markup.includes('@size&gt;='));
+  assert.match(markup, /test -game\ntest game\n"test game"\n"test game" -demo\ntestgame -test/);
+  assert.match(markup, /GAME @vendor="TEST Studios"/);
+  assert.match(markup, /GAME @version=\?<\/code> <span data-i18n="searchHelpMissingMetadata">\(missing metadata\)/);
+  assert.ok(!markup.includes('forgotten sands'));
+  assert.ok(!markup.includes('searchHelpOperatorsNote'));
+  assert.ok(!markup.includes('data-i18n="searchHelpRequiresPositive"'));
+});
+
+test('main search applies operators after name anchoring and blocks operator-only scans', async () => {
+  const {run, context} = loadApp();
+  const {nodes} = startupTestDom(context);
+  nodes.set('result-tools', {hidden: true});
+  nodes.get('search-form').querySelector = () => ({disabled: false});
+  run(`manifest = {record_chunk: 4096};
+       searchMode = 'name';
+       resetResultTools = () => {};
+       setResultControlsBusy = () => {};
+       let searched = [];
+       searchNames = async anchor => {searched.push(anchor); return [1, 2, 3];};
+       prepareResultSummaries = async state => {
+         state.summaries = new Map([
+           [1, {title: 'Sonic', bytes: 10, fields: ['sonic'], quick: ['Sonic','Sega','1.0.0','CLDC-1.1','MIDP-2.0']}],
+           [2, {title: 'Sonic', bytes: 20, fields: ['sonic'], quick: ['Sonic','Sega','1.1.0','CLDC-1.1','MIDP-2.0']}],
+           [3, {title: 'Sonic', bytes: 40, fields: ['sonic'], quick: ['Sonic','','','','']}]
+         ]);
+         state.ready = true;
+       };
+       renderPage = async () => {};`);
+  nodes.get('query').value = 'sonic @version=1.0.0';
+  await run('runSearch()');
+  assert.deepEqual(Array.from(run('active')), [1]);
+  assert.deepEqual(Array.from(run('searched')), ['sonic']);
+  nodes.get('query').value = '@version=1.0.0';
+  await run('runSearch()');
+  assert.deepEqual(Array.from(run('searched')), ['sonic'], 'Operator-only query should not fetch shards');
+  assert.match(nodes.get('results').children[0].textContent, /Include at least one search word/);
+  nodes.get('query').value = 'sonic @version>1.0.0';
+  await run('runSearch()');
+  assert.deepEqual(Array.from(run('searched')), ['sonic'], 'Invalid query should not fetch shards');
+  const errorBox = nodes.get('results').children[0];
+  assert.equal(errorBox.children[0], 'Invalid @ operator. See ');
+  assert.equal(errorBox.children[1].tagName, 'a');
+  assert.equal(errorBox.children[1].textContent, 'Search help');
+  assert.equal(errorBox.children[1].href, './html/search-help.html');
+  assert.equal(errorBox.children[1].target, '_blank');
+  assert.equal(errorBox.children[1].rel, 'noopener noreferrer');
+  assert.equal(errorBox.children[2], ' for supported syntax (or quote it to search literally).');
+});
+
+test('invalid @ refinement also links to localized Search help', async () => {
+  const {run, context} = loadApp();
+  const {nodes} = startupTestDom(context);
+  nodes.set('refine-query', {value: '@size<=100KB'});
+  nodes.set('result-sort', {value: 'default'});
+  nodes.set('export-csv', {disabled: false});
+  run(`originalResults = {ids: [1], summaries: new Map(), busy: false};
+       setResultControlsBusy = () => {};
+       setPaginationBusy = () => {};`);
+  await run('applyResultTools()');
+  const message = nodes.get('status').children;
+  assert.equal(message.length, 3);
+  assert.match(message[0], /Could not refine or sort results: Invalid @ operator/);
+  assert.equal(message[1].tagName, 'a');
+  assert.equal(message[1].textContent, 'Search help');
+  assert.equal(message[1].href, './html/search-help.html');
+  assert.match(message[2], /supported syntax/);
+
+  const de = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../assets/locales/de.json'), 'utf8'));
+  context.window.J2ME_I18N.t = (key, vars = {}) =>
+    String(de[key] || key).replace(/\{(\w+)\}/g, (match, name) =>
+      Object.hasOwn(vars, name) ? String(vars[name]) : match);
+  await run('applyResultTools()');
+  assert.equal(nodes.get('status').children[1].textContent, 'Suchhilfe');
+  assert.match(nodes.get('status').children[0], /Ungültiger @-Operator/);
+});
+
 test('main Text search uses inclusion/exclusion metadata rules consistently with refinement', async () => {
   const {run, context} = loadApp();
   const {nodes} = startupTestDom(context);
@@ -432,12 +675,16 @@ test('missing optional summary shard falls back to full record metadata', async 
        readGzipJson = async path => {
          legacyReads++;
          if (path !== 'records/0000.json.gz') throw Error('Unexpected path ' + path);
-         return [['sha', 'sha1', 55, [[0, 'Prince.jar', 'dir/Prince.jar', 'abcd']], ['Prince', 'Vendor']]];
+         return [['sha', 'sha1', 55, [[0, 'Prince.jar', 'dir/Prince.jar', 'abcd']],
+           ['Prince', 'Vendor', '1.0.0', 'CLDC-1.0', 'MIDP-2.0']]];
        };`);
   await run('prepareResultSummaries(originalResults, generation)');
   assert.equal(run('legacyReads'), 1);
   assert.equal(run('originalResults.summaries.get(0).title'), 'Prince');
   assert.equal(run('originalResults.ready'), true);
+  assert.deepEqual(Array.from(run(`selectResultIds(originalResults,
+    '@version=1.0.0 @midp=2.0', 'default')`)), [0],
+    'Operators must also work with the full-record fallback');
 });
 
 test('temporary HTTP 503 is retried; permanent HTTP 404 is not', async () => {

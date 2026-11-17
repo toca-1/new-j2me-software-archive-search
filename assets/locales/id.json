@@ -136,5 +136,8 @@
   "pageSize": "Hasil per halaman",
   "pageJump": "Buka halaman",
   "pageInvalid": "Masukkan nomor halaman antara 1 dan {total}.",
-  "pageLoadError": "Halaman tidak dapat dimuat. Coba lagi."
+  "pageLoadError": "Halaman tidak dapat dimuat. Coba lagi.",
+  "searchOperatorInvalid": "Operator @ tidak valid. Lihat {help} untuk sintaksnya (atau gunakan tanda kutip untuk pencarian literal).",
+  "searchHelpOperatorsIntro": "Anda dapat memfilter metadata dengan operator @ setelah istilah pencarian biasa (minimal 2 karakter pada pencarian awal):",
+  "searchHelpMissingMetadata": "(metadata tidak tersedia)"
 }

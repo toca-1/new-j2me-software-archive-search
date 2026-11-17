@@ -133,5 +133,8 @@
   "pageSize": "Hasil setiap halaman",
   "pageJump": "Pergi ke halaman",
   "pageInvalid": "Masukkan halaman antara 1 hingga {total}.",
-  "pageLoadError": "Halaman ini tidak dapat dimuatkan. Cuba lagi."
+  "pageLoadError": "Halaman ini tidak dapat dimuatkan. Cuba lagi.",
+  "searchOperatorInvalid": "Pengendali @ tidak sah. Lihat {help} untuk sintaks (atau gunakan tanda petikan untuk mencari secara literal).",
+  "searchHelpOperatorsIntro": "Anda boleh menapis metadata dengan pengendali @ selepas istilah carian biasa (sekurang-kurangnya 2 aksara dalam carian awal):",
+  "searchHelpMissingMetadata": "(metadata tiada)"
 }

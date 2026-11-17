@@ -136,5 +136,8 @@
   "pageSize": "每页结果数",
   "pageJump": "跳转到页",
   "pageInvalid": "请输入 1 到 {total} 之间的页码。",
-  "pageLoadError": "无法加载此页，请重试。"
+  "pageLoadError": "无法加载此页，请重试。",
+  "searchOperatorInvalid": "无效的 @ 运算符。请参阅{help}了解语法（或用引号包裹以按字面搜索）。",
+  "searchHelpOperatorsIntro": "在普通搜索词后，可以使用 @ 运算符筛选元数据（首次搜索至少需要 2 个字符）：",
+  "searchHelpMissingMetadata": "（缺少元数据）"
 }

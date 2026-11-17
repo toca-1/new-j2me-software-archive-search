@@ -137,5 +137,8 @@
   "pageSize": "Výsledků na stránku",
   "pageJump": "Přejít na stránku",
   "pageInvalid": "Zadejte stránku od 1 do {total}.",
-  "pageLoadError": "Tuto stránku se nepodařilo načíst. Zkuste to znovu."
+  "pageLoadError": "Tuto stránku se nepodařilo načíst. Zkuste to znovu.",
+  "searchOperatorInvalid": "Neplatný operátor @. Správnou syntaxi najdete v sekci {help} (nebo jej uzavřete do uvozovek pro doslovné hledání).",
+  "searchHelpOperatorsIntro": "Metadata můžete filtrovat pomocí operátorů @ za běžným hledaným výrazem (při prvním hledání alespoň 2 znaky):",
+  "searchHelpMissingMetadata": "(chybějící metadata)"
 }

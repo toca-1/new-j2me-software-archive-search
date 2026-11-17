@@ -155,6 +155,39 @@ optional `data/folders/` compatibility is checked by
 `tools/check_folder_index.py`, and other supplemental indexes are outside
 this core-index check. See [the testing guide](../tests/README.md).
 
+## Optional metadata search operators
+
+After a normal search word or quoted phrase of **at least two characters**, use
+case-insensitive, exact-match `@` filters in Text search:
+
+```text
+sonic @version=1.0.0
+sonic @midp=2.0 @cldc=1.1
+sonic @vendor="Gameloft Studios"
+sonic @size>100KB @size<1MiB
+sonic @version=?
+```
+
+Supported fields: `version`, `vendor`, `midp`, `cldc` (only `=`), and `size`
+(`=`, `<`, `>`). The metadata values can be unknown; `?` explicitly
+matches an absent **text** field. The MIDP and CLDC operators accept either
+`2.0` or `MIDP-2.0` / `CLDC-2.0` forms. Size uses bytes (`B`), decimal
+`KB`/`MB` (1,000-based), or binary `KiB`/`MiB` (1,024-based). Spaces inside
+values must be quoted, e.g. `@vendor="Some Studio"`. Operators can be combined
+and also work in **Search within results**; all conditions must match.
+
+An entire quoted operator, such as `"@version=1.0.0"`, is treated as ordinary
+literal text. An unquoted word beginning with `@` reserves operator syntax;
+unknown/malformed operators are rejected rather than ignored. Plain queries,
+normal quoted phrases, and negative words retain their existing meaning.
+Operator-only main searches are intentionally disallowed to avoid a complete
+index scan. Filters use existing search summaries, falling back to records on
+older deployments; **no index rebuild is required**. An operator filter
+uses authoritative full record metadata, which may require additional downloads
+compared with ordinary name searches. Archive collection
+(Lite/Full) is not yet an operator, because the compact summaries do not store
+collection membership.
+
 ## Known limitations
 
 - Text search is substring-based

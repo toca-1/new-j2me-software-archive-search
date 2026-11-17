@@ -137,5 +137,8 @@
   "pageSize": "Rezultate pe pagină",
   "pageJump": "Mergi la pagina",
   "pageInvalid": "Introdu un număr de pagină între 1 și {total}.",
-  "pageLoadError": "Pagina nu a putut fi încărcată. Încearcă din nou."
+  "pageLoadError": "Pagina nu a putut fi încărcată. Încearcă din nou.",
+  "searchOperatorInvalid": "Operator @ invalid. Consultă {help} pentru sintaxă (sau pune-l între ghilimele pentru căutare literală).",
+  "searchHelpOperatorsIntro": "Poți filtra metadatele cu operatori @ după un termen de căutare obișnuit (cel puțin 2 caractere la prima căutare):",
+  "searchHelpMissingMetadata": "(metadate lipsă)"
 }

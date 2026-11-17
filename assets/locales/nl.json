@@ -136,5 +136,8 @@
   "pageSize": "Resultaten per pagina",
   "pageJump": "Ga naar pagina",
   "pageInvalid": "Voer een pagina in van 1 tot {total}.",
-  "pageLoadError": "Deze pagina kon niet worden geladen. Probeer het opnieuw."
+  "pageLoadError": "Deze pagina kon niet worden geladen. Probeer het opnieuw.",
+  "searchOperatorInvalid": "Ongeldige @-operator. Bekijk {help} voor de syntaxis (of zet de operator tussen aanhalingstekens om letterlijk te zoeken).",
+  "searchHelpOperatorsIntro": "Je kunt metadata filteren met @-operatoren na een gewone zoekterm (minimaal 2 tekens bij de eerste zoekopdracht):",
+  "searchHelpMissingMetadata": "(ontbrekende metadata)"
 }

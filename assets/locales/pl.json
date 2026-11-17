@@ -138,5 +138,8 @@
   "pageSize": "Wyniki na stronę",
   "pageJump": "Przejdź do strony",
   "pageInvalid": "Wpisz numer strony od 1 do {total}.",
-  "pageLoadError": "Nie udało się wczytać tej strony. Spróbuj ponownie."
+  "pageLoadError": "Nie udało się wczytać tej strony. Spróbuj ponownie.",
+  "searchOperatorInvalid": "Nieprawidłowy operator @. Sprawdź składnię w sekcji {help} (lub użyj cudzysłowów, aby wyszukać go dosłownie).",
+  "searchHelpOperatorsIntro": "Możesz filtrować metadane operatorami @ po zwykłym haśle wyszukiwania (co najmniej 2 znaki w pierwszym wyszukiwaniu):",
+  "searchHelpMissingMetadata": "(brak metadanych)"
 }

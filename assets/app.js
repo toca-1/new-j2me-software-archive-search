@@ -55,6 +55,29 @@ function elem(tag, text, cls) {
 function fmt(x) { return Number(x).toLocaleString(I18N.numberLocale()); }
 function size(x) { return x < 1024 ? `${fmt(x)} B` : x < 1048576 ? `${(x / 1024).toFixed(1)} KiB` : `${(x / 1048576).toFixed(2)} MiB`; }
 function status(text) { $('status').textContent = text; }
+// Localized @-operator errors contain a {help} placeholder. Insert a real
+// link safely, without parsing translated strings as HTML.
+const OPERATOR_HELP_MARKER = '\uE000';
+function operatorErrorText() {
+  return t('searchOperatorInvalid', {help: OPERATOR_HELP_MARKER});
+}
+function showOperatorHelp(target, message) {
+  const parts = message.split(OPERATOR_HELP_MARKER);
+  if (parts.length !== 2) {
+    // An old cached locale may lack the placeholder: keep a usable link.
+    target.textContent = message;
+    target.append(' ', operatorHelpLink());
+    return;
+  }
+  target.replaceChildren(parts[0], operatorHelpLink(), parts[1]);
+}
+function operatorHelpLink() {
+  const link = elem('a', t('searchHelpLink'));
+  link.href = './html/search-help.html';
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  return link;
+}
 function urlFor(collection, archivePath) {
   // Archive.org's 7z viewer URL-encodes the WHOLE member path (including '/').
   const member = encodeURIComponent(archivePath).replace(/[!'()*]/g, ch => '%' + ch.charCodeAt(0).toString(16).toUpperCase());
@@ -947,7 +970,7 @@ function resultSummaryFromCompact(id, compact) {
   // Identical to resultTitle(), including fallback to the matching filename.
   const title = quick[0] || (match && match[1] === 0 ? match[0] : filenames[0]);
   const fields = [title, ...quick, ...filenames].map(value => String(value || '').toLowerCase());
-  return {title, bytes, fields};
+  return {title, bytes, fields, quick};
 }
 async function prepareFastResultSummaries(state, current) {
   if (!state.ids.every(id => summaryShardsForMatches.has(id))) return false;
@@ -986,12 +1009,15 @@ async function prepareFastResultSummaries(state, current) {
   if (current === generation && originalResults === state) state.ready = true;
   return true;
 }
+// Operator filters, ordinary refinement, and sorting all use the same compact
+// metadata generated from records' [bytes, quick, filenames]. Never download
+// full record shards just to evaluate @version, @vendor, @midp, @cldc or @size.
+// The original record-shard fallback remains for missing/invalid compact data.
 async function prepareResultSummaries(state, current) {
   if (state.ready) return;
   try {
     if (await prepareFastResultSummaries(state, current)) return;
   } catch (error) {
-    // Optional optimization: transparently use the original full record index.
     console.warn('[J2ME] Fast summaries failed; falling back to records:', error);
   }
   const groups = new Map();
@@ -1014,7 +1040,7 @@ async function prepareResultSummaries(state, current) {
         const record = rows[id % manifest.record_chunk], title = resultTitle(id, record);
         const fields = [title, ...record[4], ...record[3].map(source => source[1])]
           .map(value => String(value || '').toLowerCase());
-        state.summaries.set(id, {title, bytes: record[2], fields});
+        state.summaries.set(id, {title, bytes: record[2], fields, quick: record[4]});
       }
       completed += ids.length;
       status(t('preparingRefine', {done: fmt(completed), total: fmt(state.ids.length)}));
@@ -1026,26 +1052,67 @@ async function prepareResultSummaries(state, current) {
   if (failed) throw failed.reason;
   if (current === generation && originalResults === state) state.ready = true;
 }
-function parseRefinementTerms(query) {
-  // Double quotes keep a multi-word phrase together. A leading minus excludes
-  // the word or phrase; hyphens inside terms (CLDC-1.1) remain literal.
-  const included = [], excluded = [];
-  const tokens = query.toLowerCase().match(/-?"[^"]*"|\S+/g) || [];
+// @ operators are only recognized at the beginning of an unquoted token.
+// Quoting an entire token ("@version=1.0") retains the old literal search.
+// Never silently treat malformed @ tokens as regular search terms.
+function parseSearchQuery(query) {
+  const included = [], excluded = [], filters = [];
+  const tokens = query.match(/(?:[^\s"]|"[^"]*")+/g) || [];
   for (const token of tokens) {
     const negative = token.startsWith('-') && token.length > 1;
     const raw = negative ? token.slice(1) : token;
-    const term = raw.startsWith('"') && raw.endsWith('"') && raw.length >= 2
-      ? raw.slice(1, -1) : raw;
-    if (term) (negative ? excluded : included).push(term);
+    const quoted = raw.startsWith('"') && raw.endsWith('"') && raw.length >= 2;
+    if (!quoted && raw.startsWith('@')) {
+      if (negative) return {included, excluded, filters, error: true};
+      const match = /^@(version|vendor|midp|cldc|size)(=|>|<)(.+)$/i.exec(raw);
+      if (!match) return {included, excluded, filters, error: true};
+      const field = match[1].toLowerCase(), operator = match[2];
+      let value = match[3];
+      if (value.startsWith('"') && value.endsWith('"') && value.length >= 2)
+        value = value.slice(1, -1);
+      else if (value.includes('"')) return {included, excluded, filters, error: true};
+      value = value.trim().toLowerCase();
+      if (!value || (field !== 'size' && operator !== '='))
+        return {included, excluded, filters, error: true};
+      if (field === 'size') {
+        const sizeMatch = /^(\d+(?:\.\d+)?)(b|kb|mb|kib|mib)$/i.exec(value);
+        if (!sizeMatch) return {included, excluded, filters, error: true};
+        const factors = {b: 1, kb: 1000, mb: 1000000, kib: 1024, mib: 1048576};
+        const bytes = Number(sizeMatch[1]) * factors[sizeMatch[2].toLowerCase()];
+        if (!Number.isSafeInteger(bytes)) return {included, excluded, filters, error: true};
+        filters.push({field, operator, value: bytes});
+      } else {
+        if (field === 'cldc' || field === 'midp')
+          value = value.replace(new RegExp(`^${field}-`, 'i'), '');
+        filters.push({field, operator, value});
+      }
+      continue;
+    }
+    const value = (quoted ? raw.slice(1, -1) : raw).toLowerCase();
+    if (value) (negative ? excluded : included).push(value);
   }
-  return {included, excluded};
+  return {included, excluded, filters, error: false};
 }
-function selectResultIds(state, query, order) {
-  const {included, excluded} = parseRefinementTerms(query);
-  let ids = included.length || excluded.length ? state.ids.filter(id => {
-    const fields = state.summaries.get(id).fields;
+function matchesSearchFilter(summary, filter) {
+  if (filter.field === 'size') {
+    const a = summary.bytes, b = filter.value;
+    return filter.operator === '=' ? a === b : filter.operator === '>' ? a > b : a < b;
+  }
+  const fieldIndex = {vendor: 1, version: 2, cldc: 3, midp: 4}[filter.field];
+  const raw = String(summary.quick?.[fieldIndex] ?? '').trim().toLowerCase();
+  const value = (filter.field === 'cldc' || filter.field === 'midp')
+    ? raw.replace(new RegExp(`^${filter.field}-`, 'i'), '') : raw;
+  // ? has one unambiguous meaning: this metadata field is absent.
+  return filter.value === '?' ? !value : value === filter.value;
+}
+function selectResultIds(state, query, order, parsed = parseSearchQuery(query)) {
+  if (parsed.error) throw new Error(t('searchOperatorInvalid', {help: t('searchHelpLink')}));
+  const {included, excluded, filters} = parsed;
+  let ids = included.length || excluded.length || filters.length ? state.ids.filter(id => {
+    const summary = state.summaries.get(id), fields = summary.fields;
     return included.every(word => fields.some(field => field.includes(word))) &&
-      excluded.every(word => fields.every(field => !field.includes(word)));
+      excluded.every(word => fields.every(field => !field.includes(word))) &&
+      filters.every(filter => matchesSearchFilter(summary, filter));
   }) : [...state.ids];
   if (order !== 'default') {
     const collator = new Intl.Collator(I18N.numberLocale(), {numeric: true, sensitivity: 'base'});
@@ -1062,11 +1129,14 @@ async function applyResultTools() {
   if (!state || state.busy) return;
   const current = generation;
   const query = $('refine-query').value.trim(), order = $('result-sort').value;
+  const parsed = parseSearchQuery(query);
   state.busy = true; setResultControlsBusy(true); setPaginationBusy(true);
   try {
-    if (query || order !== 'default') await prepareResultSummaries(state, current);
+    if (parsed.error) throw new Error(t('searchOperatorInvalid', {help: t('searchHelpLink')}));
+    if (query || order !== 'default')
+      await prepareResultSummaries(state, current);
     if (current !== generation || originalResults !== state) return;
-    active = selectResultIds(state, query, order); currentPage = 1; resultViewVersion++; pageRequestId++;
+    active = selectResultIds(state, query, order, parsed); currentPage = 1; resultViewVersion++; pageRequestId++;
     $('export-status').textContent = '';
     $('results').replaceChildren(); updatePaginationButtons();
     status(query ? t('subsetCount', {count: fmt(active.length), total: fmt(state.ids.length)}) :
@@ -1075,7 +1145,9 @@ async function applyResultTools() {
     else $('results').append(elem('div', t('noRefinedResults'), 'empty'));
   } catch (error) {
     if (current === generation && originalResults === state) {
-      status(t('refineError', {error: error.message})); console.error(error);
+      if (parsed.error) showOperatorHelp($('status'), t('refineError', {error: operatorErrorText()}));
+      else status(t('refineError', {error: error.message}));
+      console.error(error);
     }
   } finally {
     state.busy = false;
@@ -1331,7 +1403,7 @@ async function runSearch() {
   resetResultTools();
   const rawTerm = $('query').value.trim();
   const term = rawTerm;
-  const textTerms = searchMode === 'name' ? parseRefinementTerms(rawTerm) : null;
+  const textTerms = searchMode === 'name' ? parseSearchQuery(rawTerm) : null;
   // Use an included word/phrase to shortlist names, then check all metadata
   // for the remaining words and exclusions. A whole-index negative-only scan
   // would force hundreds of thousands of records to be downloaded.
@@ -1345,12 +1417,16 @@ async function runSearch() {
   // retryable error shown when an index shard or record cannot be loaded.
   const hashType = searchMode === 'name' ? null : detectHashType(term);
   const invalid = searchMode === 'name'
-    ? (!textTerms.included.length ? t('searchHelpRequiresPositive') :
+    ? (textTerms.error ? operatorErrorText() :
+       !textTerms.included.length ? t('searchHelpRequiresPositive') :
        !anchor ? t('enterName') : null)
     : (!hashType ? t('enterAnyHash') : null);
   if (invalid) {
     status(t('searchError'));
-    $('results').append(elem('div', invalid, 'empty'));
+    const message = elem('div', undefined, 'empty');
+    if (textTerms?.error) showOperatorHelp(message, invalid);
+    else message.textContent = invalid;
+    $('results').append(message);
     return;
   }
   $('search-form').querySelector('button').disabled = true;
@@ -1360,14 +1436,14 @@ async function runSearch() {
     if (searchMode === 'name') {
       ids = await searchNames(anchor, current);
       if (current !== generation) return;
-      if (ids.length && (textTerms.included.length > 1 || textTerms.excluded.length)) {
+      if (ids.length && (textTerms.included.length > 1 || textTerms.excluded.length || textTerms.filters.length)) {
         // Filter with exactly the same metadata rules as Search within results,
         // so 'prince -persia' agrees with searching 'prince' then refining.
         const initial = {ids, summaries: new Map(), ready: false, busy: false};
         originalResults = initial;
         await prepareResultSummaries(initial, current);
         if (current !== generation || originalResults !== initial) return;
-        ids = selectResultIds(initial, term, 'default');
+        ids = selectResultIds(initial, term, 'default', textTerms);
         preparedSummaries = initial.summaries;
       }
     } else {
@@ -1382,7 +1458,8 @@ async function runSearch() {
     if (current !== generation) return;
     active = ids; currentPage = 1;
     originalResults = {ids: [...ids], summaries: preparedSummaries || new Map(),
-      ready: Boolean(preparedSummaries), busy: false};
+      ready: Boolean(preparedSummaries),
+      busy: false};
     $('result-tools').hidden = ids.length === 0;
     setResultControlsBusy(false);
     if (!ids.length) {
