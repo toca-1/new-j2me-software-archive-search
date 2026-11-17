@@ -115,5 +115,9 @@
   "searchHelpExclude": "उस शब्द वाले सभी परिणामों को बाहर करें।",
   "searchHelpExact": "केवल सटीक वाक्यांश वाले परिणाम दिखाएँ।",
   "searchHelpRequiresPositive": "कम से कम दो अक्षरों वाला एक शब्द या उद्धरण चिह्नों में वाक्यांश जोड़ें। केवल बहिष्करण के लिए मौजूदा परिणामों को फ़िल्टर करें।",
-  "searchHelpHashDescription": "8, 40 या 64 वर्णों वाला पूरा हेक्साडेसिमल हैश डालें (CRC32, SHA-1 या SHA-256)। SHA हैश खास फ़ाइल सामग्री की पहचान करते हैं; एक CRC32 कई फ़ाइलों से मेल खा सकता है।"
+  "searchHelpHashDescription": "8, 40 या 64 वर्णों वाला पूरा हेक्साडेसिमल हैश डालें (CRC32, SHA-1 या SHA-256)। SHA हैश खास फ़ाइल सामग्री की पहचान करते हैं; एक CRC32 कई फ़ाइलों से मेल खा सकता है।",
+  "searchHelpMetaDescription": "J2ME संग्रह में खोजने के लिए सहायता",
+  "downloaderGuideMetaDescription": "New J2ME Software Archive से अलग-अलग JAR फ़ाइलें प्राप्त करने के विस्तृत निर्देश और समस्या निवारण।",
+  "folderIndexOutdated": "फ़ोल्डर इंडेक्स पुराना है; data/folders/ को फिर से बनाएँ।",
+  "folderInvalidMembers": "फ़ोल्डर की फ़ाइल सूची अमान्य है"
 }

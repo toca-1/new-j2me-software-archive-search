@@ -1,0 +1,112 @@
+[
+  {
+    "code": "id",
+    "name": "Bahasa Indonesia",
+    "numberLocale": "id-ID"
+  },
+  {
+    "code": "ms",
+    "name": "Bahasa Melayu",
+    "numberLocale": "ms-MY"
+  },
+  {
+    "code": "cs",
+    "name": "Čeština",
+    "numberLocale": "cs-CZ"
+  },
+  {
+    "code": "de",
+    "name": "Deutsch",
+    "numberLocale": "de-DE"
+  },
+  {
+    "code": "en",
+    "name": "English",
+    "numberLocale": "en-US"
+  },
+  {
+    "code": "es",
+    "name": "Español",
+    "numberLocale": "es-ES"
+  },
+  {
+    "code": "fr",
+    "name": "Français",
+    "numberLocale": "fr-FR"
+  },
+  {
+    "code": "it",
+    "name": "Italiano",
+    "numberLocale": "it-IT"
+  },
+  {
+    "code": "nl",
+    "name": "Nederlands",
+    "numberLocale": "nl-NL"
+  },
+  {
+    "code": "pl",
+    "name": "Polski",
+    "numberLocale": "pl-PL"
+  },
+  {
+    "code": "pt-BR",
+    "name": "Português (Brasil)",
+    "numberLocale": "pt-BR"
+  },
+  {
+    "code": "ro",
+    "name": "Română",
+    "numberLocale": "ro-RO"
+  },
+  {
+    "code": "vi",
+    "name": "Tiếng Việt",
+    "numberLocale": "vi-VN"
+  },
+  {
+    "code": "tr",
+    "name": "Türkçe",
+    "numberLocale": "tr-TR"
+  },
+  {
+    "code": "ru",
+    "name": "Русский",
+    "numberLocale": "ru-RU"
+  },
+  {
+    "code": "uk",
+    "name": "Українська",
+    "numberLocale": "uk-UA"
+  },
+  {
+    "code": "hi",
+    "name": "हिन्दी",
+    "numberLocale": "hi-IN"
+  },
+  {
+    "code": "th",
+    "name": "ไทย",
+    "numberLocale": "th-TH"
+  },
+  {
+    "code": "ko",
+    "name": "한국어",
+    "numberLocale": "ko-KR"
+  },
+  {
+    "code": "ja",
+    "name": "日本語",
+    "numberLocale": "ja-JP"
+  },
+  {
+    "code": "zh-CN",
+    "name": "简体中文",
+    "numberLocale": "zh-CN"
+  },
+  {
+    "code": "zh-TW",
+    "name": "繁體中文",
+    "numberLocale": "zh-TW"
+  }
+]

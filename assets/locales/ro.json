@@ -119,5 +119,9 @@
   "searchHelpExclude": "Exclude orice rezultat care conține cuvântul.",
   "searchHelpExact": "Afișează numai rezultatele care conțin expresia exactă.",
   "searchHelpRequiresPositive": "Include cel puțin un cuvânt sau o expresie între ghilimele cu minimum două caractere. Pentru a folosi doar excluderi, filtrează rezultatele existente.",
-  "searchHelpHashDescription": "Introdu un hash hexazecimal complet de 8, 40 sau 64 de caractere (CRC32, SHA-1 sau SHA-256). Hashurile SHA identifică un conținut precis; CRC32 poate corespunde mai multor fișiere."
+  "searchHelpHashDescription": "Introdu un hash hexazecimal complet de 8, 40 sau 64 de caractere (CRC32, SHA-1 sau SHA-256). Hashurile SHA identifică un conținut precis; CRC32 poate corespunde mai multor fișiere.",
+  "searchHelpMetaDescription": "Ajutor pentru căutarea în arhiva J2ME",
+  "downloaderGuideMetaDescription": "Instrucțiuni complete și depanare pentru recuperarea fișierelor JAR individuale din New J2ME Software Archive.",
+  "folderIndexOutdated": "Indexul dosarelor este învechit; reconstruiește data/folders/.",
+  "folderInvalidMembers": "Listă de fișiere din dosar nevalidă"
 }

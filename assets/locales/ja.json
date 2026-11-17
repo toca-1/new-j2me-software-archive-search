@@ -115,5 +115,9 @@
   "searchHelpExclude": "その単語を含む結果をすべて除外します。",
   "searchHelpExact": "そのフレーズが完全に一致する結果だけを表示します。",
   "searchHelpRequiresPositive": "2文字以上の単語、または引用符で囲んだフレーズを1つ以上入力してください。除外条件だけを使う場合は、検索結果内で絞り込んでください。",
-  "searchHelpHashDescription": "8桁、40桁、または64桁の完全な16進数ハッシュ（CRC32、SHA-1、SHA-256）を入力してください。SHAハッシュは特定のファイル内容を識別しますが、CRC32は複数のファイルに一致することがあります。"
+  "searchHelpHashDescription": "8桁、40桁、または64桁の完全な16進数ハッシュ（CRC32、SHA-1、SHA-256）を入力してください。SHAハッシュは特定のファイル内容を識別しますが、CRC32は複数のファイルに一致することがあります。",
+  "searchHelpMetaDescription": "J2ME アーカイブの検索ヘルプ",
+  "downloaderGuideMetaDescription": "New J2ME Software Archive から個別の JAR ファイルを復元するための詳しい手順とトラブルシューティング。",
+  "folderIndexOutdated": "フォルダー索引が古くなっています。data/folders/ を再生成してください。",
+  "folderInvalidMembers": "フォルダー内のファイル一覧が無効です"
 }

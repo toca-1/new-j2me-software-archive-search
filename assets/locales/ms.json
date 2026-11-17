@@ -115,5 +115,9 @@
   "searchHelpExclude": "Kecualikan semua hasil yang mengandungi perkataan itu.",
   "searchHelpExact": "Paparkan hanya hasil yang mengandungi frasa tepat tersebut.",
   "searchHelpRequiresPositive": "Masukkan sekurang-kurangnya satu perkataan atau frasa dalam tanda petikan yang mempunyai dua aksara atau lebih. Untuk pengecualian sahaja, tapis hasil sedia ada.",
-  "searchHelpHashDescription": "Masukkan cincangan perenambelasan lengkap 8, 40 atau 64 aksara (CRC32, SHA-1 atau SHA-256). Cincangan SHA mengenal pasti kandungan fail tertentu; CRC32 mungkin sepadan dengan lebih daripada satu fail."
+  "searchHelpHashDescription": "Masukkan cincangan perenambelasan lengkap 8, 40 atau 64 aksara (CRC32, SHA-1 atau SHA-256). Cincangan SHA mengenal pasti kandungan fail tertentu; CRC32 mungkin sepadan dengan lebih daripada satu fail.",
+  "searchHelpMetaDescription": "Bantuan carian arkib J2ME",
+  "downloaderGuideMetaDescription": "Panduan lengkap dan penyelesaian masalah untuk memulihkan fail JAR individu daripada New J2ME Software Archive.",
+  "folderIndexOutdated": "Indeks folder telah lapuk; bina semula data/folders/.",
+  "folderInvalidMembers": "Senarai fail folder tidak sah"
 }

@@ -118,5 +118,9 @@
   "searchHelpExclude": "排除包含该词语的所有结果。",
   "searchHelpExact": "仅显示包含完全一致短语的结果。",
   "searchHelpRequiresPositive": "请至少输入一个不少于两个字符的词语或带引号的短语。如果只想排除词语，请先搜索，再在结果中筛选。",
-  "searchHelpHashDescription": "请输入完整的 8、40 或 64 位十六进制哈希（CRC32、SHA-1 或 SHA-256）。SHA 哈希用于识别特定文件内容；CRC32 可能对应多个文件。"
+  "searchHelpHashDescription": "请输入完整的 8、40 或 64 位十六进制哈希（CRC32、SHA-1 或 SHA-256）。SHA 哈希用于识别特定文件内容；CRC32 可能对应多个文件。",
+  "searchHelpMetaDescription": "J2ME 存档搜索帮助",
+  "downloaderGuideMetaDescription": "从 New J2ME Software Archive 恢复单个 JAR 文件的完整指南和故障排除说明。",
+  "folderIndexOutdated": "文件夹索引已过期；请重新生成 data/folders/。",
+  "folderInvalidMembers": "文件夹文件列表无效"
 }

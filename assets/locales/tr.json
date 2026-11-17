@@ -115,5 +115,9 @@
   "searchHelpExclude": "Bu kelimeyi içeren tüm sonuçları hariç tut.",
   "searchHelpExact": "Yalnızca tam olarak bu ifadeyi içeren sonuçları göster.",
   "searchHelpRequiresPositive": "En az iki karakterli bir arama kelimesi veya tırnak içinde ifade ekleyin. Yalnızca hariç tutma için mevcut sonuçları daraltın.",
-  "searchHelpHashDescription": "8, 40 veya 64 karakterlik tam bir onaltılık karma değeri girin (CRC32, SHA-1 veya SHA-256). SHA karmaları belirli dosya içeriğini tanımlar; CRC32 birden fazla dosyayla eşleşebilir."
+  "searchHelpHashDescription": "8, 40 veya 64 karakterlik tam bir onaltılık karma değeri girin (CRC32, SHA-1 veya SHA-256). SHA karmaları belirli dosya içeriğini tanımlar; CRC32 birden fazla dosyayla eşleşebilir.",
+  "searchHelpMetaDescription": "J2ME arşivinde arama yardımı",
+  "downloaderGuideMetaDescription": "New J2ME Software Archive içinden tek tek JAR dosyalarını kurtarma ve sorun giderme kılavuzu.",
+  "folderIndexOutdated": "Klasör dizini güncel değil; data/folders/ dizinini yeniden oluşturun.",
+  "folderInvalidMembers": "Geçersiz klasör dosyası listesi"
 }

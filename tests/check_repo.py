@@ -20,6 +20,11 @@ LITERAL_TRANSLATION = re.compile(r"\bt\(\s*['\"]([^'\"]+)['\"]")
 HTML_TRANSLATION = re.compile(r'\bdata-i18n(?:-[a-z-]+)?="([^"]+)"')
 
 
+def translation_files():
+    # The native-language menu has its own catalog JSON, not a UI translation dictionary.
+    return sorted(path for path in LOCALES.glob('*.json') if path.name != 'languages.json')
+
+
 def get_json(path):
     return json.loads(path.read_text(encoding='utf-8'))
 
@@ -42,7 +47,7 @@ class RepositoryChecks(unittest.TestCase):
 
     def test_all_locales_have_the_same_keys_and_variables(self):
         english = get_json(LOCALES / 'en.json')
-        files = sorted(LOCALES.glob('*.json'))
+        files = translation_files()
         self.assertGreaterEqual(len(files), 2, 'No translation files found')
         self.assertTrue(english)
         for file in files:
@@ -84,7 +89,7 @@ class RepositoryChecks(unittest.TestCase):
         self.assertNotIn('downloadLinksOtherMirrors', english)
 
     def test_hash_search_hints_are_concise_and_punctuated(self):
-        for file in sorted(LOCALES.glob('*.json')):
+        for file in translation_files():
             with self.subTest(language=file.stem):
                 locale = get_json(file)
                 hint = locale['hintHashAuto']
@@ -136,45 +141,38 @@ class RepositoryChecks(unittest.TestCase):
                         self.assertTrue((ROOT / 'html' / url.split('?', 1)[0]).is_file(),
                                         f'Broken {name} asset: {url}')
 
-    def test_help_language_menus_match_main_site(self):
-        # Keep standalone help-page language menus in the same native-name
-        # alphabetical order as the main search page.
-        class LanguageOptions(HTMLParser):
-            def __init__(self):
-                super().__init__()
-                self.inside = False
-                self.options = []
-                self.code = None
-
-            def handle_starttag(self, tag, attrs):
-                attrs = dict(attrs)
-                if tag == 'select' and attrs.get('id') == 'language-select':
-                    self.inside = True
-                elif tag == 'option' and self.inside:
-                    self.code = attrs.get('value')
-
-            def handle_data(self, data):
-                if self.code is not None:
-                    self.options.append((self.code, data.strip()))
-                    self.code = None
-
-            def handle_endtag(self, tag):
-                if tag == 'select' and self.inside:
-                    self.inside = False
-
-        def menu(page):
-            parser = LanguageOptions()
-            parser.feed((ROOT / page).read_text(encoding='utf-8'))
-            return parser.options
-
-        expected = menu('index.html')
-        self.assertEqual(len(expected), 22)
-        self.assertEqual(len(set(code for code, _ in expected)), len(expected))
-        self.assertEqual(set(code for code, _ in expected),
-                         set(path.stem for path in LOCALES.glob('*.json')))
-        for page in ('html/search-help.html', 'html/downloader-help.html'):
+    def test_language_catalog_drives_all_three_menus(self):
+        catalog = get_json(LOCALES / 'languages.json')
+        self.assertEqual(len(catalog), 22)
+        codes = [item['code'] for item in catalog]
+        self.assertEqual(len(set(codes)), len(codes))
+        self.assertEqual(set(codes), {path.stem for path in translation_files()})
+        for item in catalog:
+            with self.subTest(language=item['code']):
+                self.assertTrue(item['name'])
+                self.assertTrue(item['numberLocale'])
+        # Options are generated from the same catalog, not repeated in each page.
+        for page in ('index.html', 'html/search-help.html', 'html/downloader-help.html'):
+            markup = (ROOT / page).read_text(encoding='utf-8')
             with self.subTest(page=page):
-                self.assertEqual(menu(page), expected)
+                self.assertIn('<select id="language-select" aria-label="Select language"></select>', markup)
+                self.assertNotIn('<option value=', markup)
+
+    def test_localized_metadata_and_visible_folder_errors(self):
+        home = (ROOT / 'index.html').read_text(encoding='utf-8')
+        search = (ROOT / 'html/search-help.html').read_text(encoding='utf-8')
+        guide = (ROOT / 'html/downloader-help.html').read_text(encoding='utf-8')
+        app = (ROOT / 'assets/app.js').read_text(encoding='utf-8')
+        i18n = (ROOT / 'assets/i18n.js').read_text(encoding='utf-8')
+        for key in ('pageTitle', 'metaDescription'):
+            self.assertIn(f'data-i18n-content="{key}"', home)
+        self.assertIn('data-i18n-content="searchHelpMetaDescription"', search)
+        self.assertIn('data-i18n-content="downloaderGuideMetaDescription"', guide)
+        self.assertIn("document.querySelectorAll('[data-i18n-content]')", i18n)
+        self.assertIn("t('folderIndexOutdated')", app)
+        self.assertIn("t('folderInvalidMembers')", app)
+        for page in (search, guide):
+            self.assertIn('data-i18n-aria-label="searchSection"', page)
 
     def test_rendered_downloader_guide_matches_markdown_source(self):
         # The rendered HTML is a copy of the maintained Markdown guide.

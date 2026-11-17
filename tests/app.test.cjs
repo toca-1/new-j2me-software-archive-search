@@ -560,7 +560,7 @@ test('updated locale files bypass stale browser caches and resolve migrated labe
 
   for (const language of ['en', 'de']) {
     const fetched = [];
-    const select = {setAttribute() {}, addEventListener() {}, value: ''};
+    const select = {setAttribute() {}, addEventListener() {}, replaceChildren() {}, value: ''};
     const context = vm.createContext({
       window: {},
       location: {search: `?lang=${language}`},
@@ -572,7 +572,8 @@ test('updated locale files bypass stale browser caches and resolve migrated labe
         title: '',
         querySelector: () => null,
         querySelectorAll: () => [],
-        getElementById: id => id === 'language-select' ? select : null
+        getElementById: id => id === 'language-select' ? select : null,
+        createElement: () => ({value: '', textContent: ''})
       },
       fetch: async (url, options) => {
         fetched.push({url, options});
@@ -604,8 +605,50 @@ test('updated locale files bypass stale browser caches and resolve migrated labe
       assert.equal(new URL(request.url, 'https://example.org/').searchParams.get('v'),
         scriptRevision, 'Locale files must use the same revision as the loader script');
     }
-    assert.equal(fetched.length, language === 'en' ? 1 : 2);
+    assert.equal(fetched.length, language === 'en' ? 2 : 3);
+    assert.match(fetched[0].url, /assets\/locales\/languages\.json\?v=/);
   }
+});
+
+test('language catalog and locale dictionaries are the sole runtime sources for menus and metadata', async () => {
+  const script = fs.readFileSync(path.resolve(__dirname, '../assets/i18n.js'), 'utf8');
+  const catalog = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../assets/locales/languages.json'), 'utf8'));
+  const dictionaries = Object.fromEntries(['en', 'ja'].map(lang => [lang, JSON.parse(
+    fs.readFileSync(path.resolve(__dirname, `../assets/locales/${lang}.json`), 'utf8'))]));
+  const picker = {
+    value: '', options: [],
+    replaceChildren(...options) { this.options = options; },
+    setAttribute(name, value) { this[name] = value; },
+    addEventListener() {}
+  };
+  const description = {dataset: {i18nContent: 'searchHelpMetaDescription'}, content: ''};
+  const brand = {dataset: {i18nAriaLabel: 'searchSection'},
+    setAttribute(name, value) { this[name] = value; }};
+  const context = vm.createContext({
+    window: {}, location: {search: '?lang=ja'}, URLSearchParams, Intl,
+    localStorage: {getItem: () => null, setItem() {}},
+    document: {
+      documentElement: {lang: 'en'}, title: '',
+      querySelector: selector => selector === '[data-i18n-title]'
+        ? {dataset: {i18nTitle: 'searchHelpLink'}} : null,
+      querySelectorAll: selector => selector === '[data-i18n-content]'
+        ? [description] : (selector === '[data-i18n-aria-label]' ? [brand] : []),
+      getElementById: id => id === 'language-select' ? picker : null,
+      createElement: () => ({value: '', textContent: ''})
+    },
+    fetch: async url => ({ok: true, json: async () => url.includes('/languages.json')
+      ? catalog : (url.includes('/ja.json') ? dictionaries.ja : dictionaries.en)})
+  });
+  vm.runInContext(script, context);
+  await context.window.J2ME_I18N.init();
+  assert.equal(picker.options.length, catalog.length);
+  assert.deepEqual(picker.options.map(option => option.value), catalog.map(item => item.code));
+  assert.deepEqual(picker.options.map(option => option.textContent), catalog.map(item => item.name));
+  assert.equal(picker.value, 'ja');
+  assert.equal(context.window.J2ME_I18N.numberLocale(), 'ja-JP');
+  assert.equal(context.document.title, dictionaries.ja.searchHelpLink);
+  assert.equal(description.content, dictionaries.ja.searchHelpMetaDescription);
+  assert.equal(brand['aria-label'], dictionaries.ja.searchSection);
 });
 
 test('both standalone help pages initialize localized content and language picker', async () => {
@@ -625,7 +668,7 @@ test('both standalone help pages initialize localized content and language picke
     const title = {dataset: {i18n: titleKey}, textContent: 'English placeholder'};
     const notice = {dataset: {i18n: page.includes('downloader')
       ? 'downloaderGuideNotice' : 'searchHelpTextIntro'}, textContent: 'English placeholder'};
-    const picker = {value: '', setAttribute() {}, addEventListener() {}};
+    const picker = {value: '', setAttribute() {}, addEventListener() {}, replaceChildren() {}};
     const context = vm.createContext({
       window: {}, location: {search: '?lang=de'}, URLSearchParams, Intl,
       localStorage: {getItem: () => null, setItem() {}},
@@ -635,10 +678,13 @@ test('both standalone help pages initialize localized content and language picke
           ? {dataset: {i18nTitle: titleKey}} : null,
         querySelectorAll: selector => selector === '[data-i18n]'
           ? [title, notice] : [],
-        getElementById: id => id === 'language-select' ? picker : null
+        getElementById: id => id === 'language-select' ? picker : null,
+        createElement: () => ({value: '', textContent: ''})
       },
       fetch: async url => ({ok: true, json: async () =>
-        url.includes('/de.json') ? german : english}),
+        url.includes('/languages.json')
+          ? JSON.parse(fs.readFileSync(path.resolve(__dirname, '../assets/locales/languages.json'), 'utf8'))
+          : (url.includes('/de.json') ? german : english)}),
       history: {replaceState() {}}, console: {warn() {}}
     });
     vm.runInContext(localization, context);
@@ -665,12 +711,16 @@ test('locale requests resolve next to i18n.js even when a page lives in html/', 
       documentElement: {lang: ''}, title: '', querySelector: () => null,
       querySelectorAll: () => [], getElementById: () => null
     },
-    fetch: async url => { fetched.push(url); return {ok: true, json: async () => english}; },
+    fetch: async url => { fetched.push(url); return {ok: true, json: async () =>
+      url.includes('/languages.json')
+        ? JSON.parse(fs.readFileSync(path.resolve(__dirname, '../assets/locales/languages.json'), 'utf8'))
+        : english}; },
     console: {warn() {}}
   });
   vm.runInContext(script, context);
   await vm.runInContext('window.J2ME_I18N.init()', context);
-  assert.match(fetched[0], /^https:\/\/example\.org\/archive\/assets\/locales\/en\.json\?v=/);
+  assert.match(fetched[0], /^https:\/\/example\.org\/archive\/assets\/locales\/languages\.json\?v=/);
+  assert.match(fetched[1], /^https:\/\/example\.org\/archive\/assets\/locales\/en\.json\?v=/);
   assert.equal(context.document.title, english.pageTitle);
 });
 
@@ -996,16 +1046,16 @@ test('folder member verification rejects stale IDs and changed archive paths', a
 
   // Reassigned ID: same group metadata, but the current record is different.
   context.currentRecord = ['f'.repeat(64), ...main.slice(1)];
-  await assert.rejects(run("verifyFolderPage([member], 'Games')"), /out of date/);
+  await assert.rejects(run("verifyFolderPage([member], 'Games')"), /folderIndexOutdated/);
 
   // Identical SHA but moved to a different folder is also incompatible.
   context.currentRecord = [main[0], main[1], main[2],
     [[0, 'Sonic.jar', 'Elsewhere/Sonic.jar', '1234ABCD']], main[4]];
-  await assert.rejects(run("verifyFolderPage([member], 'Games')"), /out of date/);
+  await assert.rejects(run("verifyFolderPage([member], 'Games')"), /folderIndexOutdated/);
 
   context.currentRecord = main;
   context.member = [42, main[0], 'Sonic', 'Incorrect publisher', '1.0', 3072];
-  await assert.rejects(run("verifyFolderPage([member], 'Games')"), /out of date/);
+  await assert.rejects(run("verifyFolderPage([member], 'Games')"), /folderIndexOutdated/);
 });
 
 test('obsolete folder-index manifests disable optional folder browsing', async () => {
@@ -1039,5 +1089,5 @@ test('folder UI never displays a link for a member whose record ID changed', asy
   await new Promise(resolve => setImmediate(resolve));
   const panel = find(card, 'folder-panel');
   assert.equal(find(panel, 'folder-file-link'), null);
-  assert.match(find(panel, 'folder-error').textContent, /out of date/);
+  assert.match(find(panel, 'folder-error').textContent, /folderIndexOutdated/);
 });

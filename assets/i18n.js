@@ -1,39 +1,15 @@
 // UI translations only. Archive filenames, metadata, and search data remain unchanged.
 'use strict';
 window.J2ME_I18N = (() => {
-  const codes = ['en', 'de', 'es', 'pt-BR', 'ru', 'id', 'zh-CN', 'pl', 'vi', 'fr', 'tr', 'it', 'uk', 'th', 'cs', 'zh-TW', 'ro', 'hi', 'ja', 'ko', 'nl', 'ms'];
-  const numberLocales = {
-    en: 'en-US', de: 'de-DE', es: 'es-ES', 'pt-BR': 'pt-BR',
-    ru: 'ru-RU', id: 'id-ID', 'zh-CN': 'zh-CN',
-    pl: 'pl-PL',
-    vi: 'vi-VN',
-    fr: 'fr-FR',
-    tr: 'tr-TR',
-    it: 'it-IT',
-    uk: 'uk-UA',
-    th: 'th-TH',
-    cs: 'cs-CZ',
-    'zh-TW': 'zh-TW',
-    ro: 'ro-RO',
-    hi: 'hi-IN',
-    ja: 'ja-JP',
-    ko: 'ko-KR',
-    nl: 'nl-NL',
-    ms: 'ms-MY'
-  };
-  const urlLanguage = new URLSearchParams(location.search).get('lang');
+  // Native language names and formatting rules live alongside the translations.
+  // Loading the catalog first also keeps all three page menus in sync.
+  let languages = [];
   let language = 'en';
-  try {
-    const saved = localStorage.getItem('j2me-archive-language');
-    language = urlLanguage !== null ? (codes.includes(urlLanguage) ? urlLanguage : 'en') : (codes.includes(saved) ? saved : 'en');
-  } catch {
-    language = codes.includes(urlLanguage) ? urlLanguage : 'en';
-  }
   let english = {};
   let chosen = {};
   // A locale file can be updated while an older response is still in a browser
   // cache. Keep the request versioned and revalidate before displaying UI text.
-  const LOCALE_REVISION = '20261117-inline-code';
+  const LOCALE_REVISION = '20261117-locale-audit';
   // Resolve locale assets relative to this JS file, not the HTML document,
   // because the standalone help pages live inside html/.
   const localePath = document.currentScript?.src
@@ -49,19 +25,24 @@ window.J2ME_I18N = (() => {
   function t(key, vars = {}) {
     let message = chosen[key] ?? english[key] ?? key;
     if (message && typeof message === 'object') {
-      const category = new Intl.PluralRules(numberLocales[language]).select(Number(vars.pluralCount ?? vars.count));
+      const category = new Intl.PluralRules(numberLocale()).select(Number(vars.pluralCount ?? vars.count));
       message = message[category] ?? message.other ?? message.one;
     }
     return String(message).replace(/\{(\w+)\}/g,
       (whole, name) => Object.hasOwn(vars, name) ? String(vars[name]) : whole);
   }
 
+  function numberLocale() {
+    return languages.find(item => item.code === language)?.numberLocale || 'en-US';
+  }
+
   function translateStatic() {
     document.documentElement.lang = language;
     // Other pages can opt into a localized title without affecting the homepage.
     document.title = t(document.querySelector('[data-i18n-title]')?.dataset.i18nTitle || 'pageTitle');
-    const description = document.querySelector('meta[name="description"]');
-    if (description && !document.querySelector('[data-i18n-title]')) description.content = t('metaDescription');
+    for (const element of document.querySelectorAll('[data-i18n-content]')) {
+      element.content = t(element.dataset.i18nContent);
+    }
     for (const element of document.querySelectorAll('[data-i18n]')) {
       element.textContent = t(element.dataset.i18n);
     }
@@ -74,6 +55,25 @@ window.J2ME_I18N = (() => {
   }
 
   async function init() {
+    try {
+      const catalog = await load('languages');
+      if (!Array.isArray(catalog) || !catalog.some(item => item.code === 'en') ||
+          catalog.some(item => !item.code || !item.name || !item.numberLocale) ||
+          new Set(catalog.map(item => item.code)).size !== catalog.length)
+        throw new Error('Invalid language catalog');
+      languages = catalog;
+    } catch (error) {
+      console.warn('Language catalog unavailable; using English:', error);
+    }
+    const codes = languages.map(item => item.code);
+    const urlLanguage = new URLSearchParams(location.search).get('lang');
+    try {
+      const saved = localStorage.getItem('j2me-archive-language');
+      language = urlLanguage !== null ? (codes.includes(urlLanguage) ? urlLanguage : 'en')
+        : (codes.includes(saved) ? saved : 'en');
+    } catch {
+      language = codes.includes(urlLanguage) ? urlLanguage : 'en';
+    }
     try {
       english = await load('en');
     } catch (error) {
@@ -90,6 +90,12 @@ window.J2ME_I18N = (() => {
     translateStatic();
     const select = document.getElementById('language-select');
     if (select) {
+      select.replaceChildren(...languages.map(item => {
+        const option = document.createElement('option');
+        option.value = item.code;
+        option.textContent = item.name;
+        return option;
+      }));
       select.value = language;
       select.setAttribute('aria-label', t('languageLabel'));
       select.addEventListener('change', () => {
@@ -111,5 +117,5 @@ window.J2ME_I18N = (() => {
     }
   }
 
-  return Object.freeze({init, t, numberLocale: () => numberLocales[language]});
+  return Object.freeze({init, t, numberLocale});
 })();

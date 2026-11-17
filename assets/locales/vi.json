@@ -115,5 +115,9 @@
   "searchHelpExclude": "Loại trừ mọi kết quả chứa từ đó.",
   "searchHelpExact": "Chỉ hiển thị kết quả chứa chính xác cụm từ đó.",
   "searchHelpRequiresPositive": "Nhập ít nhất một từ hoặc cụm từ trong dấu ngoặc kép dài từ hai ký tự trở lên. Nếu chỉ muốn loại trừ, hãy lọc các kết quả hiện có.",
-  "searchHelpHashDescription": "Nhập mã băm thập lục phân đầy đủ gồm 8, 40 hoặc 64 ký tự (CRC32, SHA-1 hoặc SHA-256). Mã băm SHA nhận diện nội dung tệp cụ thể; một CRC32 có thể khớp nhiều tệp."
+  "searchHelpHashDescription": "Nhập mã băm thập lục phân đầy đủ gồm 8, 40 hoặc 64 ký tự (CRC32, SHA-1 hoặc SHA-256). Mã băm SHA nhận diện nội dung tệp cụ thể; một CRC32 có thể khớp nhiều tệp.",
+  "searchHelpMetaDescription": "Trợ giúp tìm kiếm kho lưu trữ J2ME",
+  "downloaderGuideMetaDescription": "Hướng dẫn đầy đủ và cách khắc phục sự cố khi khôi phục từng tệp JAR từ New J2ME Software Archive.",
+  "folderIndexOutdated": "Chỉ mục thư mục đã lỗi thời; hãy tạo lại data/folders/.",
+  "folderInvalidMembers": "Danh sách tệp trong thư mục không hợp lệ"
 }

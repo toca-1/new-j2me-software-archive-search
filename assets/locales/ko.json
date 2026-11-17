@@ -115,5 +115,9 @@
   "searchHelpExclude": "해당 단어가 포함된 모든 결과를 제외합니다.",
   "searchHelpExact": "정확히 일치하는 구문이 포함된 결과만 표시합니다.",
   "searchHelpRequiresPositive": "두 글자 이상의 검색어 또는 따옴표로 묶인 구문을 하나 이상 입력하세요. 제외 조건만 사용하려면 기존 결과 내에서 필터링하세요.",
-  "searchHelpHashDescription": "8자리, 40자리 또는 64자리의 완전한 16진수 해시(CRC32, SHA-1 또는 SHA-256)를 입력하세요. SHA 해시는 특정 파일 내용을 식별하며, CRC32는 여러 파일과 일치할 수 있습니다."
+  "searchHelpHashDescription": "8자리, 40자리 또는 64자리의 완전한 16진수 해시(CRC32, SHA-1 또는 SHA-256)를 입력하세요. SHA 해시는 특정 파일 내용을 식별하며, CRC32는 여러 파일과 일치할 수 있습니다.",
+  "searchHelpMetaDescription": "J2ME 아카이브 검색 도움말",
+  "downloaderGuideMetaDescription": "New J2ME Software Archive에서 개별 JAR 파일을 복구하는 방법과 문제 해결을 위한 전체 안내입니다.",
+  "folderIndexOutdated": "폴더 색인이 오래되었습니다. data/folders/를 다시 생성하세요.",
+  "folderInvalidMembers": "잘못된 폴더 파일 목록"
 }

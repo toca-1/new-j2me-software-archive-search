@@ -115,5 +115,9 @@
   "searchHelpExclude": "ยกเว้นผลลัพธ์ทั้งหมดที่มีคำนั้น",
   "searchHelpExact": "แสดงเฉพาะผลลัพธ์ที่มีวลีตรงกันทุกตัวอักษร",
   "searchHelpRequiresPositive": "ระบุอย่างน้อยหนึ่งคำหรือวลีในเครื่องหมายอัญประกาศที่มีตั้งแต่สองอักขระขึ้นไป หากต้องการใช้เฉพาะการยกเว้น ให้กรองผลลัพธ์เดิม",
-  "searchHelpHashDescription": "ป้อนแฮชเลขฐานสิบหกที่ครบ 8, 40 หรือ 64 อักขระ (CRC32, SHA-1 หรือ SHA-256) แฮช SHA ระบุเนื้อหาไฟล์เฉพาะได้ ส่วน CRC32 อาจตรงกับหลายไฟล์"
+  "searchHelpHashDescription": "ป้อนแฮชเลขฐานสิบหกที่ครบ 8, 40 หรือ 64 อักขระ (CRC32, SHA-1 หรือ SHA-256) แฮช SHA ระบุเนื้อหาไฟล์เฉพาะได้ ส่วน CRC32 อาจตรงกับหลายไฟล์",
+  "searchHelpMetaDescription": "วิธีใช้การค้นหาในคลัง J2ME",
+  "downloaderGuideMetaDescription": "คำแนะนำฉบับสมบูรณ์และวิธีแก้ปัญหาในการกู้คืนไฟล์ JAR แต่ละไฟล์จาก New J2ME Software Archive",
+  "folderIndexOutdated": "ดัชนีโฟลเดอร์ล้าสมัยแล้ว โปรดสร้าง data/folders/ ใหม่",
+  "folderInvalidMembers": "รายการไฟล์ในโฟลเดอร์ไม่ถูกต้อง"
 }

@@ -118,5 +118,9 @@
   "searchHelpExclude": "Kecualikan semua hasil yang memuat kata tersebut.",
   "searchHelpExact": "Hanya tampilkan hasil yang memuat frasa persis tersebut.",
   "searchHelpRequiresPositive": "Sertakan setidaknya satu kata atau frasa dalam tanda kutip yang terdiri dari dua karakter atau lebih. Untuk pengecualian saja, gunakan penyaringan hasil.",
-  "searchHelpHashDescription": "Masukkan hash heksadesimal lengkap sepanjang 8, 40, atau 64 karakter (CRC32, SHA-1, atau SHA-256). Hash SHA mengidentifikasi isi berkas tertentu; CRC32 dapat cocok dengan lebih dari satu berkas."
+  "searchHelpHashDescription": "Masukkan hash heksadesimal lengkap sepanjang 8, 40, atau 64 karakter (CRC32, SHA-1, atau SHA-256). Hash SHA mengidentifikasi isi berkas tertentu; CRC32 dapat cocok dengan lebih dari satu berkas.",
+  "searchHelpMetaDescription": "Bantuan pencarian arsip J2ME",
+  "downloaderGuideMetaDescription": "Petunjuk lengkap dan pemecahan masalah untuk memulihkan berkas JAR dari New J2ME Software Archive.",
+  "folderIndexOutdated": "Indeks folder sudah usang; buat ulang data/folders/.",
+  "folderInvalidMembers": "Daftar berkas folder tidak valid"
 }

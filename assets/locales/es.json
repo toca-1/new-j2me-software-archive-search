@@ -118,5 +118,9 @@
   "searchHelpExclude": "Excluir cualquier resultado que contenga la palabra.",
   "searchHelpExact": "Mostrar solo resultados que contengan la frase exacta.",
   "searchHelpRequiresPositive": "Introduce al menos una palabra o frase entre comillas de dos caracteres como mínimo. Para usar solo exclusiones, filtra los resultados existentes.",
-  "searchHelpHashDescription": "Introduce un hash hexadecimal completo de 8, 40 o 64 caracteres (CRC32, SHA-1 o SHA-256). Los hashes SHA identifican contenidos concretos; un CRC32 puede corresponder a varios archivos."
+  "searchHelpHashDescription": "Introduce un hash hexadecimal completo de 8, 40 o 64 caracteres (CRC32, SHA-1 o SHA-256). Los hashes SHA identifican contenidos concretos; un CRC32 puede corresponder a varios archivos.",
+  "searchHelpMetaDescription": "Ayuda para buscar en el archivo J2ME",
+  "downloaderGuideMetaDescription": "Instrucciones completas y solución de problemas para recuperar archivos JAR individuales del New J2ME Software Archive.",
+  "folderIndexOutdated": "El índice de carpetas está desactualizado; vuelve a generar data/folders/.",
+  "folderInvalidMembers": "Lista de archivos de carpeta no válida"
 }

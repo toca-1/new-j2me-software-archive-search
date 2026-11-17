@@ -119,5 +119,9 @@
   "searchHelpExclude": "Vyloučit všechny výsledky obsahující dané slovo.",
   "searchHelpExact": "Zobrazit jen výsledky obsahující přesně tuto frázi.",
   "searchHelpRequiresPositive": "Zadejte alespoň jedno slovo nebo frázi v uvozovkách o nejméně dvou znacích. Chcete-li použít jen vyloučení, filtrujte existující výsledky.",
-  "searchHelpHashDescription": "Zadejte úplný hexadecimální hash o délce 8, 40 nebo 64 znaků (CRC32, SHA-1 nebo SHA-256). Hash SHA identifikuje konkrétní obsah souboru; CRC32 může odpovídat více souborům."
+  "searchHelpHashDescription": "Zadejte úplný hexadecimální hash o délce 8, 40 nebo 64 znaků (CRC32, SHA-1 nebo SHA-256). Hash SHA identifikuje konkrétní obsah souboru; CRC32 může odpovídat více souborům.",
+  "searchHelpMetaDescription": "Nápověda k hledání v archivu J2ME",
+  "downloaderGuideMetaDescription": "Podrobný návod a řešení problémů při obnově jednotlivých souborů JAR z New J2ME Software Archive.",
+  "folderIndexOutdated": "Index složek je zastaralý; znovu vytvořte data/folders/.",
+  "folderInvalidMembers": "Neplatný seznam souborů ve složce"
 }

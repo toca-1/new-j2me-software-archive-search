@@ -525,7 +525,7 @@ function folderEntries(folder) {
 // per-row checks defend against stale/mixed assets at runtime without loading
 // all ~620k main records just to open a folder.
 function folderIndexMismatch() {
-  return new Error('Folder index is out of date; rebuild data/folders/.');
+  return new Error(t('folderIndexOutdated'));
 }
 async function verifyFolderPage(entries, folder) {
   let next = 0;
@@ -631,7 +631,7 @@ async function addFolderBrowser(id, record, card, downloadSection, downloadBar,
     try {
       const all = await folderEntries(selected);
       if (token !== request || !card.isConnected) return;
-      if (!Array.isArray(all)) throw new Error('Invalid folder member list');
+      if (!Array.isArray(all)) throw new Error(t('folderInvalidMembers'));
       // Every group must contain the result which led us here. Detect stale
       // record-ID assignments even if the ordinary manifest was unchanged.
       if (!all.some(row => Array.isArray(row) && row[0] === id && row[1] === record[0]))
