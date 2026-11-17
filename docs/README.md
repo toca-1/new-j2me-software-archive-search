@@ -14,8 +14,18 @@ The project's software license applies only to its original code and documentati
 
 ## Search features
 
-- Case-insensitive text search of original filenames, MIDlet names, and vendors, supporting multiple search terms, `"exact phrases"`, and `-term` exclusions (see [Search help](../html/search-help.html)), as well as search-within-results refinement and sorting by title or file size
-- A single Hash search mode which automatically detects complete CRC32, SHA-1, or SHA-256 checksums
+There are two main search modes:
+1. **Text search**
+
+Case-insensitive text search of original filenames, MIDlet names, and vendors, as well as search-within-results refinement and sorting by title or file size. This supports multiple search terms, `"exact phrases"`, `-term` exclusions, as well as metadata operations like `@version=x.x` (see [Search help](../html/search-help.html) for detailed instructions)
+
+2. **Hash search**
+
+A single Hash search mode which automatically detects complete CRC32, SHA-1, or SHA-256 checksums
+
+---
+
+Moreover, the following information and features are available once a search has been conducted:
 - MIDlet name, vendor, version, CLDC, and MIDP information where available
 - Direct download links to individual JAR files on the Internet Archive and other mirror sites, together with alternative downloader instructions and copyable commands for Windows and Linux/macOS
 - Page through matching files in groups of 5 by default (adjustable to 10, 20, or 50), with Previous/Next, numbered pages, and a clickable ellipsis for direct page jumps; switching sort order or refinement starts again at page 1
