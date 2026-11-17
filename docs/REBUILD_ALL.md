@@ -42,7 +42,7 @@ The enrichment directory must contain `jarchive-enriched.csv` and `jarchive-enri
 2. Reconstruct/audit the original **816,215 archive entries**, or reuse complete enriched inputs. CRC32 ambiguities cannot be silently guessed.
 3. Rebuild the core search index: **620,287 unique contents**, **1,024 `names-v2` shards**, records/details and CRC32/SHA-1/SHA-256 lookups. The core builder includes its own exhaustive validation.
 4. Rebuild `data/folders/` and `data/search-summaries/`; validate folder compatibility and the core index again.
-5. Compare SHA-256 of all core files to the reference; also check equivalent decompressed data/JSON values, the entire searchable-name stream and shard boundaries. **Unexpected changes abort publication.**
+5. Compare SHA-256 of all core files to the reference; also check equivalent decompressed data/JSON values, the complete per-shard searchable-name contents and boundaries (without an additional global scan). **Unexpected changes abort publication.**
 6. Where safe and present, **copy** reference `data/upstream/` and `retrieval/v1/` download mappings (not regenerate or independently validate them). Run with `--no-copy-reference-extras` to omit these copies.
 7. Write `rebuild-report.json` and atomically publish the candidate directory.
 

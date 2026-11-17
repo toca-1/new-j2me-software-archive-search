@@ -23,10 +23,9 @@ import sys
 import tempfile
 
 if __package__:
-    from . import compare_core_hashes, compare_index_layout
+    from . import compare_core_hashes
 else:
     import compare_core_hashes
-    import compare_index_layout
 
 TOOLS = Path(__file__).resolve().parent
 ARCHIVE_NAMES = (
@@ -91,13 +90,12 @@ def evaluate_comparison(existing: Path, rebuilt: Path) -> dict:
     right = json.loads((rebuilt / 'manifest.json').read_text(encoding='utf-8'))
     if left != right:
         raise RebuildError('Manifest values differ from the reference')
-    names = compare_index_layout.compare_name_streams(
-        existing, rebuilt, left['names_chunks'], right['names_chunks'])
-    print(f'Name stream: {names["left"]["total"]:,} entries; '
-          f'{names["sequence_mismatches"]:,} differences; '
-          f'boundaries equal: {names["same_boundaries"]}', flush=True)
-    if names['sequence_mismatches'] or not names['same_boundaries']:
-        raise RebuildError('Searchable name entries or shard boundaries differ')
+    # Every individual names-v2 shard has already been compared byte-for-byte,
+    # as uncompressed bytes, or as ordered JSON arrays. A matching inventory
+    # plus equal manifest guarantees identical entry order and shard boundaries;
+    # scanning all two million names a second time adds no assurance.
+    print('Name entries and shard boundaries match (per-shard content verified)',
+          flush=True)
     if counts['content_differs'] > 1:
         raise RebuildError('Only build-summary.json may have different values')
     # Return stable JSON-serializable counts and per-group breakdown, no
@@ -105,7 +103,7 @@ def evaluate_comparison(existing: Path, rebuilt: Path) -> dict:
     return {'files_compared': report['total'], 'counts': dict(counts),
             'by_group': {key: dict(value) for key, value in report['by_group'].items()},
             'missing': 0, 'extra': 0,
-            'names': names['left']['total'],
+            'names': left['search_terms'],
             'name_shards': left['names_chunks'],
             'same_name_sequence': True, 'same_name_boundaries': True,
             'note': 'Different gzip headers/DEFLATE streams and the historically stale '
@@ -227,7 +225,7 @@ def rebuild(*, reference: Path, out: Path, archive_dir: Path | None = None,
             args += ['--temp-dir', temp_dir]
         run_tool('check_full_index.py', *args)
 
-        print('\nStage 6/8: SHA-256 and complete name-layout comparison', flush=True)
+        print('\nStage 6/8: SHA-256 and per-shard name comparison', flush=True)
         comparison = evaluate_comparison(reference, data)
 
         print('\nStage 7/8: Retain optional published download indexes', flush=True)

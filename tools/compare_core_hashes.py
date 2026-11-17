@@ -3,7 +3,7 @@
 
 Separates exact byte matches from gzip-encoding differences, JSON text
 ordering differences, and true per-file content differences. For names-v2,
-compare_index_layout.py additionally verifies the complete global name stream.
+Per-shard comparisons preserve the exact name order and shard boundaries.
 
     python3 tools/compare_core_hashes.py --existing data \
       --rebuilt "$HOME/j2me-index-builds/rebuilt-data-02"
