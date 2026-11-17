@@ -3,4 +3,3 @@
 - [ ] **Metadata quality tools.** Identify conflicting or incomplete manifest fields, as well as fields that could still be added (e.g.,  screen resolution, language, device compatibility)
 - [ ] **Check docs.** Make sure that everything is accurate and up-to-date
 - [ ] **Repo file cleanup.** Review obsolete scripts, generated files, redundant documentation, and temporary development artifacts
-- [ ] **Update website announcement.** https://forum.toolassisted.run/t/searchable-index-for-the-new-j2me-software-archive/2138
