@@ -603,6 +603,69 @@ test('CSV export respects the cap and uses the active result order', async () =>
   assert.equal(get('export-csv').disabled, false);
 });
 
+test('CSV export loads record shards with bounded concurrency and reuses cached rows', async () => {
+  const {run, context} = loadApp();
+  const elements = new Map();
+  context.document.getElementById = id => {
+    if (!elements.has(id)) elements.set(id, {textContent: '', disabled: false});
+    return elements.get(id);
+  };
+  const blobs = [], calls = [];
+  context.Blob = Blob;
+  context.URL = {
+    createObjectURL(blob) { blobs.push(blob); return 'blob:test'; },
+    revokeObjectURL() {}
+  };
+  context.document.body = {append() {}};
+  context.document.createElement = () => ({click() {}, remove() {}});
+  context.pause = () => new Promise(resolve => setTimeout(resolve, 4));
+  context.testRows = Array.from({length: 24}, (_, n) => [[
+    'a'.repeat(64), 'b'.repeat(40), n + 100,
+    [[0, `Game${n}.jar`, `Folder/Game${n}.jar`, 'deadbeef']],
+    [`Game${n}`, 'Vendor', '1.0', 'CLDC-1.0', 'MIDP-2.0']
+  ]]);
+  context.track = path => calls.push(path);
+  run(`manifest = {record_chunk: 1};
+       originalResults = {busy: false};
+       active = Array.from({length: 24}, (_, i) => i);
+       let exportInFlight = 0, exportPeak = 0;
+       readGzipJson = async path => {
+         track(path);
+         exportInFlight++;
+         exportPeak = Math.max(exportPeak, exportInFlight);
+         await pause();
+         exportInFlight--;
+         return testRows[Number(path.split('/')[1].split('.')[0])];
+       };`);
+  await run('exportCurrentResults()');
+  assert.equal(calls.length, 24);
+  assert.equal(run('exportPeak'), 8, 'Limit concurrent full-shard requests to eight');
+  assert.equal(blobs.length, 1);
+  let lines = (await blobs[0].text()).trim().split('\r\n');
+  assert.match(lines[1], /^0,Game0,/);
+  assert.match(lines[24], /^23,Game23,/);
+  run('active = [23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0];');
+  await run('exportCurrentResults()');
+  assert.equal(calls.length, 24, 'Re-exporting the same files should not load another record shard');
+  lines = (await blobs[1].text()).trim().split('\r\n');
+  assert.match(lines[1], /^23,Game23,/);
+  assert.match(lines[24], /^0,Game0,/);
+  assert.equal(elements.get('export-status').textContent, 'exportReady');
+  assert.equal(elements.get('export-csv').disabled, false);
+});
+
+test('CSV row cache is bounded and excludes records needing a search-dependent title', () => {
+  const {run} = loadApp();
+  run(`for (let i = 0; i < EXPORT_CACHED_ROWS + 3; i++) {
+         rememberExportRow(i, [null, null, 1, [], ['Title']], 'row' + i);
+       }`);
+  assert.equal(run('exportRowCache.size'), 10000);
+  assert.equal(run('exportRowCache.has(0)'), false);
+  assert.equal(run('cachedExportRow(3)'), 'row3');
+  run(`rememberExportRow(99999, [null, null, 1, [], ['', 'Vendor']], 'unsafe');`);
+  assert.equal(run('exportRowCache.has(99999)'), false);
+});
+
 test('full downloader guide link uses the local styled HTML page', () => {
   const {run} = loadApp();
   const script = fs.readFileSync(path.resolve(__dirname, '../assets/app.js'), 'utf8');

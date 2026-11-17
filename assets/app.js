@@ -17,7 +17,12 @@ const WORKERS = 8;
 const SUMMARY_WORKERS = 6;
 // Keep browser-side CSV exports bounded; users can refine very broad searches.
 const EXPORT_MAX_RECORDS = 10000;
-const EXPORT_WORKERS = 4;
+// Export is user-initiated: keep more record-shard requests in flight than
+// ordinary result pages, but avoid an unbounded flood on slower connections.
+const EXPORT_WORKERS = 8;
+// Retain only completed CSV rows, never whole record shards. This makes a
+// repeat export (or an overlapping refined export) inexpensive in memory.
+const EXPORT_CACHED_ROWS = EXPORT_MAX_RECORDS;
 const MAX_CACHED_SEARCH_SHARDS = 12;
 // Read the search-only index settings from data/manifest.json.
 function nameIndexConfig(index) {
@@ -1157,6 +1162,8 @@ async function applyResultTools() {
     }
   }
 }
+// CSV needs archive paths and checksums absent from compact search summaries;
+// fetch full record shards only for entries not already exported this session.
 // One CSV row represents one unique file content, with all original archive
 // locations in multiline cells. Spreadsheet formula-looking metadata is quoted
 // as text so that untrusted manifest values never execute as formulas.
@@ -1168,6 +1175,24 @@ function csvCell(value) {
   if (/^[\s\u0000-\u001f]*[=+\-@]/.test(text) || /^[\t\r\n]/.test(text))
     text = "'" + text;
   return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+// Every ID has immutable contents within the published index. Cache a row only
+// when its title is embedded in the record itself: title-less records may use
+// a filename from the current search, which can vary between queries.
+const exportRowCache = new Map();
+function cachedExportRow(id) {
+  if (!exportRowCache.has(id)) return null;
+  const row = exportRowCache.get(id);
+  exportRowCache.delete(id);
+  exportRowCache.set(id, row);
+  return row;
+}
+function rememberExportRow(id, record, row) {
+  if (!record?.[4]?.[0]) return;
+  exportRowCache.delete(id);
+  exportRowCache.set(id, row);
+  while (exportRowCache.size > EXPORT_CACHED_ROWS)
+    exportRowCache.delete(exportRowCache.keys().next().value);
 }
 function exportRecordRow(id, record) {
   if (!Array.isArray(record) || record.length !== 5 || !Array.isArray(record[3]) ||
@@ -1201,14 +1226,22 @@ async function exportCurrentResults() {
   const ids = [...active]; // Snapshot the current refinement and sort order.
   const stillCurrent = () => current === generation && view === resultViewVersion && originalResults === state;
   const groups = new Map();
+  const rows = new Array(ids.length);
+  let done = 0;
   for (let index = 0; index < ids.length; index++) {
-    const chunk = Math.floor(ids[index] / manifest.record_chunk);
+    const id = ids[index];
+    const cached = cachedExportRow(id);
+    if (cached !== null) {
+      rows[index] = cached;
+      done++;
+      continue;
+    }
+    const chunk = Math.floor(id / manifest.record_chunk);
     if (!groups.has(chunk)) groups.set(chunk, []);
-    groups.get(chunk).push([index, ids[index]]);
+    groups.get(chunk).push([index, id]);
   }
   const batches = [...groups];
-  const rows = new Array(ids.length);
-  let next = 0, done = 0;
+  let next = 0;
   exportBusy = true;
   $('export-csv').disabled = true;
   output.textContent = t('exportWorking', {done: 0, total: fmt(ids.length)});
@@ -1222,7 +1255,10 @@ async function exportCurrentResults() {
           () => readGzipJson(`records/${String(chunk).padStart(4, '0')}.json.gz`), 12);
         if (!stillCurrent()) return;
         for (const [index, id] of entries) {
-          rows[index] = exportRecordRow(id, records[id % manifest.record_chunk]);
+          const record = records[id % manifest.record_chunk];
+          const row = exportRecordRow(id, record);
+          rows[index] = row;
+          rememberExportRow(id, record, row);
         }
         done += entries.length;
         output.textContent = t('exportWorking', {done: fmt(done), total: fmt(ids.length)});
