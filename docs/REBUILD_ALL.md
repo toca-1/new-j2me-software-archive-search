@@ -46,7 +46,7 @@ The enrichment directory must contain `jarchive-enriched.csv` and `jarchive-enri
 6. Where safe and present, **copy** reference `data/upstream/` and `retrieval/v1/` download mappings (not regenerate or independently validate them). Run with `--no-copy-reference-extras` to omit these copies.
 7. Write `rebuild-report.json` and atomically publish the candidate directory.
 
-The core comparison tolerates different gzip bytes/JSON formatting but not changed logical index data. The published `build-summary.json` contains older size/file-count bookkeeping; the new builder reports its own accurate generated totals. This difference is documented in the report. The original `names-v2` gzip files also contain timestamps/filenames and DEFLATE streams different from the modern builder, so **bit-for-bit compressed-file SHA-256 equality is not expected**. The recorded real-data comparison is in [REPRODUCIBILITY.md](REPRODUCIBILITY.md).
+The core comparison tolerates different gzip bytes/JSON formatting but not changed logical index data. The published `build-summary.json` contains older size/file-count bookkeeping; the new builder reports its own accurate generated totals. This difference is documented in the report. The original `names-v2` gzip files also contain timestamps/filenames and DEFLATE streams different from the modern builder, so **bit-for-bit compressed-file SHA-256 equality is not expected**. The recorded real-data comparison is in [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md).
 
 Typical output:
 
@@ -71,4 +71,4 @@ The workflow stages files in a hidden sibling `.j2me-all-staging-*` directory an
 - Optional upstream/retrieval mappings are copied **only when core record files match the reference byte-for-byte**. Copied external links are not URL-audited by this tool.
 - This verifies **compatibility with published search data**, not the authenticity of all archived JAR bytes. Original upstream scans and downloader-retrieval index generation require separate inputs/procedures.
 
-For the test commands, see [tests/README.md](../tests/README.md). For independent byte hashing and historical pipeline context, see [REPRODUCIBILITY.md](REPRODUCIBILITY.md).
+For the test commands, see [`tests/README.md`](../tests/README.md). For independent byte hashing and historical pipeline context, see [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md).
