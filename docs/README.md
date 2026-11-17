@@ -58,6 +58,10 @@ Then open [http://localhost:8000/](http://localhost:8000/) in your browser. The 
 
 **Do not open `index.html` directly as a `file://` page:** browsers restrict local `fetch()` requests. Previewing an existing checkout does not require rebuilding its generated index.
 
+## Reproducing and verifying the archive index
+
+See [REPRODUCIBILITY.md](REPRODUCIBILITY.md) for an end-to-end **methodology map**, the commands that can be run with the available inputs, a streaming hash check for filenames too long to extract on Linux, and a clear inventory of the historical enrichment/build components that are not included here. Independent verification of individual original JAR contents uses `tools/hash_jar_stream.py`; this is separate from checking consistency of an existing generated `data/` index.
+
 ## Rebuild the website's search data
 
 Required input files, created by the separate verification and enrichment pipeline:
@@ -65,19 +69,26 @@ Required input files, created by the separate verification and enrichment pipeli
 1. `jarchive-enriched.csv`: verified SHA-1/SHA-256 index with basic MIDlet fields
 2. `jarchive-enriched-details.jsonl.gz`: manifest fields and original source locations
 
-These enriched inputs are not included in the base-index release above and are not published by the site package. **Availability note:** This repository snapshot does not include `build_site.py` or the enriched input files. The following is a maintainer rebuild command for an environment where those separate pipeline components are available; it cannot be run using this source checkout alone. If you only want to preview an existing index, use the local-server instructions above instead.
+These enriched inputs are not included in the base-index release above and
+are not published by the site package. The **historical v4** `build_site.py`
+was removed in Git commit `97a3b2f` but can be recovered non-destructively:
 
-With `index.html`, `assets/`, and a separately obtained `build_site.py` in the current directory, run the following Linux/macOS example, adjusting the input paths as needed:
-
-```bash
-python3 build_site.py \
-  --input ~/Downloads/jarchive-enriched.csv \
-  --details ~/Downloads/jarchive-enriched-details.jsonl.gz \
-  --out . \
-  --expected-count 816215
+```sh
+git show '97a3b2f^:build_site.py' > /tmp/jarchive-build-site-v4.py
+python3 /tmp/jarchive-build-site-v4.py --help
 ```
 
-The builder uses a temporary SQLite database and writes to a staging directory. It replaces `data/` only after it has successfully generated and checked the new output. On successful completion it prints total byte size and file count, and writes `data/build-summary.json`. The default `--max-original-paths 2` publishes the first two historical original paths per manifest; the total available path count is retained. Use `--max-original-paths 0` to omit original paths from the website or `-1` to publish all paths (larger output and potential personal information in historical paths). The complete original metadata remains untouched outside the website. This command rebuilds the website's `data/` index. After rebuilding the main index, regenerate its separate folder-browsing data with `python3 tools/build_folder_groups.py --repo .`. The downloader's `retrieval/v1/` index is separate; its generation is not covered by these instructions.
+**Do not run the recovered script against the current site.** It produces the
+older `data/names/` index and schema version 4, whereas the site now uses
+`data/names-v2/`. Simply increasing `--name-shards` cannot make the historical
+builder compatible; running it also replaces `--out/data/`. The original
+enrichment scripts/inputs and a verified modern main-index builder are still
+needed for a complete current-index rebuild. See
+[REPRODUCIBILITY.md](REPRODUCIBILITY.md#5-the-recovered-historical-v4-site-builder)
+for the precise v4 input schema, grouping/index algorithm, historical flags,
+limitations and **isolated** example command. From a valid current index,
+regenerate supplemental folder and summary indexes separately with the
+included tools (described below).
 
 ## Files and data design
 
