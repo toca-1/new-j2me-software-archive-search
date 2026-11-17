@@ -17,6 +17,8 @@ This document records which Internet Archive collections and which files within 
 
 Additionally, the third-party mirror [nnproject](https://f.nnproject.cc/jarchive/) has been incorporated into the site.
 
+For reproduction steps, their known limitations, and the archive-member streaming workaround, see [REPRODUCIBILITY.md](REPRODUCIBILITY.md).
+
 # Matching and publication methodology
 
 1. Use the [verified base-index release](https://github.com/toca-1/new-j2me-software-archive-search/releases/tag/index-v1) (`jarchive-combined-verified.csv.gz`) as the reference set of SHA-256 hashes.
@@ -27,7 +29,7 @@ Additionally, the third-party mirror [nnproject](https://f.nnproject.cc/jarchive
 
 ## Missing-file investigation
 
-Files whose SHA-256 values are absent from the original JARchive index are recorded separately in `missing_files/`; the consolidated inventory is: [`missing_files/all_unmatched_deduplicated.csv`](../missing_files/all_unmatched_deduplicated.csv). It contains one row per distinct SHA-256 and retains recorded source information and locations. The `source_archives` and `locations_json` columns allow the same file content to be associated with multiple upstream collections without counting it as multiple distinct files.
+Files whose SHA-256 values are absent from the original JARchive index are recorded separately in `missing_files/`. The consolidated inventory, `missing_files/all_unmatched_deduplicated.csv`, is a separate large dataset and is not included in source-only downloads. It contains one row per distinct SHA-256 and retains recorded source information and locations. The `source_archives` and `locations_json` columns allow the same file content to be associated with multiple upstream collections without counting it as multiple distinct files.
 
 ### Deduplicated results
 

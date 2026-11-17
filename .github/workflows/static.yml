@@ -61,7 +61,20 @@ jobs:
             --exclude='.github/' \
             --exclude='missing_files/' \
             --exclude='tests/' \
+            --exclude='docs/' \
+            --exclude='tools/' \
+            --exclude='LICENSE' \
+            --exclude='.gitignore' \
+            --exclude='__pycache__/' \
+            --exclude='*.pyc' \
             ./ "$RUNNER_TEMP/pages/"
+          # Keep the standalone downloader public, but never publish build tools or docs.
+          test -f "$RUNNER_TEMP/pages/index.html"
+          test -f "$RUNNER_TEMP/pages/jarchive_download.py"
+          test -d "$RUNNER_TEMP/pages/assets"
+          test -d "$RUNNER_TEMP/pages/data"
+          test ! -e "$RUNNER_TEMP/pages/tools"
+          test ! -e "$RUNNER_TEMP/pages/docs"
           du -sh "$RUNNER_TEMP/pages"
 
       - name: Upload artifact
