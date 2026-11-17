@@ -77,10 +77,38 @@ The browser search index lives under `data/`:
 - `data/folders/`: separately generated folder counts and lazily loaded folder-membership shards (run `tools/build_folder_groups.py` after rebuilding the main index)
 - `data/names-v2/grams.json.gz`: gram-to-shard bitmap for exact substring search
 - `data/names-v2/NNN.json.gz`: sorted searchable labels (filename, MIDlet name, vendor) mapped to unique content IDs
+- `data/search-summaries/`: optional compact per-name-shard metadata for faster first-time refinement and sorting (generate with `python3 tools/build_search_summaries.py --repo .`)
 - `data/records/NNNN.json.gz`: grouped file contents, CRC32/SHA-1/SHA-256 checksums, archive paths, and summary metadata
 - `data/upstream/`: supplementary metadata for downloads from upstream collections
 - `data/build-summary.json`: summary statistics from the index build
 - `data/manifest.json`: index schema, configuration, and counts
+
+### Faster refinement and sorting (optional supplemental index)
+
+Without `data/search-summaries/`, the first sort or refinement must fetch full
+`data/records/` chunks for all text-search matches, even though only title,
+size and searchable metadata are needed. Those IDs are scattered across many
+record chunks. Build a smaller index aligned with the existing name-search
+shards to cut that extra network traffic:
+
+```sh
+python3 tools/build_search_summaries.py --repo .
+```
+
+Run this **from a checkout containing the complete `data/records/` and
+`data/names-v2/` directories**, not from the source-only ZIP. The builder uses
+SQLite for bounded memory and writes `data/search-summaries/` atomically. It
+does not touch `manifest.json`, the main index, folder groups or download URLs.
+Add and deploy the generated `data/search-summaries/` files along with the
+updated `assets/app.js`. The browser validates the original manifest hash
+before using them and gracefully falls back to the original record-loading
+path if they are absent or invalid. Rebuild the supplemental files whenever
+the main records or name-index shards are rebuilt.
+
+This optimization targets **name-based text searches**. Hash-only searches
+still use the original record-loading path when refined or sorted. The amount
+of improvement depends on how many name shards match a query, the browser
+cache and the network.
 
 ### Folder-index rebuild compatibility
 

@@ -1,5 +1,5 @@
 {
-  "pageTitle": "J2ME-Spiele und Apps – Archivsuche",
+  "pageTitle": "J2ME-Spiele und Apps - Archivsuche",
   "metaDescription": "Durchsuche das New J2ME Software Archive nach Spieltitel, Dateiname, Hersteller oder CRC32-/SHA-1-/SHA-256-Hash. Finde bestimmte JAR-Versionen und Downloadlinks.",
   "sourceCode": "Quellcode",
   "languageLabel": "Sprache auswählen",
@@ -69,8 +69,8 @@
   "refineHelpExamples": "Beispiele",
   "sortLabel": "Ergebnisse sortieren",
   "sortDefault": "Standardreihenfolge",
-  "sortTitleAsc": "Titel A–Z",
-  "sortTitleDesc": "Titel Z–A",
+  "sortTitleAsc": "Titel A-Z",
+  "sortTitleDesc": "Titel Z-A",
   "sortSmallFirst": "Größe: kleinste zuerst",
   "sortLargeFirst": "Größe: größte zuerst",
   "preparingRefine": "Eingrenzung und Sortierung werden vorbereitet… {done}/{total}",

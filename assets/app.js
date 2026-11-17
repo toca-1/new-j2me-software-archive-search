@@ -32,6 +32,8 @@ let NAME_INDEX;
 let manifest, searchMode = 'name', active = [], shown = 0, generation = 0;
 let searchGramPromise = null;
 let labelsForMatches = new Map();
+// Each name-search match also remembers the name shard that supplied it.
+let summaryShardsForMatches = new Map();
 // Remember completed queries without retaining all parsed name shards.
 const recentNameSearches = new Map();
 const MAX_RECENT_NAME_SEARCHES = 5;
@@ -217,6 +219,7 @@ async function searchNames(query, current) {
     recentNameSearches.delete(query);
     recentNameSearches.set(query, remembered);
     labelsForMatches = new Map(remembered.labels);
+    summaryShardsForMatches = new Map(remembered.summaryShards);
     console.info('[J2ME search cache] HIT:', query, remembered.ids.length, 'results');
     return [...remembered.ids];
   }
@@ -245,21 +248,26 @@ async function searchNames(query, current) {
   await Promise.all(workers);
   if (current !== generation) return [];
   const ids = new Set(), bestRank = new Map();
-  for (const batch of found) for (const [label, id, kind] of batch) {
-    ids.add(id);
-    const rank = nameMatchRank(query, label, kind);
-    if (!bestRank.has(id) || rank < bestRank.get(id)) bestRank.set(id, rank);
-    // Keep the original preferred label for card-title fallback; ranking
-    // separately considers every matching label for the same record.
-    const earlier = labelsForMatches.get(id);
-    if (!earlier || kind < earlier[1]) labelsForMatches.set(id, [label, kind]);
+  for (let shardIndex = 0; shardIndex < found.length; shardIndex++) {
+    const batch = found[shardIndex];
+    for (const [label, id, kind] of batch) {
+      ids.add(id);
+      if (!summaryShardsForMatches.has(id)) summaryShardsForMatches.set(id, candidates[shardIndex]);
+      const rank = nameMatchRank(query, label, kind);
+      if (!bestRank.has(id) || rank < bestRank.get(id)) bestRank.set(id, rank);
+      // Keep the original preferred label for card-title fallback; ranking
+      // separately considers every matching label for the same record.
+      const earlier = labelsForMatches.get(id);
+      if (!earlier || kind < earlier[1]) labelsForMatches.set(id, [label, kind]);
+    }
   }
   // Eight stable tiers avoid a full sort and preserve the previous order
   // between matches of equal relevance, even for very broad searches.
   const ranked = Array.from({length: 8}, () => []);
   for (const id of ids) ranked[bestRank.get(id)].push(id);
   const matches = ranked.flat();
-  recentNameSearches.set(query, {ids: matches, labels: [...labelsForMatches]});
+  recentNameSearches.set(query, {ids: matches, labels: [...labelsForMatches],
+    summaryShards: [...summaryShardsForMatches]});
   while (recentNameSearches.size > MAX_RECENT_NAME_SEARCHES)
     recentNameSearches.delete(recentNameSearches.keys().next().value);
   return matches;
@@ -885,8 +893,95 @@ function installResultTools() {
   input.addEventListener('search', () => { if (!input.value) applyResultTools(); });
   sort.addEventListener('change', () => applyResultTools());
 }
+// Supplemental, name-shard-aligned metadata for fast first-time refinement and sorting.
+// Its files contain compact metadata only, not the large records/download paths.
+// Older deployments without data/search-summaries/ retain the original slow path.
+const nameSummariesCache = new Map();
+let searchSummaryCatalogPromise = null;
+function searchSummaryCatalog() {
+  if (!searchSummaryCatalogPromise) searchSummaryCatalogPromise = (async () => {
+    const info = await readJson('search-summaries/manifest.json');
+    if (info.schema_version !== 1 || info.unique_files !== manifest.unique_files ||
+        info.record_chunk !== manifest.record_chunk ||
+        info.names_chunks !== NAME_INDEX.chunks || info.names_grams !== NAME_INDEX.grams ||
+        !/^[0-9a-f]{64}$/.test(info.index_manifest_sha256))
+      throw new Error('Search summaries do not match the current name index. Rebuild data/search-summaries/.');
+    // The supplemental index must refer to exactly the manifest used to assign IDs.
+    if (typeof crypto === 'undefined' || !crypto.subtle)
+      throw new Error('Search summaries require localhost or HTTPS.');
+    const response = await fetchIndexWithRetry('manifest.json');
+    const digest = await crypto.subtle.digest('SHA-256', await response.arrayBuffer());
+    const hex = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+    if (hex !== info.index_manifest_sha256)
+      throw new Error('Search summaries were built for a different index manifest.');
+    return info;
+  })().catch(error => {
+    // The extra files are optional. Never break the existing search on a missing index.
+    console.warn('[J2ME] Fast refinement index unavailable; using record shards:', error);
+    return null;
+  });
+  return searchSummaryCatalogPromise;
+}
+function nameSummaryShard(shard) {
+  return memoized(nameSummariesCache, shard, async () => {
+    const rows = await readGzipJson(`search-summaries/${String(shard).padStart(3, '0')}.json.gz`);
+    if (!Array.isArray(rows)) throw new Error('Invalid search summary shard');
+    return new Map(rows.map(row => [row[0], row]));
+  }, MAX_CACHED_SEARCH_SHARDS);
+}
+function resultSummaryFromCompact(id, compact) {
+  const [, bytes, quick, filenames] = compact;
+  const match = labelsForMatches.get(id);
+  // Identical to resultTitle(), including fallback to the matching filename.
+  const title = quick[0] || (match && match[1] === 0 ? match[0] : filenames[0]);
+  const fields = [title, ...quick, ...filenames].map(value => String(value || '').toLowerCase());
+  return {title, bytes, fields};
+}
+async function prepareFastResultSummaries(state, current) {
+  if (!state.ids.every(id => summaryShardsForMatches.has(id))) return false;
+  if (!await searchSummaryCatalog()) return false;
+  if (current !== generation || originalResults !== state) return true;
+  const groups = new Map();
+  for (const id of state.ids) {
+    if (state.summaries.has(id)) continue;
+    const shard = summaryShardsForMatches.get(id);
+    if (!groups.has(shard)) groups.set(shard, []);
+    groups.get(shard).push(id);
+  }
+  const batches = [...groups];
+  let next = 0, completed = state.summaries.size;
+  const worker = async () => {
+    while (current === generation && originalResults === state) {
+      const index = next++;
+      if (index >= batches.length) return;
+      const [shard, ids] = batches[index];
+      const rows = await nameSummaryShard(shard);
+      if (current !== generation || originalResults !== state) return;
+      // Don't apply a partially valid shard: the legacy path can take over.
+      for (const id of ids) if (!rows.has(id))
+        throw new Error(`Missing search summary for ID ${id} (shard ${shard})`);
+      for (const id of ids)
+        state.summaries.set(id, resultSummaryFromCompact(id, rows.get(id)));
+      completed += ids.length;
+      status(t('preparingRefine', {done: fmt(completed), total: fmt(state.ids.length)}));
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+  };
+  const outcomes = await Promise.allSettled(
+    Array.from({length: Math.min(SUMMARY_WORKERS, batches.length)}, worker));
+  const failed = outcomes.find(outcome => outcome.status === 'rejected');
+  if (failed) throw failed.reason;
+  if (current === generation && originalResults === state) state.ready = true;
+  return true;
+}
 async function prepareResultSummaries(state, current) {
   if (state.ready) return;
+  try {
+    if (await prepareFastResultSummaries(state, current)) return;
+  } catch (error) {
+    // Optional optimization: transparently use the original full record index.
+    console.warn('[J2ME] Fast summaries failed; falling back to records:', error);
+  }
   const groups = new Map();
   for (const id of state.ids) {
     if (state.summaries.has(id)) continue;
@@ -1041,7 +1136,8 @@ async function runSearch() {
   // for the remaining words and exclusions. A whole-index negative-only scan
   // would force hundreds of thousands of records to be downloaded.
   const anchor = textTerms?.included.find(word => Array.from(word).length >= 2);
-  $('results').replaceChildren(); $('more').hidden = true; $('show-all').hidden = true; labelsForMatches = new Map();
+  $('results').replaceChildren(); $('more').hidden = true; $('show-all').hidden = true;
+  labelsForMatches = new Map(); summaryShardsForMatches = new Map();
   showAllBusy = false;
   if (!manifest) { status(t('indexNotLoaded')); return; }
   if (!term) { status(t('enterSearchTerm')); return; }

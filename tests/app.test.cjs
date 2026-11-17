@@ -78,9 +78,11 @@ test('name search deduplicates IDs, remembers labels, and reuses cached results'
   const first = await run("searchNames('son', 0)");
   assert.deepEqual(Array.from(first), [5, 9, 7]);
   assert.equal(run('labelsForMatches.get(5)[1]'), 0, 'Preferred label kind should win');
+  assert.equal(run('summaryShardsForMatches.get(5)'), 0, 'Remember which name shard can supply metadata');
   run('gramMap = async () => { throw Error("cache miss"); };');
   const second = await run("searchNames('son', 0)");
   assert.deepEqual(Array.from(second), [5, 9, 7]);
+  assert.equal(run('summaryShardsForMatches.get(7)'), 0, 'Cached hits retain their summary shard');
 });
 
 test('text results rank exact, prefix, word-start, substring, and vendor-only hits', async () => {
@@ -319,6 +321,50 @@ test('sorting metadata reads up to six record chunks concurrently and caches sum
   // Changing the sort order for the same search must not reload metadata.
   await run('prepareResultSummaries(originalResults, generation)');
   assert.equal(run('totalReads'), 9);
+});
+
+test('fast refinement uses compact metadata from matching name shards, not record chunks', async () => {
+  const {run} = loadApp();
+  run(`manifest = {unique_files: 12, record_chunk: 4};
+       originalResults = {ids: [0, 4, 8], summaries: new Map(), ready: false, busy: false};
+       summaryShardsForMatches = new Map([[0, 0], [4, 1], [8, 0]]);
+       labelsForMatches = new Map([[0, ['Prince.jar', 0]], [4, ['Prince of Persia', 1]], [8, ['Prince Game.jar', 0]]]);
+       let opened = [];
+       searchSummaryCatalog = async () => ({schema_version: 1});
+       nameSummaryShard = async shard => {
+         opened.push(shard);
+         return shard === 0
+           ? new Map([[0, [0, 10, ['', 'Studio A'], ['Prince.jar']]],
+                      [8, [8, 30, ['Prince Game', 'Studio B'], ['Game.jar']]]])
+           : new Map([[4, [4, 20, ['Prince of Persia', 'Studio A'], ['Persia.jar']]]]);
+       };
+       readGzipJson = async () => {throw Error('Should not load a full record chunk');};`);
+  await run('prepareResultSummaries(originalResults, generation)');
+  assert.deepEqual(Array.from(run('opened')), [0, 1]);
+  assert.equal(run('originalResults.ready'), true);
+  assert.equal(run('originalResults.summaries.get(0).title'), 'Prince.jar');
+  assert.deepEqual(Array.from(run('selectResultIds(originalResults, "-persia", "size-desc")')), [8, 0]);
+  await run('prepareResultSummaries(originalResults, generation)');
+  assert.deepEqual(Array.from(run('opened')), [0, 1], 'Later sorts reuse the summaries');
+});
+
+test('missing optional summary shard falls back to full record metadata', async () => {
+  const {run} = loadApp();
+  run(`manifest = {unique_files: 4, record_chunk: 4};
+       originalResults = {ids: [0], summaries: new Map(), ready: false, busy: false};
+       summaryShardsForMatches = new Map([[0, 2]]);
+       searchSummaryCatalog = async () => ({schema_version: 1});
+       nameSummaryShard = async () => new Map();
+       let legacyReads = 0;
+       readGzipJson = async path => {
+         legacyReads++;
+         if (path !== 'records/0000.json.gz') throw Error('Unexpected path ' + path);
+         return [['sha', 'sha1', 55, [[0, 'Prince.jar', 'dir/Prince.jar', 'abcd']], ['Prince', 'Vendor']]];
+       };`);
+  await run('prepareResultSummaries(originalResults, generation)');
+  assert.equal(run('legacyReads'), 1);
+  assert.equal(run('originalResults.summaries.get(0).title'), 'Prince');
+  assert.equal(run('originalResults.ready'), true);
 });
 
 test('temporary HTTP 503 is retried; permanent HTTP 404 is not', async () => {

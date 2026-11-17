@@ -91,7 +91,7 @@ Run `python3 jarchive_download.py --help` for the options supported by your exac
 | `--request-timeout SECONDS` | `45` | Hard limit for one byte-range request |
 | `--connect-timeout SECONDS` | `5` | Connection timeout for byte-range requests |
 | `--stall-limit SECONDS` | `120` | Allow this long without a completed new range before failing |
-| `--route-passes N` | `2` | Maximum passes across available download routes per range (1–5) |
+| `--route-passes N` | `2` | Maximum passes across available download routes per range (1-5) |
 | `--time-limit SECONDS` | `0` (off) | Optional *total* transfer time limit; disabled by default |
 | `--chunk-kib N` | `1024` | Compressed bytes per request, in KiB (maximum 4096) |
 | `--max-download-mib N` | `512` | Hard cap on compressed bytes processed per source, including cached bytes |

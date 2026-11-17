@@ -12,6 +12,7 @@ node --check assets/i18n.js
 node --test tests/app.test.cjs
 python3 -m unittest discover -s tests -p 'test_check_index.py'
 python3 -m unittest discover -s tests -p 'test_folder_index.py'
+python3 -m unittest discover -s tests -p 'test_search_summaries.py'
 ```
 
 To check a **complete checkout containing the generated `data/` shards** before deploying:
