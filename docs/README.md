@@ -18,7 +18,8 @@ The project's software license applies only to its original code and documentati
 - A single Hash search mode which automatically detects complete CRC32, SHA-1, or SHA-256 checksums
 - MIDlet name, vendor, version, CLDC, and MIDP information where available
 - Direct download links to individual JAR files on the Internet Archive and other mirror sites, together with alternative downloader instructions and copyable commands for Windows and Linux/macOS
-- Export the current search results, including refinements and sorting (up to 10,000 unique files per export)
+- Page through matching files in groups of 5 by default (adjustable to 10, 20, or 50), with Previous/Next, numbered pages, and a clickable ellipsis for direct page jumps; switching sort order or refinement starts again at page 1
+- Export the full current search result set, including refinements and sorting (up to 10,000 unique files per export, not just the visible page)
 - Expandable manifest details and historical original-source locations
 - Expandable "Other files" browser for distinct JAR contents in the same archive folder with filtering
 

@@ -127,5 +127,14 @@
   "exportLimit": "Riduci i risultati a {limit} o meno prima di esportare.",
   "exportWorking": "Preparazione CSV… {done}/{total} file",
   "exportReady": "CSV pronto per il download: {count} file.",
-  "exportError": "Impossibile esportare il CSV. Riprova."
+  "exportError": "Impossibile esportare il CSV. Riprova.",
+  "pageNavigation": "Pagine dei risultati",
+  "pageRange": "Visualizzati {first}–{last} di {total}",
+  "pagePrevious": "Precedente",
+  "pageNext": "Successiva",
+  "pageNumber": "Pagina {page}",
+  "pageSize": "Risultati per pagina",
+  "pageJump": "Vai alla pagina",
+  "pageInvalid": "Inserisci una pagina da 1 a {total}.",
+  "pageLoadError": "Impossibile caricare questa pagina. Riprova."
 }

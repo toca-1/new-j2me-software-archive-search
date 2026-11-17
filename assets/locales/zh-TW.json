@@ -124,5 +124,14 @@
   "exportLimit": "請將結果縮小至 {limit} 筆或更少後再匯出。",
   "exportWorking": "正在準備 CSV… {done}/{total} 個檔案",
   "exportReady": "CSV 已準備好下載：{count} 個檔案。",
-  "exportError": "無法匯出 CSV，請重試。"
+  "exportError": "無法匯出 CSV，請重試。",
+  "pageNavigation": "搜尋結果分頁",
+  "pageRange": "顯示第 {first}–{last} 筆，共 {total} 筆",
+  "pagePrevious": "上一頁",
+  "pageNext": "下一頁",
+  "pageNumber": "第 {page} 頁",
+  "pageSize": "每頁結果數",
+  "pageJump": "跳至頁面",
+  "pageInvalid": "請輸入 1 到 {total} 之間的頁碼。",
+  "pageLoadError": "無法載入此頁，請重試。"
 }

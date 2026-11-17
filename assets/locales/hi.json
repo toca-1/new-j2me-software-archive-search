@@ -124,5 +124,14 @@
   "exportLimit": "निर्यात करने से पहले परिणामों को {limit} या उससे कम करें।",
   "exportWorking": "CSV तैयार हो रहा है… {done}/{total} फ़ाइलें",
   "exportReady": "CSV डाउनलोड के लिए तैयार है: {count} फ़ाइलें।",
-  "exportError": "CSV निर्यात नहीं हो सका। कृपया फिर प्रयास करें।"
+  "exportError": "CSV निर्यात नहीं हो सका। कृपया फिर प्रयास करें।",
+  "pageNavigation": "परिणाम पृष्ठ",
+  "pageRange": "{total} में से {first}–{last} दिखाए जा रहे हैं",
+  "pagePrevious": "पिछला",
+  "pageNext": "अगला",
+  "pageNumber": "पृष्ठ {page}",
+  "pageSize": "प्रति पृष्ठ परिणाम",
+  "pageJump": "पृष्ठ पर जाएँ",
+  "pageInvalid": "1 से {total} के बीच पृष्ठ संख्या दर्ज करें।",
+  "pageLoadError": "यह पृष्ठ लोड नहीं हो सका। फिर से प्रयास करें।"
 }

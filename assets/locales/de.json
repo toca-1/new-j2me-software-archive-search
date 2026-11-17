@@ -127,5 +127,14 @@
   "exportLimit": "Zum Exportieren auf höchstens {limit} Ergebnisse eingrenzen.",
   "exportWorking": "CSV wird vorbereitet… {done}/{total} Dateien",
   "exportReady": "CSV zum Herunterladen vorbereitet: {count} Dateien.",
-  "exportError": "CSV-Export fehlgeschlagen. Bitte erneut versuchen."
+  "exportError": "CSV-Export fehlgeschlagen. Bitte erneut versuchen.",
+  "pageNavigation": "Ergebnisseiten",
+  "pageRange": "{first}–{last} von {total} werden angezeigt",
+  "pagePrevious": "Zurück",
+  "pageNext": "Weiter",
+  "pageNumber": "Seite {page}",
+  "pageSize": "Ergebnisse pro Seite",
+  "pageJump": "Zu Seite",
+  "pageInvalid": "Bitte eine Seite zwischen 1 und {total} eingeben.",
+  "pageLoadError": "Diese Seite konnte nicht geladen werden. Bitte erneut versuchen."
 }

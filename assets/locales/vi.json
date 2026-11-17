@@ -124,5 +124,14 @@
   "exportLimit": "Thu hẹp kết quả xuống tối đa {limit} trước khi xuất.",
   "exportWorking": "Đang chuẩn bị CSV… {done}/{total} tệp",
   "exportReady": "CSV đã sẵn sàng tải xuống: {count} tệp.",
-  "exportError": "Không thể xuất CSV. Vui lòng thử lại."
+  "exportError": "Không thể xuất CSV. Vui lòng thử lại.",
+  "pageNavigation": "Trang kết quả",
+  "pageRange": "Hiển thị {first}–{last} trong tổng số {total}",
+  "pagePrevious": "Trước",
+  "pageNext": "Tiếp",
+  "pageNumber": "Trang {page}",
+  "pageSize": "Kết quả mỗi trang",
+  "pageJump": "Đến trang",
+  "pageInvalid": "Nhập số trang từ 1 đến {total}.",
+  "pageLoadError": "Không thể tải trang này. Vui lòng thử lại."
 }

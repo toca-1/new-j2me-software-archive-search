@@ -226,7 +226,7 @@ test('main Text search uses inclusion/exclusion metadata rules consistently with
          ]);
          state.ready = true;
        };
-       renderMore = async () => {};`);
+       renderPage = async () => {};`);
   nodes.get('query').value = 'prince -persia';
   await run('runSearch()');
   assert.deepEqual(Array.from(run('active')), [2]);
@@ -259,7 +259,7 @@ test('main search leaves simple single-term queries on the fast shard path', asy
        setResultControlsBusy = () => {};
        searchNames = async anchor => { if(anchor !== 'sonic') throw Error('Bad anchor'); return [4, 2]; };
        prepareResultSummaries = async () => { throw Error('Simple query should not fetch every summary'); };
-       renderMore = async () => {};`);
+       renderPage = async () => {};`);
   nodes.get('query').value = 'sonic';
   await run('runSearch()');
   assert.deepEqual(Array.from(run('active')), [4, 2]);
@@ -481,6 +481,23 @@ function downloadTestDom(context) {
         if (!listeners.has(type)) listeners.set(type, []);
         listeners.get(type).push(handler);
       },
+      dispatch(type, event = {preventDefault() {}}) {
+        for (const handler of listeners.get(type) || []) handler(event);
+      },
+      querySelectorAll(selector) {
+        const tags = new Set(selector.split(',').map(x => x.trim().toLowerCase()));
+        const found = [];
+        function walk(node) {
+          for (const child of node.children || []) {
+            if (tags.has(String(child.tagName).toLowerCase())) found.push(child);
+            walk(child);
+          }
+        }
+        walk(this);
+        return found;
+      },
+      focus() { this.focused = true; },
+      scrollIntoView() { this.scrolled = true; },
       click() { for (const handler of listeners.get('click') || []) handler(); },
       get childElementCount() { return this.children.filter(x => x?.tagName).length; }
     };
@@ -619,11 +636,11 @@ test('opening downloads during mirror loading closes the expanded folder browser
   assert.equal(folderPanel.hidden, true, 'Only the requested disclosure remains open');
 });
 
-test('localized download headings and Show all use the locale files', () => {
+test('localized download headings and page navigation use the locale files', () => {
   for (const [lang, expected] of Object.entries({
-    en: ['Download links', 'Internet archive', 'Other mirrors', 'Show all (3)'],
-    de: ['Downloadlinks', 'Internet Archive', 'andere Mirrors', 'Alle anzeigen (3)'],
-    'zh-TW': ['下載連結', 'Internet Archive', '其他鏡像站', '顯示全部 (3)']
+    en: ['Download links', 'Internet archive', 'Other mirrors'],
+    de: ['Downloadlinks', 'Internet Archive', 'andere Mirrors'],
+    'zh-TW': ['下載連結', 'Internet Archive', '其他鏡像站']
   })) {
     const dictionary = JSON.parse(fs.readFileSync(
       path.resolve(__dirname, `../assets/locales/${lang}.json`), 'utf8'));
@@ -646,13 +663,16 @@ test('localized download headings and Show all use the locale files', () => {
     assert.equal(toggle.textContent, expected[0], `Disclosure label (${lang})`);
     assert.deepEqual(headings, expected.slice(1, 3), `Source headings (${lang})`);
 
-    const elements = new Map();
-    context.document.getElementById = id => {
-      if (!elements.has(id)) elements.set(id, {textContent: '', hidden: false});
-      return elements.get(id);
-    };
-    run('active = [1, 2, 3, 4]; shown = 1; updatePaginationButtons()');
-    assert.equal(elements.get('show-all').textContent, expected[3], `Show all (${lang})`);
+    const bottom = context.document.createElement('nav');
+    context.document.getElementById = id => id === 'pagination-bottom' ? bottom : null;
+    run('active = Array.from({length: 41}, (_, i) => i); currentPage = 2; updatePaginationButtons()');
+    assert.equal(bottom.children[0].textContent, context.window.J2ME_I18N.t('pageRange',
+      {first: '6', last: '10', total: '41'}), `Page range (${lang})`);
+    assert.equal(bottom.getAttribute('aria-label'), dictionary.pageNavigation);
+    assert.equal(bottom.children[2].children[0].textContent, dictionary.pageSize);
+    assert.equal(bottom.children[2].children[1].value, '5');
+    const ellipsis = bottom.children[1].children.find(b => b.className === 'page-ellipsis');
+    assert.equal(ellipsis.getAttribute('aria-label'), dictionary.pageJump);
   }
 });
 
@@ -858,7 +878,7 @@ function startupTestDom(context) {
     };
   }
   for (const id of ['status', 'results', 'unique-count', 'language-select',
-    'search-form', 'more', 'show-all', 'query']) nodes.set(id, node());
+    'search-form', 'pagination-bottom', 'query']) nodes.set(id, node());
   const section = {hidden: true};
   context.document = {
     getElementById: id => nodes.get(id) || null,
@@ -901,7 +921,7 @@ test('Hash search dispatches all three formats and reports invalid values', asyn
   const {run, context} = loadApp();
   const state = {
     query: {value: ''}, results: {children: [], replaceChildren(...v) { this.children = v; }, append(...v) { this.children.push(...v); }},
-    more: {hidden: true}, 'show-all': {hidden: true},
+    'pagination-bottom': {hidden: true, replaceChildren() {}},
     status: {textContent: ''}, 'result-tools': {hidden: true},
     'search-form': {querySelector: () => ({disabled: false})}
   };
@@ -913,7 +933,7 @@ test('Hash search dispatches all three formats and reports invalid values', asyn
        searchMode = 'hash';
        resetResultTools = () => {};
        setResultControlsBusy = () => {};
-       renderMore = async () => {};
+       renderPage = async () => {};
        window.lookupCalls = [];
        crc32Lookup = async value => { window.lookupCalls.push(['crc32', value]); return [17, 19]; };
        exactHashLookup = async (type, value) => { window.lookupCalls.push([type, value]); return 23; };`);
@@ -1082,7 +1102,7 @@ test('search-index failure shows a friendly localized message; Retry search actu
          if (calls === 1) throw new TypeError('NetworkError when attempting to fetch resource');
          return [7];
        };
-       renderMore = async () => { $('results').append(elem('div', 'Sonic result', 'card')); };`);
+       renderPage = async () => { $('results').append(elem('div', 'Sonic result', 'card')); };`);
   await run('runSearch()');
   assert.equal(run('calls'), 1);
   assert.equal(nodes.get('status').textContent, 'Search error');
@@ -1117,7 +1137,7 @@ test('failure while loading result records clears any partial result cards', asy
        resetResultTools = () => {};
        setResultControlsBusy = () => {};
        searchNames = async () => [7, 8];
-       renderMore = async () => {
+       renderPage = async () => {
          $('results').append(elem('div', 'Incomplete', 'card'));
          throw new Error('records/0001.json.gz: HTTP 503');
        };`);
@@ -1128,8 +1148,7 @@ test('failure while loading result records clears any partial result cards', asy
   assert.equal(run('active.length'), 0);
   assert.equal(run('originalResults'), null);
   assert.equal(nodes.get('result-tools').hidden, true);
-  assert.equal(nodes.get('more').hidden, true);
-  assert.equal(nodes.get('show-all').hidden, true);
+  assert.equal(nodes.get('pagination-bottom').hidden, true);
 });
 
 
@@ -1209,4 +1228,193 @@ test('folder UI never displays a link for a member whose record ID changed', asy
   const panel = find(card, 'folder-panel');
   assert.equal(find(panel, 'folder-file-link'), null);
   assert.match(find(panel, 'folder-error').textContent, /folderIndexOutdated/);
+});
+
+function paginationTestDom(context) {
+  downloadTestDom(context);
+  const nodes = new Map();
+  for (const id of ['pagination-bottom', 'results', 'status'])
+    nodes.set(id, context.document.createElement(id.startsWith('pagination') ? 'nav' : 'div'));
+  context.document.getElementById = id => nodes.get(id) ?? null;
+  const english = JSON.parse(fs.readFileSync(
+    path.resolve(__dirname, '../assets/locales/en.json'), 'utf8'));
+  context.window.J2ME_I18N.t = (key, vars = {}) =>
+    String(english[key] ?? key).replace(/\{(\w+)\}/g, (original, name) =>
+      Object.hasOwn(vars, name) ? String(vars[name]) : original);
+  context.window.J2ME_I18N.numberLocale = () => 'en-US';
+  return nodes;
+}
+
+test('page number windows stay bounded even for tens of thousands of pages', () => {
+  const {run} = loadApp();
+  assert.deepEqual(Array.from(run('paginationPages(1, 1)')), [1]);
+  assert.deepEqual(Array.from(run('paginationPages(5, 3)')), [1, 2, 3, 4, 5]);
+  assert.deepEqual(Array.from(run('paginationPages(10000, 1)')), [1, 2, 3, null, 10000]);
+  assert.deepEqual(Array.from(run('paginationPages(10000, 5000)')),
+    [1, null, 4998, 4999, 5000, 5001, 5002, null, 10000]);
+  assert.deepEqual(Array.from(run('paginationPages(10000, 10000)')),
+    [1, null, 9998, 9999, 10000]);
+});
+
+test('pagination defaults to five, navigates by ellipsis, and changes page size', async () => {
+  const {run, context} = loadApp();
+  const nodes = paginationTestDom(context);
+  context.window.prompt = () => '9';
+  run(`active = Array.from({length: 45}, (_, i) => i);
+       originalResults = {ids: [...active], busy: false};
+       window.loaded = [];
+       recordById = async id => {window.loaded.push(id); return [id];};
+       renderResult = (id) => elem('article', String(id), 'card');`);
+  assert.equal(run('PAGE'), 5);
+  await run('renderPage(generation, 1)');
+  assert.equal(nodes.get('results').children.length, 5);
+  assert.equal(nodes.get('results').children[0].textContent, '0');
+  assert.equal(nodes.get('results').children.at(-1).textContent, '4');
+  const nav = nodes.get('pagination-bottom');
+  assert.equal(nav.hidden, false);
+  assert.equal(nav.children[0].textContent, 'Showing 1–5 of 45');
+  assert.equal(nav.getAttribute('aria-label'), 'Result pages');
+  assert.equal(nav.children[1].children[0].disabled, true, 'Previous disabled on first page');
+  assert.equal(nav.children[1].children[1].getAttribute('aria-current'), 'page');
+  assert.equal(nav.children[2].children[0].textContent, 'Results per page');
+  const options = nav.children[2].children[1].children;
+  assert.deepEqual(options.map(option => option.value), ['5', '10', '20', '50']);
+  nav.children[1].children.at(-1).click();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(run('currentPage'), 2);
+  assert.equal(nodes.get('results').children[0].textContent, '5');
+  assert.equal(nav.children[0].textContent, 'Showing 6–10 of 45');
+  assert.equal(nodes.get('results').focused, true, 'Focus the new page for keyboard navigation');
+  assert.equal(nodes.get('results').scrolled, true, 'Scroll to the new page');
+  const ellipsis = nav.children[1].children.find(child => child.className === 'page-ellipsis');
+  assert.equal(ellipsis.tagName, 'button');
+  assert.equal(ellipsis.getAttribute('aria-label'), 'Go to page');
+  ellipsis.click();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(run('currentPage'), 9);
+  assert.equal(nodes.get('results').children.length, 5);
+  assert.equal(nodes.get('results').children[0].textContent, '40');
+  assert.equal(nodes.get('results').children.at(-1).textContent, '44');
+  assert.equal(nav.children[1].children.at(-1).disabled, true,
+    'Next disabled on the last page');
+  const callsBeforeInvalid = context.window.loaded.length;
+  context.window.prompt = () => '999';
+  nav.children[1].children.find(child => child.className === 'page-ellipsis').click();
+  assert.equal(nodes.get('status').textContent, 'Enter a page from 1 to 9.');
+  assert.equal(context.window.loaded.length, callsBeforeInvalid);
+  context.window.prompt = () => null;
+  nav.children[1].children.find(child => child.className === 'page-ellipsis').click();
+  assert.equal(context.window.loaded.length, callsBeforeInvalid, 'Cancel does not load a page');
+  // Switching to 20 keeps the first file on screen in the resulting page.
+  const select = nav.children[2].children[1];
+  select.value = '20';
+  select.dispatch('change');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(run('PAGE'), 20);
+  assert.equal(run('currentPage'), 3);
+  assert.equal(nodes.get('results').children.length, 5);
+  assert.equal(nodes.get('results').children[0].textContent, '40');
+  assert.equal(nav.children[0].textContent, 'Showing 41–45 of 45');
+  assert.equal(nav.children[2].children[1].value, '20');
+  assert.equal(context.window.loaded.length, 20, 'Only the visited pages were requested');
+  nav.children[2].children[1].value = '50';
+  nav.children[2].children[1].dispatch('change');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(run('PAGE'), 50);
+  assert.equal(run('currentPage'), 1);
+  assert.equal(nodes.get('results').children.length, 45);
+  assert.equal(nav.children[1].children.length, 0, 'Single-page searches omit page buttons');
+  assert.equal(nav.hidden, false, 'Size picker is available even for one page');
+});
+
+test('pagination cancels stale searches and switches pages atomically after network errors', async () => {
+  const {run, context} = loadApp();
+  const nodes = paginationTestDom(context);
+  run(`active = Array.from({length: 43}, (_, i) => i);
+       originalResults = {ids: [...active], busy: false};
+       renderResult = (id) => elem('article', String(id), 'card');
+       recordById = async id => [id];`);
+  await run('renderPage(generation, 1)');
+  run(`recordById = async id => {
+    if (id === 6) throw Error('Test record shard offline');
+    return [id];
+  };`);
+  await assert.rejects(run('renderPage(generation, 2)'), /Test record shard offline/);
+  assert.equal(run('currentPage'), 1);
+  assert.equal(nodes.get('results').children.length, 5);
+  assert.equal(nodes.get('results').children[0].textContent, '0',
+    'A failed page cannot replace any existing cards');
+  assert.equal(nodes.get('pagination-bottom').children[1].children.at(-1).disabled, false,
+    'Controls are re-enabled when a page fails');
+  run(`let finishLater;
+       recordById = id => id >= 5 ? new Promise(resolve => {finishLater ??= []; finishLater.push(() => resolve([id]));}) : Promise.resolve([id]);
+       window.finishLater = () => finishLater.forEach(resolve => resolve());`);
+  const pending = run('renderPage(generation, 2)');
+  run('generation++; resultViewVersion++;'); // New query or sort supersedes the old request.
+  run('window.finishLater()');
+  await pending;
+  assert.equal(run('currentPage'), 1);
+  assert.equal(nodes.get('results').children[0].textContent, '0',
+    'A stale result page cannot overwrite newer search results');
+});
+
+test('refinement and CSV keep the whole matching set while paging its display', async () => {
+  const {run, context} = loadApp();
+  const nodes = paginationTestDom(context);
+  nodes.set('refine-query', {value: ''});
+  nodes.set('result-sort', {value: 'default'});
+  nodes.set('export-status', {textContent: ''});
+  nodes.set('export-csv', {disabled: false});
+  context.document.querySelectorAll = () => [];
+  run(`active = Array.from({length: 40}, (_, i) => i);
+       originalResults = {ids: [...active], summaries: new Map(), ready: false, busy: false};
+       renderResult = (id) => elem('article', String(id), 'card');
+       recordById = async id => [id];
+       selectResultIds = (state, query, order) => state.ids.filter(id => id % 2 === 0).reverse();`);
+  await run('renderPage(generation, 2)');
+  assert.equal(run('currentPage'), 2);
+  await run('applyResultTools()');
+  assert.equal(run('currentPage'), 1, 'Refinement resets the visible page');
+  assert.deepEqual(Array.from(run('active')).slice(0, 3), [38, 36, 34]);
+  assert.equal(run('active.length'), 20, 'Refinement keeps all 20 matching IDs');
+  assert.equal(nodes.get('results').children.length, 5);
+  assert.equal(nodes.get('results').children[0].textContent, '38');
+  assert.equal(nodes.get('pagination-bottom').hidden, false, '20 matches occupy four five-file pages');
+});
+
+test('page-size changes are atomic and recover after a failed record request', async () => {
+  const {run, context} = loadApp();
+  const nodes = paginationTestDom(context);
+  run(`active = Array.from({length: 30}, (_, i) => i);
+       originalResults = {ids: [...active], busy: false};
+       renderResult = id => elem('article', String(id), 'card');
+       recordById = async id => [id];`);
+  await run('renderPage(generation, 2)');
+  assert.equal(nodes.get('results').children[0].textContent, '5');
+  run(`recordById = async id => {if (id === 6) throw Error('Network offline'); return [id];};`);
+  const nav = nodes.get('pagination-bottom');
+  nav.children[2].children[1].value = '20';
+  nav.children[2].children[1].dispatch('change');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(run('PAGE'), 5, 'Failed requests must not commit new page sizes');
+  assert.equal(run('currentPage'), 2);
+  assert.equal(nav.children[2].children[1].value, '5');
+  assert.equal(nodes.get('results').children[0].textContent, '5');
+  assert.equal(nodes.get('status').textContent, 'Could not load that page. Try again.');
+});
+
+test('single-page results still display the adjustable result count, no page buttons', async () => {
+  const {run, context} = loadApp();
+  const nodes = paginationTestDom(context);
+  run(`active = [10, 20, 30];
+       originalResults = {ids: [...active], busy: false};
+       renderResult = id => elem('article', String(id), 'card');
+       recordById = async id => [id];`);
+  await run('renderPage(generation, 1)');
+  const nav = nodes.get('pagination-bottom');
+  assert.equal(nav.hidden, false);
+  assert.equal(nav.children[1].children.length, 0);
+  assert.equal(nav.children[2].children[1].value, '5');
+  run('active = []; updatePaginationButtons()');
+  assert.equal(nav.hidden, true);
 });

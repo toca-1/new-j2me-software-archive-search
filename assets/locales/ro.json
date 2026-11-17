@@ -128,5 +128,14 @@
   "exportLimit": "Restrânge rezultatele la cel mult {limit} înainte de export.",
   "exportWorking": "Se pregătește CSV… {done}/{total} fișiere",
   "exportReady": "CSV pregătit pentru descărcare: {count} fișiere.",
-  "exportError": "Nu s-a putut exporta CSV. Încearcă din nou."
+  "exportError": "Nu s-a putut exporta CSV. Încearcă din nou.",
+  "pageNavigation": "Pagini de rezultate",
+  "pageRange": "Se afișează {first}–{last} din {total}",
+  "pagePrevious": "Anterior",
+  "pageNext": "Următor",
+  "pageNumber": "Pagina {page}",
+  "pageSize": "Rezultate pe pagină",
+  "pageJump": "Mergi la pagina",
+  "pageInvalid": "Introdu un număr de pagină între 1 și {total}.",
+  "pageLoadError": "Pagina nu a putut fi încărcată. Încearcă din nou."
 }

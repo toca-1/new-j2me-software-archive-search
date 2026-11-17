@@ -124,5 +124,14 @@
   "exportLimit": "出力するには結果を {limit} 件以下に絞り込んでください。",
   "exportWorking": "CSV を準備中… {done}/{total} ファイル",
   "exportReady": "CSV のダウンロード準備ができました: {count} ファイル。",
-  "exportError": "CSV を出力できませんでした。もう一度お試しください。"
+  "exportError": "CSV を出力できませんでした。もう一度お試しください。",
+  "pageNavigation": "検索結果のページ",
+  "pageRange": "{total}件中 {first}～{last}件を表示",
+  "pagePrevious": "前へ",
+  "pageNext": "次へ",
+  "pageNumber": "ページ {page}",
+  "pageSize": "1ページあたりの結果数",
+  "pageJump": "ページへ移動",
+  "pageInvalid": "1～{total}のページ番号を入力してください。",
+  "pageLoadError": "このページを読み込めませんでした。もう一度お試しください。"
 }

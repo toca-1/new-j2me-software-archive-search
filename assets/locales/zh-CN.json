@@ -127,5 +127,14 @@
   "exportLimit": "请将结果缩小至 {limit} 条或更少后再导出。",
   "exportWorking": "正在准备 CSV… {done}/{total} 个文件",
   "exportReady": "CSV 已准备好下载：{count} 个文件。",
-  "exportError": "无法导出 CSV，请重试。"
+  "exportError": "无法导出 CSV，请重试。",
+  "pageNavigation": "搜索结果分页",
+  "pageRange": "显示第 {first}–{last} 项，共 {total} 项",
+  "pagePrevious": "上一页",
+  "pageNext": "下一页",
+  "pageNumber": "第 {page} 页",
+  "pageSize": "每页结果数",
+  "pageJump": "跳转到页",
+  "pageInvalid": "请输入 1 到 {total} 之间的页码。",
+  "pageLoadError": "无法加载此页，请重试。"
 }

@@ -124,5 +124,14 @@
   "exportLimit": "내보내려면 결과를 {limit}개 이하로 좁히세요.",
   "exportWorking": "CSV 준비 중… {done}/{total}개 파일",
   "exportReady": "CSV 다운로드 준비 완료: {count}개 파일.",
-  "exportError": "CSV를 내보내지 못했습니다. 다시 시도하세요."
+  "exportError": "CSV를 내보내지 못했습니다. 다시 시도하세요.",
+  "pageNavigation": "검색 결과 페이지",
+  "pageRange": "총 {total}개 중 {first}–{last}개 표시",
+  "pagePrevious": "이전",
+  "pageNext": "다음",
+  "pageNumber": "페이지 {page}",
+  "pageSize": "페이지당 결과 수",
+  "pageJump": "페이지로 이동",
+  "pageInvalid": "1부터 {total}까지의 페이지 번호를 입력하세요.",
+  "pageLoadError": "페이지를 불러오지 못했습니다. 다시 시도하세요."
 }

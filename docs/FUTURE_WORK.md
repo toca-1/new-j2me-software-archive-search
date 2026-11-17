@@ -3,7 +3,7 @@
 - [ ] **Better navigation for large result sets.** Improve handling of very broad queries
 - [ ] **Document reproducibility.** Publish or refine the indexing, extraction, hashing and metadata-join methodology, including the overlong Linux filename handled by archive streaming
 - [ ] **Metadata quality tools.** Identify conflicting or incomplete manifest fields, as well as fields that could still be added (e.g.,  screen resolution, language, device compatibility)
-- [ ] **Export search results.** Add the ability for users to export the results of their current search in some form
+- [x] **Export search results.** Add the ability for users to export the results of their current search in some form
 - [ ] **Full index-integrity validation.** Develop an optional validation script for checking the generated index before publishing major rebuilds. Verify record IDs, shard references, hash formats, counts, and consistency between the name indexes and underlying records. Keep this separate from the lightweight pre-deployment checks because validating the complete archive could be expensive
 - [ ] **Check docs.** Make sure that everything is accurate and up-to-date
 - [ ] **Repo file cleanup.** Review obsolete scripts, generated files, redundant documentation, and temporary development artifacts

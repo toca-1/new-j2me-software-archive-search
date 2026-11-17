@@ -127,5 +127,14 @@
   "exportLimit": "Beperk de resultaten tot maximaal {limit} voordat je exporteert.",
   "exportWorking": "CSV voorbereiden… {done}/{total} bestanden",
   "exportReady": "CSV klaar om te downloaden: {count} bestanden.",
-  "exportError": "CSV exporteren mislukt. Probeer opnieuw."
+  "exportError": "CSV exporteren mislukt. Probeer opnieuw.",
+  "pageNavigation": "Resultaatpagina’s",
+  "pageRange": "Toont {first}–{last} van {total}",
+  "pagePrevious": "Vorige",
+  "pageNext": "Volgende",
+  "pageNumber": "Pagina {page}",
+  "pageSize": "Resultaten per pagina",
+  "pageJump": "Ga naar pagina",
+  "pageInvalid": "Voer een pagina in van 1 tot {total}.",
+  "pageLoadError": "Deze pagina kon niet worden geladen. Probeer het opnieuw."
 }

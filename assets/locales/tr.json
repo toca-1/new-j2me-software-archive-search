@@ -124,5 +124,14 @@
   "exportLimit": "Dışa aktarmak için sonuçları {limit} veya altına daraltın.",
   "exportWorking": "CSV hazırlanıyor… {done}/{total} dosya",
   "exportReady": "CSV indirilmeye hazır: {count} dosya.",
-  "exportError": "CSV dışa aktarılamadı. Tekrar deneyin."
+  "exportError": "CSV dışa aktarılamadı. Tekrar deneyin.",
+  "pageNavigation": "Sonuç sayfaları",
+  "pageRange": "{total} sonuçtan {first}–{last} gösteriliyor",
+  "pagePrevious": "Önceki",
+  "pageNext": "Sonraki",
+  "pageNumber": "Sayfa {page}",
+  "pageSize": "Sayfa başına sonuç",
+  "pageJump": "Sayfaya git",
+  "pageInvalid": "1 ile {total} arasında bir sayfa girin.",
+  "pageLoadError": "Bu sayfa yüklenemedi. Tekrar deneyin."
 }

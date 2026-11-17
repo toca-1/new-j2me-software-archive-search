@@ -9,8 +9,8 @@ const ARCHIVES = ['JARchiveLite_v11.7z', 'JARchive_v11.7z'];
 // Full archive paths unavailable on the nnproject mirror.
 const NNPROJECT_FULL_MISSING = new Set([".                                       1/.                                       1 (WORMS) (1.0) (CLDC-1.1, MIDP-2.0) (BootJoker) (7f17fdeefba505d9fe2e5a51e789347e2f5153ec8ab8d32ac9c1c79b99e1c789).jar", "..VIETVTC..nguoi con gai mau lanh/..VIETVTC..nguoi con gai mau lanh (HeroCraft) (1.4.0) (CLDC-1.0, MIDP-2.0) (Main) (01505f772d07305863f419a69179c73e9ebebfdfc754e24d2592ef66c1b72ba3).jar", "ChinhDomTV/ChinhDomTV (nguyendoanchinh.wapsite.meTELEVISION%202G-S40) (1.01) (CLDC-1.0, MIDP-2.0) (GameMidlet) (9ce85ae8fddff39f10c5cea313c7c43d82b88761540c9406915cfb933a4e0f0f).jar", "M_YouTube_ChinhDom/M_YouTube_ChinhDom (m.youtube.comwatchdesktop_uri=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D-yOXycNEoAc&v=-yOXycNEoAc&gl=US) (1.01) (CLDC-1.0, MIDP-2.0) (GameMidlet) (1fa199e30bfadadde6ece841ad54e2e0b6afa13b9332cd9f738ad1aadb939571).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (532b09be357ff5054ba559825912bc6f43de6f8de41fdadeadc9773821e0a727).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (6847ae78ed5a35676f251f370584ccaaebee8a496080580abd5a22292c0ed425).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (ac001c962b1dc5803c34333fbed1f7d86e23b1ca52be7a11d1419a7e89f41381).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (ea019cb412a7cabf0de0a34df8f198c9610505b4750bf3e2b448f79ea172228d).jar"]);
 const NNPROJECT_FULL_OVERRIDES = new Map([]);
-const PAGE = 20;
-const INITIAL_PAGE = 5;
+const PAGE_SIZES = [5, 10, 20, 50];
+let PAGE = PAGE_SIZES[0];
 const WORKERS = 8;
 // Sorting/refining needs metadata from record chunks spread across the archive.
 // Use more concurrent reads than before (2) without fetching every chunk at once.
@@ -32,7 +32,7 @@ function nameIndexConfig(index) {
   return Object.freeze({chunks, grams, directory});
 }
 let NAME_INDEX;
-let manifest, searchMode = 'name', active = [], shown = 0, generation = 0;
+let manifest, searchMode = 'name', active = [], currentPage = 1, generation = 0;
 let searchGramPromise = null;
 let labelsForMatches = new Map();
 // Each name-search match also remembers the name shard that supplied it.
@@ -40,7 +40,7 @@ let summaryShardsForMatches = new Map();
 // Remember completed queries without retaining all parsed name shards.
 const recentNameSearches = new Map();
 const MAX_RECENT_NAME_SEARCHES = 5;
-let showAllBusy = false;
+let pageRequestId = 0;
 const recordsCache = new Map(), detailsCache = new Map(), hashesCache = new Map(), namesCache = new Map();
 
 const upstreamShardCache = new Map();
@@ -853,7 +853,7 @@ function renderResult(id, record) {
   return card;
 }
 // Search within all original matches, with metadata loaded only on demand.
-let originalResults = null, resultViewVersion = 0, moreLoadingVersion = null;
+let originalResults = null, resultViewVersion = 0;
 let exportBusy = false;
 function resultTitle(id, record) {
   const match = labelsForMatches.get(id);
@@ -864,7 +864,7 @@ function setResultControlsBusy(busy) {
     .forEach(control => { control.disabled = busy; });
 }
 function resetResultTools() {
-  originalResults = null; resultViewVersion++;
+  originalResults = null; resultViewVersion++; pageRequestId++; currentPage = 1;
   $('result-tools').hidden = true;
   $('refine-query').value = ''; $('result-sort').value = 'default';
   $('export-status').textContent = '';
@@ -1062,16 +1062,16 @@ async function applyResultTools() {
   if (!state || state.busy) return;
   const current = generation;
   const query = $('refine-query').value.trim(), order = $('result-sort').value;
-  state.busy = true; setResultControlsBusy(true); $('more').disabled = true; $('show-all').disabled = true;
+  state.busy = true; setResultControlsBusy(true); setPaginationBusy(true);
   try {
     if (query || order !== 'default') await prepareResultSummaries(state, current);
     if (current !== generation || originalResults !== state) return;
-    active = selectResultIds(state, query, order); shown = 0; resultViewVersion++;
+    active = selectResultIds(state, query, order); currentPage = 1; resultViewVersion++; pageRequestId++;
     $('export-status').textContent = '';
-    $('results').replaceChildren(); $('more').hidden = true; $('show-all').hidden = true;
+    $('results').replaceChildren(); updatePaginationButtons();
     status(query ? t('subsetCount', {count: fmt(active.length), total: fmt(state.ids.length)}) :
       t('matchingFiles', {count: fmt(active.length), pluralCount: active.length}));
-    if (active.length) await renderMore(current, INITIAL_PAGE);
+    if (active.length) await renderPage(current, 1);
     else $('results').append(elem('div', t('noRefinedResults'), 'empty'));
   } catch (error) {
     if (current === generation && originalResults === state) {
@@ -1080,7 +1080,7 @@ async function applyResultTools() {
   } finally {
     state.busy = false;
     if (current === generation && originalResults === state) {
-      setResultControlsBusy(false); $('more').disabled = false; $('show-all').disabled = false;
+      setResultControlsBusy(false); setPaginationBusy(false);
       $('export-csv').disabled = exportBusy;
     }
   }
@@ -1184,57 +1184,144 @@ async function exportCurrentResults() {
   }
 }
 
-function updatePaginationButtons() {
-  const remaining = Math.max(0, active.length - shown);
-  const more = $('more'), all = $('show-all');
-  more.hidden = all.hidden = remaining === 0;
-  more.textContent = t('moreRemaining', {count: fmt(remaining)});
-  all.textContent = t('showAllRemaining', {count: fmt(remaining)});
-}
-async function renderAllRemaining(current) {
-  if (showAllBusy || current !== generation) return;
-  showAllBusy = true;
-  const view = resultViewVersion;
-  $('more').disabled = true;
-  $('show-all').disabled = true;
-  try {
-    while (current === generation && view === resultViewVersion && shown < active.length) {
-      const before = shown;
-      await renderMore(current, PAGE);
-      if (shown === before) break; // Prevent looping if the view was cancelled.
-      // Allow browser painting and user interactions between batches.
-      await new Promise(resolve => setTimeout(resolve, 0));
-    }
-  } catch (error) {
-    if (current === generation && view === resultViewVersion) {
-      status(t('loadMoreError'));
-      console.error(error);
-    }
-  } finally {
-    if (current === generation && view === resultViewVersion) {
-      showAllBusy = false;
-      $('more').disabled = Boolean(originalResults?.busy);
-      $('show-all').disabled = Boolean(originalResults?.busy);
-      updatePaginationButtons();
-    }
+// Page size defaults to five cards for slower connections and can be changed
+// without fetching a new search index. Only the requested page's record chunks
+// are loaded; sorting, refinement, and CSV still use the full matching ID set.
+function paginationPages(total, current) {
+  const selected = new Set([1, total]);
+  if (total <= 7) {
+    for (let page = 1; page <= total; page++) selected.add(page);
+  } else {
+    for (let page = Math.max(1, current - 2); page <= Math.min(total, current + 2); page++)
+      selected.add(page);
   }
+  const ordered = [...selected].sort((a, b) => a - b);
+  const pages = [];
+  for (let i = 0; i < ordered.length; i++) {
+    if (i && ordered[i] - ordered[i - 1] > 1) pages.push(null);
+    pages.push(ordered[i]);
+  }
+  return pages;
 }
-async function renderMore(current, pageSize = PAGE) {
-  const view = resultViewVersion;
-  if (current !== generation || moreLoadingVersion === view) return;
-  const button = $('more'); button.disabled = true; $('show-all').disabled = true; moreLoadingVersion = view;
-  try {
-    const ids = active.slice(shown, Math.min(shown + pageSize, active.length));
-    const results = await Promise.all(ids.map(recordById));
+function setPaginationBusy(busy) {
+  const nav = $('pagination-bottom');
+  nav?.querySelectorAll?.('button, input, select').forEach(control => {
+    control.disabled = busy || control.getAttribute('data-page-locked') === 'true';
+  });
+}
+function navigateToPage(page, requestedSize = PAGE) {
+  const current = generation, view = resultViewVersion;
+  if (!PAGE_SIZES.includes(requestedSize) || !Number.isSafeInteger(page) ||
+      page < 1 || page > Math.ceil(active.length / requestedSize)) return;
+  renderPage(current, page, true, requestedSize).catch(error => {
     if (current !== generation || view !== resultViewVersion) return;
-    results.forEach((rec, i) => $('results').append(renderResult(ids[i], rec)));
-    shown += ids.length; updatePaginationButtons();
-  } finally {
-    if (moreLoadingVersion === view) moreLoadingVersion = null;
-    if (current === generation && view === resultViewVersion) {
-      button.disabled = Boolean(showAllBusy || (originalResults && originalResults.busy));
-      $('show-all').disabled = Boolean(showAllBusy || (originalResults && originalResults.busy));
+    status(t('pageLoadError'));
+    console.error('[J2ME] Could not load result page:', error);
+    updatePaginationButtons(); // Restore the current page and selected size.
+  });
+}
+function promptForPage(total) {
+  const input = window.prompt(`${t('pageJump')} (1–${fmt(total)})`, String(currentPage));
+  if (input === null) return; // A cancelled prompt is not an error.
+  const value = input.trim(), requested = Number(value);
+  if (!value || !Number.isSafeInteger(requested) || requested < 1 || requested > total) {
+    status(t('pageInvalid', {total: fmt(total)}));
+    return;
+  }
+  navigateToPage(requested);
+}
+function updatePaginationButtons() {
+  const nav = $('pagination-bottom');
+  if (!nav) return;
+  const total = Math.ceil(active.length / PAGE);
+  nav.hidden = active.length === 0;
+  if (nav.hidden) { nav.replaceChildren(); return; }
+  nav.setAttribute('aria-label', t('pageNavigation'));
+  const first = (currentPage - 1) * PAGE + 1;
+  const last = Math.min(currentPage * PAGE, active.length);
+  const range = elem('span', t('pageRange', {
+    first: fmt(first), last: fmt(last), total: fmt(active.length)
+  }), 'page-range');
+  const buttons = elem('div', undefined, 'page-buttons');
+  const button = (text, page, label, selected = false) => {
+    const item = elem('button', text, selected ? 'is-current' : undefined);
+    item.type = 'button'; item.disabled = selected;
+    item.setAttribute('data-page-locked', String(selected));
+    item.setAttribute('aria-label', label);
+    if (selected) item.setAttribute('aria-current', 'page');
+    item.addEventListener('click', () => navigateToPage(page));
+    return item;
+  };
+  if (total > 1) {
+    const previous = button(t('pagePrevious'), currentPage - 1, t('pagePrevious'));
+    previous.disabled = currentPage === 1;
+    previous.setAttribute('data-page-locked', String(currentPage === 1));
+    buttons.append(previous);
+    for (const page of paginationPages(total, currentPage)) {
+      if (page === null) {
+        const ellipsis = elem('button', '…', 'page-ellipsis');
+        ellipsis.type = 'button';
+        ellipsis.setAttribute('aria-label', t('pageJump'));
+        ellipsis.setAttribute('title', t('pageJump'));
+        ellipsis.addEventListener('click', () => promptForPage(total));
+        buttons.append(ellipsis);
+      } else {
+        buttons.append(button(fmt(page), page,
+          t('pageNumber', {page: fmt(page)}), page === currentPage));
+      }
     }
+    const next = button(t('pageNext'), currentPage + 1, t('pageNext'));
+    next.disabled = currentPage === total;
+    next.setAttribute('data-page-locked', String(currentPage === total));
+    buttons.append(next);
+  }
+  const sizePicker = elem('div', undefined, 'page-size');
+  const label = elem('label', t('pageSize'));
+  label.htmlFor = 'page-size-select';
+  const select = elem('select');
+  select.id = label.htmlFor;
+  for (const amount of PAGE_SIZES) {
+    const option = elem('option', String(amount));
+    option.value = String(amount);
+    select.append(option);
+  }
+  select.value = String(PAGE);
+  select.addEventListener('change', () => {
+    const requestedSize = Number(select.value);
+    if (!PAGE_SIZES.includes(requestedSize) || requestedSize === PAGE) return;
+    // Keep the previously viewed position approximately in view.
+    const newPage = Math.floor(((currentPage - 1) * PAGE) / requestedSize) + 1;
+    navigateToPage(newPage, requestedSize);
+  });
+  sizePicker.append(label, select);
+  nav.replaceChildren(range, buttons, sizePicker);
+  if (originalResults?.busy) setPaginationBusy(true);
+}
+async function renderPage(current, requestedPage, scrollToResults = false, requestedSize = PAGE) {
+  const view = resultViewVersion;
+  const total = Math.ceil(active.length / requestedSize);
+  if (current !== generation || !PAGE_SIZES.includes(requestedSize) ||
+      !Number.isSafeInteger(requestedPage) || requestedPage < 1 || requestedPage > total) return;
+  const request = ++pageRequestId;
+  setPaginationBusy(true);
+  try {
+    const first = (requestedPage - 1) * requestedSize;
+    const ids = active.slice(first, first + requestedSize);
+    const rows = await Promise.all(ids.map(recordById));
+    if (current !== generation || view !== resultViewVersion || request !== pageRequestId) return;
+    // Commit the new size and page together; failed requests never replace cards.
+    const cards = rows.map((record, i) => renderResult(ids[i], record));
+    PAGE = requestedSize;
+    currentPage = requestedPage;
+    $('results').replaceChildren(...cards);
+    updatePaginationButtons();
+    if (scrollToResults) {
+      $('results').focus({preventScroll: true});
+      $('results').scrollIntoView({block: 'start'});
+    }
+  } finally {
+    if (current === generation && view === resultViewVersion && request === pageRequestId)
+      setPaginationBusy(Boolean(originalResults?.busy));
   }
 }
 
@@ -1249,9 +1336,9 @@ async function runSearch() {
   // for the remaining words and exclusions. A whole-index negative-only scan
   // would force hundreds of thousands of records to be downloaded.
   const anchor = textTerms?.included.find(word => Array.from(word).length >= 2);
-  $('results').replaceChildren(); $('more').hidden = true; $('show-all').hidden = true;
+  active = []; currentPage = 1;
+  $('results').replaceChildren(); updatePaginationButtons();
   labelsForMatches = new Map(); summaryShardsForMatches = new Map();
-  showAllBusy = false;
   if (!manifest) { status(t('indexNotLoaded')); return; }
   if (!term) { status(t('enterSearchTerm')); return; }
   // Input mistakes are not network failures; keep them distinct from the
@@ -1293,7 +1380,7 @@ async function runSearch() {
       }
     }
     if (current !== generation) return;
-    active = ids; shown = 0;
+    active = ids; currentPage = 1;
     originalResults = {ids: [...ids], summaries: preparedSummaries || new Map(),
       ready: Boolean(preparedSummaries), busy: false};
     $('result-tools').hidden = ids.length === 0;
@@ -1302,14 +1389,14 @@ async function runSearch() {
       status(t('zeroMatching')); $('results').append(elem('div', t('noMatchingFiles'), 'empty')); return;
     }
     status(t('matchingFiles', {count: fmt(ids.length), pluralCount: ids.length}));
-    await renderMore(current, INITIAL_PAGE);
+    await renderPage(current, 1);
   } catch (e) {
     if (current !== generation) return;
     // Never present an underlying browser exception (or a partial result set)
     // as if it were a successful search. The console retains the actual error.
-    active = []; shown = 0; originalResults = null;
+    active = []; currentPage = 1; originalResults = null; pageRequestId++;
     $('result-tools').hidden = true;
-    $('more').hidden = true; $('show-all').hidden = true;
+    updatePaginationButtons();
     status(t('searchError'));
     const message = elem('div', undefined, 'empty');
     // An unsupported browser cannot fix missing gzip support by retrying.
@@ -1362,10 +1449,7 @@ async function init() {
     }
     runSearch();
   });
-  $('more').addEventListener('click', () => renderMore(generation).catch(e => {
-    status(t('loadMoreError')); console.error(e);
-  }));
-  $('show-all').addEventListener('click', () => renderAllRemaining(generation));
+
   $('language-select').addEventListener('change', () => updatePaginationButtons());
   try {
     const loadedManifest = await readJson('manifest.json');

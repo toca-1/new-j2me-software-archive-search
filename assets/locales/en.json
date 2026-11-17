@@ -127,5 +127,14 @@
   "exportLimit": "Refine to {limit} results or fewer before exporting.",
   "exportWorking": "Preparing CSV… {done}/{total} files",
   "exportReady": "CSV prepared for download: {count} files.",
-  "exportError": "Could not export CSV. Please try again."
+  "exportError": "Could not export CSV. Please try again.",
+  "pageNavigation": "Result pages",
+  "pageRange": "Showing {first}–{last} of {total}",
+  "pagePrevious": "Previous",
+  "pageNext": "Next",
+  "pageNumber": "Page {page}",
+  "pageSize": "Results per page",
+  "pageJump": "Go to page",
+  "pageInvalid": "Enter a page from 1 to {total}.",
+  "pageLoadError": "Could not load that page. Try again."
 }

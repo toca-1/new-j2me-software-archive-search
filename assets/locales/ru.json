@@ -129,5 +129,14 @@
   "exportLimit": "Для экспорта сократите результаты до {limit} или меньше.",
   "exportWorking": "Подготовка CSV… {done}/{total} файлов",
   "exportReady": "CSV готов к скачиванию: {count} файлов.",
-  "exportError": "Не удалось экспортировать CSV. Попробуйте снова."
+  "exportError": "Не удалось экспортировать CSV. Попробуйте снова.",
+  "pageNavigation": "Страницы результатов",
+  "pageRange": "Показано {first}–{last} из {total}",
+  "pagePrevious": "Назад",
+  "pageNext": "Вперёд",
+  "pageNumber": "Страница {page}",
+  "pageSize": "Результатов на странице",
+  "pageJump": "Перейти к странице",
+  "pageInvalid": "Введите номер страницы от 1 до {total}.",
+  "pageLoadError": "Не удалось загрузить страницу. Повторите попытку."
 }

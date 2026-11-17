@@ -124,5 +124,14 @@
   "exportLimit": "กรองผลลัพธ์ให้เหลือไม่เกิน {limit} รายการก่อนส่งออก",
   "exportWorking": "กำลังเตรียม CSV… {done}/{total} ไฟล์",
   "exportReady": "CSV พร้อมดาวน์โหลด: {count} ไฟล์",
-  "exportError": "ไม่สามารถส่งออก CSV ได้ โปรดลองอีกครั้ง"
+  "exportError": "ไม่สามารถส่งออก CSV ได้ โปรดลองอีกครั้ง",
+  "pageNavigation": "หน้าผลลัพธ์",
+  "pageRange": "แสดง {first}–{last} จาก {total}",
+  "pagePrevious": "ก่อนหน้า",
+  "pageNext": "ถัดไป",
+  "pageNumber": "หน้า {page}",
+  "pageSize": "ผลลัพธ์ต่อหน้า",
+  "pageJump": "ไปยังหน้า",
+  "pageInvalid": "กรุณาระบุหน้าตั้งแต่ 1 ถึง {total}",
+  "pageLoadError": "ไม่สามารถโหลดหน้านี้ได้ โปรดลองอีกครั้ง"
 }

@@ -128,5 +128,14 @@
   "exportLimit": "Před exportem omezte výsledky na nejvýše {limit}.",
   "exportWorking": "Příprava CSV… {done}/{total} souborů",
   "exportReady": "CSV připraveno ke stažení: {count} souborů.",
-  "exportError": "Export CSV se nezdařil. Zkuste to znovu."
+  "exportError": "Export CSV se nezdařil. Zkuste to znovu.",
+  "pageNavigation": "Stránky výsledků",
+  "pageRange": "Zobrazeno {first}–{last} z {total}",
+  "pagePrevious": "Předchozí",
+  "pageNext": "Další",
+  "pageNumber": "Stránka {page}",
+  "pageSize": "Výsledků na stránku",
+  "pageJump": "Přejít na stránku",
+  "pageInvalid": "Zadejte stránku od 1 do {total}.",
+  "pageLoadError": "Tuto stránku se nepodařilo načíst. Zkuste to znovu."
 }

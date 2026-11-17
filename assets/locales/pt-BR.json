@@ -127,5 +127,14 @@
   "exportLimit": "Refine para {limit} resultados ou menos antes de exportar.",
   "exportWorking": "Preparando CSV… {done}/{total} arquivos",
   "exportReady": "CSV pronto para download: {count} arquivos.",
-  "exportError": "Não foi possível exportar o CSV. Tente novamente."
+  "exportError": "Não foi possível exportar o CSV. Tente novamente.",
+  "pageNavigation": "Páginas de resultados",
+  "pageRange": "Exibindo {first}–{last} de {total}",
+  "pagePrevious": "Anterior",
+  "pageNext": "Próxima",
+  "pageNumber": "Página {page}",
+  "pageSize": "Resultados por página",
+  "pageJump": "Ir para a página",
+  "pageInvalid": "Digite uma página de 1 a {total}.",
+  "pageLoadError": "Não foi possível carregar esta página. Tente novamente."
 }

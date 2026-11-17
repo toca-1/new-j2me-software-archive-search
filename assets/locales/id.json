@@ -127,5 +127,14 @@
   "exportLimit": "Persempit hasil menjadi {limit} atau kurang sebelum mengekspor.",
   "exportWorking": "Menyiapkan CSV… {done}/{total} berkas",
   "exportReady": "CSV siap diunduh: {count} berkas.",
-  "exportError": "Gagal mengekspor CSV. Coba lagi."
+  "exportError": "Gagal mengekspor CSV. Coba lagi.",
+  "pageNavigation": "Halaman hasil",
+  "pageRange": "Menampilkan {first}–{last} dari {total}",
+  "pagePrevious": "Sebelumnya",
+  "pageNext": "Berikutnya",
+  "pageNumber": "Halaman {page}",
+  "pageSize": "Hasil per halaman",
+  "pageJump": "Buka halaman",
+  "pageInvalid": "Masukkan nomor halaman antara 1 dan {total}.",
+  "pageLoadError": "Halaman tidak dapat dimuat. Coba lagi."
 }
