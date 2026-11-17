@@ -60,7 +60,7 @@ Then open [http://localhost:8000/](http://localhost:8000/) in your browser. The 
 
 ## Reproducing and verifying the archive index
 
-See [REPRODUCIBILITY.md](REPRODUCIBILITY.md) for an end-to-end **methodology map**, the commands that can be run with the available inputs, a streaming hash check for filenames too long to extract on Linux, and a clear inventory of the historical enrichment/build components that are not included here. Independent verification of individual original JAR contents uses `tools/hash_jar_stream.py`; this is separate from checking consistency of an existing generated `data/` index.
+See [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md) for an end-to-end **methodology map**, the commands that can be run with the available inputs, a streaming hash check for filenames too long to extract on Linux, and a clear inventory of the historical enrichment/build components that are not included here. Independent verification of individual original JAR contents uses `tools/hash_jar_stream.py`; this is separate from checking consistency of an existing generated `data/` index.
 
 ## Rebuild the website's search data
 
