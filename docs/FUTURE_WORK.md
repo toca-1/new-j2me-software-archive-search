@@ -7,3 +7,4 @@
 - [ ] **Full index-integrity validation.** Develop an optional validation script for checking the generated index before publishing major rebuilds. Verify record IDs, shard references, hash formats, counts, and consistency between the name indexes and underlying records. Keep this separate from the lightweight pre-deployment checks because validating the complete archive could be expensive
 - [ ] **Check docs.** Make sure that everything is accurate and up-to-date
 - [ ] **Repo file cleanup.** Review obsolete scripts, generated files, redundant documentation, and temporary development artifacts
+- [ ] **Update website announcement.** https://forum.toolassisted.run/t/searchable-index-for-the-new-j2me-software-archive/2138
