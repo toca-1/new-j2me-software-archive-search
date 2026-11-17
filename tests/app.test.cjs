@@ -19,6 +19,22 @@ const TEST_MANIFEST = Object.freeze({
   names_chunks: 256, names_grams: 'names-v2/grams.json.gz'
 });
 
+// Shared locale fixture: preserve the real translation and interpolation rules.
+function readLocale(lang) {
+  return JSON.parse(fs.readFileSync(path.resolve(__dirname,
+    `../assets/locales/${lang}.json`), 'utf8'));
+}
+function useTranslations(context, lang = 'en') {
+  const dictionary = readLocale(lang);
+  context.window.J2ME_I18N.t = (key, vars = {}) => {
+    const message = dictionary[key] || key;
+    if (typeof message !== 'string') return key;
+    return message.replace(/\{(\w+)\}/g, (whole, name) =>
+      Object.hasOwn(vars, name) ? String(vars[name]) : whole);
+  };
+  return dictionary;
+}
+
 function loadApp() {
   const context = vm.createContext({
     window: {J2ME_I18N: {
@@ -952,17 +968,10 @@ test('localized download headings and page navigation use the locale files', () 
     de: ['Downloadlinks', 'Internet Archive', 'andere Mirrors'],
     'zh-TW': ['下載連結', 'Internet Archive', '其他鏡像站']
   })) {
-    const dictionary = JSON.parse(fs.readFileSync(
-      path.resolve(__dirname, `../assets/locales/${lang}.json`), 'utf8'));
     const {run, context} = loadApp();
     const find = downloadTestDom(context);
     context.document.documentElement.lang = lang;
-    context.window.J2ME_I18N.t = (key, vars = {}) => {
-      const message = dictionary[key] || key;
-      if (typeof message !== 'string') return key;
-      return message.replace(/\{(\w+)\}/g, (whole, name) =>
-        Object.hasOwn(vars, name) ? String(vars[name]) : whole);
-    };
+    const dictionary = useTranslations(context, lang);
     run('addFolderBrowser = async () => {};');
     const card = run(`renderResult(42, ${testRecord})`);
     const toggle = find(card, 'download-toggle');
@@ -988,11 +997,7 @@ test('localized download headings and page navigation use the locale files', () 
 
 test('folder-browser text uses the same translation and interpolation functions', () => {
   const {run, context} = loadApp();
-  const dictionary = JSON.parse(fs.readFileSync(
-    path.resolve(__dirname, '../assets/locales/zh-CN.json'), 'utf8'));
-  context.window.J2ME_I18N.t = (key, vars = {}) =>
-    String(dictionary[key] || key).replace(/\{(\w+)\}/g,
-      (whole, name) => Object.hasOwn(vars, name) ? String(vars[name]) : whole);
+  useTranslations(context, 'zh-CN');
   assert.equal(run("t('folderOther')"), '其他文件');
   assert.equal(run("t('folderView')"), '查看结果');
   assert.equal(run("t('folderCounter', {matching: '2', total: '10'})"),
@@ -1200,11 +1205,7 @@ function startupTestDom(context) {
   context.location = {search: '', reload: () => { reloads++; }};
   context.URLSearchParams = URLSearchParams;
   context.window.J2ME_I18N.init = async () => {};
-  const english = JSON.parse(fs.readFileSync(
-    path.resolve(__dirname, '../assets/locales/en.json'), 'utf8'));
-  context.window.J2ME_I18N.t = (key, vars = {}) =>
-    String(english[key] || key).replace(/\{(\w+)\}/g,
-      (match, name) => Object.hasOwn(vars, name) ? String(vars[name]) : match);
+  useTranslations(context);
   return {nodes, section, getReloads: () => reloads};
 }
 
@@ -1273,11 +1274,7 @@ test('Hash search dispatches all three formats and reports invalid values', asyn
 
 test('Hash hint identifies the detected type and keeps Text mode unambiguous', () => {
   const {run, context} = loadApp();
-  const dictionary = JSON.parse(fs.readFileSync(
-    path.resolve(__dirname, '../assets/locales/en.json'), 'utf8'));
-  context.window.J2ME_I18N.t = (key, vars = {}) =>
-    String(dictionary[key] || key).replace(/\{(\w+)\}/g,
-      (whole, name) => Object.hasOwn(vars, name) ? String(vars[name]) : whole);
+  const dictionary = useTranslations(context);
   const query = {value: ''}, hint = {textContent: ''};
   context.document.getElementById = id => id === 'query' ? query : hint;
   run("searchMode = 'hash'");
@@ -1546,11 +1543,7 @@ function paginationTestDom(context) {
   for (const id of ['pagination-bottom', 'results', 'status'])
     nodes.set(id, context.document.createElement(id.startsWith('pagination') ? 'nav' : 'div'));
   context.document.getElementById = id => nodes.get(id) ?? null;
-  const english = JSON.parse(fs.readFileSync(
-    path.resolve(__dirname, '../assets/locales/en.json'), 'utf8'));
-  context.window.J2ME_I18N.t = (key, vars = {}) =>
-    String(english[key] ?? key).replace(/\{(\w+)\}/g, (original, name) =>
-      Object.hasOwn(vars, name) ? String(vars[name]) : original);
+  useTranslations(context);
   context.window.J2ME_I18N.numberLocale = () => 'en-US';
   return nodes;
 }
