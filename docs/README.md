@@ -200,8 +200,6 @@ collection membership.
 
 ## Known limitations
 
-- Text search is substring-based
-- Broad text searches may need to fetch and scan multiple index shards. A first search can take longer when the necessary data is not cached
 - Public metadata includes at most the configured number of historical original-source paths per manifest. Full original paths and untruncated manifest details remain in the original source infofiles and enrichment output
 
 ## Future work
