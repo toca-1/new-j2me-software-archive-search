@@ -64,31 +64,34 @@ See [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md) for an end-to-end **methodology m
 
 ## Rebuild the website's search data
 
-Required input files, created by the separate verification and enrichment pipeline:
-
-1. `jarchive-enriched.csv`: verified SHA-1/SHA-256 index with basic MIDlet fields
-2. `jarchive-enriched-details.jsonl.gz`: manifest fields and original source locations
-
-These enriched inputs are not included in the base-index release above and
-are not published by the site package. The **historical v4** `build_site.py`
-was removed in Git commit `97a3b2f` but can be recovered non-destructively:
+**Recommended: one-command full candidate rebuild.**
+[`tools/rebuild_all.py`](../tools/rebuild_all.py) reconstructs the enriched
+inputs from the original Full/Lite `.7z` archives **and the validated published
+index**, builds the current search index, regenerates folder browsing and
+fast-search summaries, and verifies all core SHA-256 hashes and logical name
+entries. See **[REBUILD_ALL.md](REBUILD_ALL.md)** for the exact command,
+prerequisites, safe output layout, limitations, and verification report.
 
 ```sh
-git show '97a3b2f^:build_site.py' > /tmp/jarchive-build-site-v4.py
-python3 /tmp/jarchive-build-site-v4.py --help
+python3 tools/rebuild_all.py \
+  --reference-data ./data \
+  --archive-dir "$HOME/j2me-96x65pixels-test" \
+  --out "$HOME/j2me-index-builds/full-site-candidate-01"
 ```
 
-**Do not run the recovered script against the current site.** It produces the
-older `data/names/` index and schema version 4, whereas the site now uses
-`data/names-v2/`. Simply increasing `--name-shards` cannot make the historical
-builder compatible; running it also replaces `--out/data/`. The original
-enrichment scripts/inputs and a verified modern main-index builder are still
-needed for a complete current-index rebuild. See
-[REPRODUCIBILITY.md](REPRODUCIBILITY.md#5-the-recovered-historical-v4-site-builder)
-for the precise v4 input schema, grouping/index algorithm, historical flags,
-limitations and **isolated** example command. From a valid current index,
-regenerate supplemental folder and summary indexes separately with the
-included tools (described below).
+This is **reference-backed**, not independent rehashing of every original
+JAR. It publishes to a **new** directory and never replaces the live `data/`.
+If you've already reconstructed `jarchive-enriched.csv` and
+`jarchive-enriched-details.jsonl.gz`, use `--enriched-dir` instead of
+`--archive-dir` to skip processing the archives again.
+
+For manual stage-specific rebuilds, see [BUILD_SITE.md](BUILD_SITE.md) and
+[RECONSTRUCT_ENRICHMENT.md](RECONSTRUCT_ENRICHMENT.md). The recovered historical
+v4 `build_site.py` from commit `97a3b2f^` is **not** the current builder; see
+[REPRODUCIBILITY.md](REPRODUCIBILITY.md) for its history. Original upstream
+source scans and downloader retrieval-index generation are separate processes;
+the one-command tool may copy their existing published outputs when available,
+but does not claim to recreate them from the four JARchive archives.
 
 ## Files and data design
 
