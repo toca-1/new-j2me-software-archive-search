@@ -1,6 +1,6 @@
 # Sources and archive coverage
 
-This document records which Internet Archive collections and which files within them have been examined for the [New J2ME Software Archive Search](https://toca-1.github.io/new-j2me-software-archive-search/). It distinguishes the site's original indexed collection from additional sources used for alternative downloads or for investigating missing JARs. Beware that the project has not re-scraped the original websites and no new JARs were added to the index. It has downloaded existing preservation archives, inspected or hashed their contents, and compared SHA-256 values against the published JARchive index. The New archive's description identifies ten historical upstream collections:
+This document records which Internet Archive collections and which files within them have been examined for the [New J2ME Software Archive Search](https://toca-1.github.io/new-j2me-software-archive-search/). The description of said archive identifies ten historical upstream collections:
 
 | Historical upstream collection | Processing performed for this project |
 | --- | --- |
@@ -15,9 +15,7 @@ This document records which Internet Archive collections and which files within 
 | [Ovi Store Panic (2015)](https://archive.org/details/2015_ovi_store_panic) | Not processed; downloads unavailable |
 | [Ovi Store Panic 2 (2015)](https://archive.org/details/2015_ovi_store_panic_2) | Not processed; downloads unavailable |
 
-Additionally, the third-party mirror [nnproject](https://f.nnproject.cc/jarchive/) has been incorporated into the site.
-
-For reproduction steps, their known limitations, and the archive-member streaming workaround, see [REPRODUCIBILITY.md](REPRODUCIBILITY.md).
+Additionally, the third-party mirror [nnproject](https://f.nnproject.cc/jarchive/) has been incorporated into the site. For reproduction steps, their known limitations, and the archive-member streaming workaround, see [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md).
 
 # Matching and publication methodology
 
@@ -29,7 +27,7 @@ For reproduction steps, their known limitations, and the archive-member streamin
 
 ## Missing-file investigation
 
-Files whose SHA-256 values are absent from the original JARchive index are recorded separately in `missing_files/`. The consolidated inventory, `missing_files/all_unmatched_deduplicated.csv`, is a separate large dataset and is not included in source-only downloads. It contains one row per distinct SHA-256 and retains recorded source information and locations. The `source_archives` and `locations_json` columns allow the same file content to be associated with multiple upstream collections without counting it as multiple distinct files.
+Files whose SHA-256 values are absent from the original JARchive index are recorded separately in `missing_files/`. The consolidated inventory, `missing_files/all_unmatched_deduplicated.csv`, is a separate large dataset which contains one row per distinct SHA-256 and retains recorded source information and locations. The `source_archives` and `locations_json` columns allow the same file content to be associated with multiple upstream collections without counting it as multiple distinct files.
 
 ### Deduplicated results
 
