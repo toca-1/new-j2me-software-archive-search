@@ -102,7 +102,7 @@ When choosing `--chunk-kib`, smaller chunks can reduce wasted data on a failed r
 
 ## Errors and troubleshooting
 
-- **Python not installed** / **Missing `lzma` module** / **Missing curl** or : Use a Python build with `lzma`/liblzma support.
+- **Python, `lzma`, or `curl` missing:** Install Python with LZMA support and the `curl` command.
     - On *Linux*, run `sudo apt update && sudo apt install -y python3 curl`
     - On *Windows* run `winget install --id Python.Python.3.14 -e` and restart PowerShell
     - On *macOS* run `brew install python` (if Homebrew is missing, install it first: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)

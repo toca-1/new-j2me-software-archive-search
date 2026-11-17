@@ -2,7 +2,7 @@
 
 [Search J2ME games, apps, and exact JAR builds](https://toca-1.github.io/new-j2me-software-archive-search/) by filename, title, vendor, or various hashes (CRC32, SHA-1, SHA-256). A current browser with JavaScript enabled is required.
 
-This independent index covers [TwoSpacesSG's **New J2ME Software Archive**](https://archive.org/details/96x65pixels_j2me) as well as its upstream sources that are listed in the archive's description, cf. [`SOURCES.MD`](SOURCES.md). For an alternative visual exploration of the archive refer to [this website](https://f.nnproject.cc/jarchive/).
+This independent index covers [TwoSpacesSG's **New J2ME Software Archive**](https://archive.org/details/96x65pixels_j2me) as well as its upstream sources that are listed in the archive's description, cf. [`SOURCES.md`](SOURCES.md). For an alternative visual exploration of the archive refer to [this website](https://f.nnproject.cc/jarchive/).
 
 ## Search features
 
