@@ -1,5 +1,3 @@
-# Potential improvements
-
 - [ ] **Search improvements.** Search paths as well as filenames and metadata
 - [ ] **Optional J2ME-specific search filters.** In a collapsible advanced-filter section, let visitors narrow results by archive collection (Lite/Full), MIDP and CLDC version, file size, and vendor. Handle missing metadata explicitly (e.g., "Unknown") and keep the default search UI uncluttered
 - [ ] **Better navigation for large result sets.** Improve handling of very broad queries
