@@ -1,6 +1,6 @@
 # Reproducibility and independent checks
 
-The supported rebuild is [the one-command workflow](REBUILD_ALL.md). It joins the original Lite/Full archive inventories and infofiles to the **existing validated `data/` index**; it does **not** independently recalculate every JAR's SHA-1/SHA-256. The original archives and infofiles are available from the [Internet Archive](https://archive.org/details/96x65pixels_j2me).
+The supported rebuild is [the one-command workflow](REBUILD_ALL.md). It joins the [original Lite/Full archive inventories and infofiles](https://archive.org/details/96x65pixels_j2me) to the existing validated `data/` index.
 
 ## Provenance and metadata
 
@@ -11,9 +11,7 @@ sha256sum -c jarchive-combined-verified.csv.gz.sha256
 gzip -t jarchive-combined-verified.csv.gz
 ```
 
-The checksum confirms agreement with the **published inventory**, not independent authenticity of the original JARs. There are **816,215 archive-member occurrences**, including duplicates, representing **620,287 unique SHA-256 contents**.
-
-`tools/reconstruct_enrichment.py` checks exact archive paths, sizes and CRC32s against the reference. It joins **Full infofiles by SHA-256** and **Lite infofiles by CRC32**, with collision safeguards, preserving source locations and available manifest metadata. `tools/build_site.py` then builds the core index; `tools/rebuild_all.py` also builds folder and search-summary data. Missing or inconsistent metadata must not be silently invented.
+The checksum confirms agreement with the published inventory; there are 816,215 archive-member occurrences (including duplicates), representing 620,287 unique SHA-256 contents. Then, `tools/reconstruct_enrichment.py` checks exact archive paths, sizes and CRC32s against the reference. It joins **Full infofiles by SHA-256** and **Lite infofiles by CRC32**, with collision safeguards, preserving source locations and available manifest metadata. `tools/build_site.py` then builds the core index; `tools/rebuild_all.py` also builds folder and search-summary data. Missing or inconsistent metadata must not be silently invented.
 
 ## Independently hash a JAR without extracting its filename
 
