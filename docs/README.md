@@ -122,6 +122,39 @@ python3 tools/build_folder_groups.py --repo .
 python3 tools/check_folder_index.py --repo . --require-folders
 ```
 
+## Exhaustive index-integrity validation (optional)
+
+`tests/check_index.py` is a fast pre-deployment smoke check: it samples a few
+compressed assets and verifies filenames/counts. Before publishing a **major
+rebuild of `data/`**, you can additionally validate the *entire* generated
+search index with:
+
+```sh
+python3 tools/check_full_index.py --repo .
+```
+
+This Python-standard-library script reads **every** record and manifest-detail
+shard, all CRC32/SHA-1/SHA-256 lookup buckets, every searchable name entry,
+and the full 2-/3-gram map. It checks record IDs, checksums, original source
+and metadata shapes, unique-content/collection counts, hash-to-record mappings
+(including CRC32 collisions), name-label-to-record consistency, and exact
+gram-to-name-shard bitmaps. It exits nonzero with the first detected problem.
+
+The validator is deliberately **not** part of the routine Pages deployment
+workflow. It is read-only, but decompressing the full index and building
+on-disk SQLite expectations can be expensive. It uses system temporary disk
+space, not the `data/` directory. To place temporary files on a larger disk:
+
+```sh
+python3 tools/check_full_index.py --repo . --temp-dir /path/to/existing/temp-directory
+```
+
+The source-only ZIP cannot run this validation because it excludes `data/`.
+The command does not rehash the original JAR files or validate download URLs;
+optional `data/folders/` compatibility is checked by
+`tools/check_folder_index.py`, and other supplemental indexes are outside
+this core-index check. See [the testing guide](../tests/README.md).
+
 ## Known limitations
 
 - Text search is substring-based

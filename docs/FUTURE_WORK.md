@@ -1,9 +1,9 @@
 - [ ] **Search improvements.** Search paths as well as filenames and metadata
-- [ ] **Optional J2ME-specific search filters.** In a collapsible advanced-filter section, let visitors narrow results by archive collection (Lite/Full), MIDP and CLDC version, file size, and vendor. Handle missing metadata explicitly (e.g., "Unknown") and keep the default search UI uncluttered
+- [ ] **Optional J2ME-specific search operators (deferred).** If added later, prefer explicit syntax (e.g. `@version=1.0`, `@midp=2.0`, `@size>100KB`) over an advanced-filter UI. Require a normal positive search term, preserve quoted literal searches, reject malformed operators, handle unknown metadata explicitly, and avoid ambiguous interpretation of ordinary text
 - [ ] **Document reproducibility.** Publish or refine the indexing, extraction, hashing and metadata-join methodology, including the overlong Linux filename handled by archive streaming
 - [ ] **Metadata quality tools.** Identify conflicting or incomplete manifest fields, as well as fields that could still be added (e.g.,  screen resolution, language, device compatibility)
 - [x] **Export search results.** Add the ability for users to export the results of their current search in some form
-- [ ] **Full index-integrity validation.** Develop an optional validation script for checking the generated index before publishing major rebuilds. Verify record IDs, shard references, hash formats, counts, and consistency between the name indexes and underlying records. Keep this separate from the lightweight pre-deployment checks because validating the complete archive could be expensive
+- [x] **Full index-integrity validation.** Added optional `tools/check_full_index.py` for exhaustive checks of all core record/detail shards, hash lookups, name labels and gram bitmaps, separate from lightweight pre-deployment checks. Synthetic corruption tests are included; run it against the complete `data/` before publishing a major rebuild.
 - [ ] **Check docs.** Make sure that everything is accurate and up-to-date
 - [ ] **Repo file cleanup.** Review obsolete scripts, generated files, redundant documentation, and temporary development artifacts
 - [ ] **Update website announcement.** https://forum.toolassisted.run/t/searchable-index-for-the-new-j2me-software-archive/2138
