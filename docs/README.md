@@ -39,7 +39,7 @@ python3 tools/rebuild_all.py \
   --out /path/to/new-output
 ```
 
-This reconstructs the search index, metadata, folder browser and search summaries, then validates the results against the existing index (the output must be a new directory). To preview the website locally, run `python3 -m http.server 8000` and open <http://localhost:8000/>. For prerequisites, limitations and detailed instructions, see [`REBUILD_ALL.md`](REBUILD_ALL.md).
+This reconstructs the search index, metadata, folder browser and search summaries, then validates the results against the existing index (the output must be a new directory). To preview the website locally, run `python3 -m http.server 8000` and open <http://localhost:8000/>. For prerequisites, limitations and detailed instructions, see [`REBUILD_ALL.md`](REBUILD_ALL.md). To assess missing or conflicting MIDlet metadata and discover candidate manifest fields for later research, see [`METADATA_QUALITY.md`](METADATA_QUALITY.md) and run `python3 tools/audit_metadata.py --data ./data --out /path/to/new-report-directory`.
 
 ## Downloads, third-party content, and licensing
 
