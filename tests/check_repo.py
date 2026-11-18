@@ -134,8 +134,9 @@ class RepositoryChecks(unittest.TestCase):
         for name, page in [('html/search-help.html', help_page),
                            ('html/downloader-help.html', guide_page)]:
             with self.subTest(page=name):
-                for asset in ('assets/i18n.js', 'assets/help.js', 'assets/site.css'):
+                for asset in ('assets/i18n.js', 'assets/site.css'):
                     self.assertIn('../' + asset + '?v=' + revision.group(1), page)
+                self.assertIn('../assets/help.js?v=20261118-guide-v1', page)
                 for attr in ('src', 'href'):
                     for url in re.findall(rf'\b{attr}="(assets/[^"]+)"', page):
                         self.assertTrue((ROOT / 'html' / url.split('?', 1)[0]).is_file(),

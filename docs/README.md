@@ -52,3 +52,4 @@ The project's software license applies only to its original code and documentati
 ## Usage of AI
 
 Parts of this project were developed with substantial ChatGPT assistance and were not all reviewed line by line. The indexing, search and downloader workflows were tested, including manual Linux/Windows tests, but this cannot guarantee correct operation for every file, browser or configuration.
+

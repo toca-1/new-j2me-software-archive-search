@@ -1,4 +1,3 @@
 - [ ] **Metadata quality tools.** Identify conflicting or incomplete manifest fields, as well as fields that could still be added (e.g.,  screen resolution, language, device compatibility)
-- [ ] **Translate downloader page to other langauges.**
 - [ ] **Check docs.** Make sure that everything is accurate and up-to-date
 - [ ] **Repo file cleanup.** Review obsolete scripts, generated files, redundant documentation, and temporary development artifacts

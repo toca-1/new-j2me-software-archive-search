@@ -1121,7 +1121,7 @@ test('both standalone help pages initialize localized content and language picke
     assert.match(markup, new RegExp('data-i18n-title="' + titleKey + '"'));
     const title = {dataset: {i18n: titleKey}, textContent: 'English placeholder'};
     const notice = {dataset: {i18n: page.includes('downloader')
-      ? 'downloaderGuideNotice' : 'searchHelpTextIntro'}, textContent: 'English placeholder'};
+      ? 'guide' : 'searchHelpTextIntro'}, textContent: 'English placeholder'};
     const picker = {value: '', setAttribute() {}, addEventListener() {}, replaceChildren() {}};
     const context = vm.createContext({
       window: {}, location: {search: '?lang=de'}, URLSearchParams, Intl,
@@ -1720,4 +1720,60 @@ test('single-page results still display the adjustable result count, no page but
   assert.equal(nav.children[2].children[1].value, '5');
   run('active = []; updatePaginationButtons()');
   assert.equal(nav.hidden, true);
+});
+
+test('downloader guide translates prose without altering command/link DOM nodes', async () => {
+  const script = fs.readFileSync(path.resolve(__dirname, '../assets/downloader-guide.js'), 'utf8');
+  const warnings = [];
+  const link = {name: 'link', href: 'https://example.org/download'};
+  const code = {name: 'code', textContent: 'python3 jarchive_download.py HASH'};
+  const inner = {dataset: {guideKey: 'g001'}, children: [], replaced: null,
+    replaceChildren(...nodes) {this.replaced = nodes;}};
+  const outer = {dataset: {guideKey: 'g000'}, children: [link, inner, code], replaced: null,
+    replaceChildren(...nodes) {this.replaced = nodes;}};
+  const guide = {lang: 'en', querySelectorAll: () => [outer, inner]};
+  let requested = '';
+  const context = vm.createContext({
+    window: {}, document: {
+      currentScript: {src: 'https://example.org/archive/assets/downloader-guide.js?v=1'},
+      querySelector: selector => selector === '.guide-document' ? guide : null
+    },
+    fetch: async url => {requested = url; return {ok: true, json: async () => ({
+      g000: 'Translated {2} around {0} and {1}.', g001: 'Innenansicht'
+    })};},
+    console: {warn: (...args) => warnings.push(args)}
+  });
+  vm.runInContext(script, context);
+  await context.window.J2ME_DownloaderGuide.translate('de');
+  assert.match(requested, /\/assets\/guide-locales\/de\.json\?v=/);
+  assert.equal(guide.lang, 'de');
+  assert.equal(inner.replaced.join(''), 'Innenansicht');
+  assert.equal(outer.replaced[1], code, 'Original code node must not be replaced');
+  assert.equal(outer.replaced[3], link, 'Original link and URL must not be replaced');
+  assert.equal(outer.replaced[5], inner, 'Nested translated node must be reused');
+  assert.equal(link.href, 'https://example.org/download');
+  assert.equal(warnings.length, 0);
+  outer.replaced = null;
+  await context.window.J2ME_DownloaderGuide.translate('en');
+  assert.equal(outer.replaced, null, 'Original English should never be rewritten');
+});
+
+test('incomplete downloader translation falls back to untouched English guide', async () => {
+  const script = fs.readFileSync(path.resolve(__dirname, '../assets/downloader-guide.js'), 'utf8');
+  const link = {name: 'link'};
+  const element = {dataset: {guideKey: 'g000'}, children: [link], changed: false,
+    replaceChildren() {this.changed = true;}};
+  const guide = {lang: 'en', querySelectorAll: () => [element]};
+  const warnings = [];
+  const context = vm.createContext({
+    window: {}, document: {currentScript: {src: 'https://example.org/assets/downloader-guide.js'},
+      querySelector: () => guide},
+    fetch: async () => ({ok: true, json: async () => ({g000: 'No {0} slot {0}'})}),
+    console: {warn: (...args) => warnings.push(args)}
+  });
+  vm.runInContext(script, context);
+  await context.window.J2ME_DownloaderGuide.translate('de');
+  assert.equal(element.changed, false);
+  assert.equal(guide.lang, 'en');
+  assert.equal(warnings.length, 1);
 });

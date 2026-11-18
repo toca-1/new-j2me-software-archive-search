@@ -9,7 +9,8 @@
   <title>JAR downloader</title>
   <link rel="stylesheet" href="../assets/site.css?v=20261117-export-speed">
   <script defer src="../assets/i18n.js?v=20261117-export-speed"></script>
-  <script defer src="../assets/help.js?v=20261117-export-speed"></script>
+  <script defer src="../assets/downloader-guide.js?v=20261118-guide-v1"></script>
+  <script defer src="../assets/help.js?v=20261118-guide-v1"></script>
 </head>
 <body>
 <div class="shell">
@@ -23,204 +24,203 @@
   <main class="help-content">
     <section class="hero"><h1 data-i18n="downloaderGuideTitle">JAR downloader</h1></section>
     <article class="help-article">
-      <p data-i18n="downloaderGuideNotice" class="guide-notice">The detailed technical instructions below are currently in English. Commands are the same in every language.</p>
       <p class="guide-source"><a href="https://github.com/toca-1/new-j2me-software-archive-search/blob/main/docs/DOWNLOADER.md" data-i18n="guide">Full setup guide</a></p>
       <!-- Source SHA-256 (docs/DOWNLOADER.md): c4cde80c79f51fd035511bf1ba6546ccbc6e598364aff7ed930a6c54e51f4150 -->
       <div class="guide-document" lang="en">
-<p>Use a python script to recover individual JAR files from the Internet archive using their SHA-1 or SHA-256 checksum.</p>
-<h2 id="quick-start">Quick start</h2>
-<p><strong>Requirements:</strong> Python 3.9 or newer and the <code>curl</code> command on your path. For any issues that arise, first check the <a href="#errors-and-troubleshooting">Errors and Troubleshooting section</a> down below.</p>
+<p data-guide-key="g000">Use a python script to recover individual JAR files from the Internet archive using their SHA-1 or SHA-256 checksum.</p>
+<h2 id="quick-start" data-guide-key="g001">Quick start</h2>
+<p data-guide-key="g002"><strong data-guide-key="g003">Requirements:</strong> Python 3.9 or newer and the <code>curl</code> command on your path. For any issues that arise, first check the <a href="#errors-and-troubleshooting" data-guide-key="g004">Errors and Troubleshooting section</a> down below.</p>
 <ol>
-<li>Download <a href="https://toca-1.github.io/new-j2me-software-archive-search/jarchive_download.py"><code>jarchive_download.py</code></a>.</li>
-<li>Open the terminal/command line/PowerShell in the same folder where your <code>jarchive_download.py</code> sits</li>
-<li>On the <a href="https://toca-1.github.io/new-j2me-software-archive-search/">archive search site</a>, at the bottom of the box of the game you're interested in you'll see &quot;Copy download command&quot; followed by two buttons: &quot;Windows&quot; and &quot;Linux/macOS&quot;. Simply clicking the button corresponding to your operating system copies the command that you need to run in the terminal.</li>
+<li data-guide-key="g005">Download <a href="https://toca-1.github.io/new-j2me-software-archive-search/jarchive_download.py"><code>jarchive_download.py</code></a>.</li>
+<li data-guide-key="g006">Open the terminal/command line/PowerShell in the same folder where your <code>jarchive_download.py</code> sits</li>
+<li data-guide-key="g007">On the <a href="https://toca-1.github.io/new-j2me-software-archive-search/" data-guide-key="g008">archive search site</a>, at the bottom of the box of the game you're interested in you'll see &quot;Copy download command&quot; followed by two buttons: &quot;Windows&quot; and &quot;Linux/macOS&quot;. Simply clicking the button corresponding to your operating system copies the command that you need to run in the terminal.</li>
 </ol>
-<p>Alternatively:</p>
+<p data-guide-key="g009">Alternatively:</p>
 <ol start="2">
-<li><p>On the <a href="https://toca-1.github.io/new-j2me-software-archive-search/">archive search site</a>, search for the game and copy its SHA-1 or SHA-256.</p>
+<li><p data-guide-key="g010">On the <a href="https://toca-1.github.io/new-j2me-software-archive-search/" data-guide-key="g011">archive search site</a>, search for the game and copy its SHA-1 or SHA-256.</p>
 </li>
-<li><p>From the folder containing the script, on Linux/macOS run:</p>
+<li><p data-guide-key="g012">From the folder containing the script, on Linux/macOS run:</p>
 <pre><code class="language-bash">python3 jarchive_download.py YOUR_SHA1_OR_SHA256
 </code></pre>
-<p>or on Windows run:</p>
+<p data-guide-key="g013">or on Windows run:</p>
 <pre><code class="language-powershell">py -3 .\jarchive_download.py YOUR_SHA1_OR_SHA256
 </code></pre>
-<p>By default the output is <code>&lt;SHA-256&gt;.jar</code> in your current working directory. The script never overwrites an existing output file. Pass <code>--output PATH/FILENAME</code> to choose the destination or give the downloaded file another name.</p>
+<p data-guide-key="g014">By default the output is <code>&lt;SHA-256&gt;.jar</code> in your current working directory. The script never overwrites an existing output file. Pass <code>--output PATH/FILENAME</code> to choose the destination or give the downloaded file another name.</p>
 </li>
 </ol>
-<h2 id="how-it-works">How it works</h2>
-<p>The script downloads only portions of the original solid-compressed 7z archive over HTTP Range, starts decompression at an indexed independent LZMA2 restart, and saves the JAR only if the content matches the verified index. More specifically:</p>
+<h2 id="how-it-works" data-guide-key="g015">How it works</h2>
+<p data-guide-key="g016">The script downloads only portions of the original solid-compressed 7z archive over HTTP Range, starts decompression at an indexed independent LZMA2 restart, and saves the JAR only if the content matches the verified index. More specifically:</p>
 <ul>
-<li>It fetches the small <code>retrieval/v1/manifest.json</code> and the required gzip-compressed SHA lookup shard(s) from GitHub Pages</li>
-<li>It selects the archive copy requiring the least decompression. If a hash has multiple sources, it can try others upon failure</li>
-<li>It locates the actual Internet Archive storage servers from the item's metadata, and uses bounded HTTP byte-range requests</li>
-<li>Successful complete HTTP ranges are cached under <code>.jarchive-cache/</code>; rerunning the same command resumes from those cached ranges instead of starting again</li>
-<li>The displayed percentage is progress on the decoding. A compressed transfer upper bound is printed, but the actual transfer may be much smaller</li>
-<li>Before saving, the recovered JAR must pass its expected file size, CRC32, SHA and ZIP internal integrity checks</li>
+<li data-guide-key="g017">It fetches the small <code>retrieval/v1/manifest.json</code> and the required gzip-compressed SHA lookup shard(s) from GitHub Pages</li>
+<li data-guide-key="g018">It selects the archive copy requiring the least decompression. If a hash has multiple sources, it can try others upon failure</li>
+<li data-guide-key="g019">It locates the actual Internet Archive storage servers from the item's metadata, and uses bounded HTTP byte-range requests</li>
+<li data-guide-key="g020">Successful complete HTTP ranges are cached under <code>.jarchive-cache/</code>; rerunning the same command resumes from those cached ranges instead of starting again</li>
+<li data-guide-key="g021">The displayed percentage is progress on the decoding. A compressed transfer upper bound is printed, but the actual transfer may be much smaller</li>
+<li data-guide-key="g022">Before saving, the recovered JAR must pass its expected file size, CRC32, SHA and ZIP internal integrity checks</li>
 </ul>
-<h3 id="examples">Examples</h3>
-<p>Preview which archive source would be used:</p>
+<h3 id="examples" data-guide-key="g023">Examples</h3>
+<p data-guide-key="g024">Preview which archive source would be used:</p>
 <pre><code class="language-bash">python3 jarchive_download.py YOUR_HASH --dry-run
 </code></pre>
-<p>Use a custom filename, or force the archive source:</p>
+<p data-guide-key="g025">Use a custom filename, or force the archive source:</p>
 <pre><code class="language-bash">python3 jarchive_download.py YOUR_HASH --output my-game.jar
 python3 jarchive_download.py YOUR_HASH --source full
 python3 jarchive_download.py YOUR_HASH --source lite
 </code></pre>
-<p>Allow more time for slow or inconsistent connections; after Ctrl+C or a temporary failure, run the exact same command again to resume where the download left off:</p>
+<p data-guide-key="g026">Allow more time for slow or inconsistent connections; after Ctrl+C or a temporary failure, run the exact same command again to resume where the download left off:</p>
 <pre><code class="language-bash">python3 jarchive_download.py YOUR_HASH --request-timeout 90 --stall-limit 240
 </code></pre>
-<p>If you have already downloaded index files you can use them via:</p>
+<p data-guide-key="g027">If you have already downloaded index files you can use them via:</p>
 <pre><code class="language-bash">python3 jarchive_download.py YOUR_HASH --index-offline
 </code></pre>
-<p>Use a complete local retrieval index or a custom index server:</p>
+<p data-guide-key="g028">Use a complete local retrieval index or a custom index server:</p>
 <pre><code class="language-bash">python3 jarchive_download.py YOUR_HASH --index /PATH/TO/jarchive-retrieval-v1
 python3 jarchive_download.py YOUR_HASH --index-url https://EXAMPLE.ORG/RETRIEVAL
 </code></pre>
-<h2 id="full-command-line-options">Full command-line options</h2>
-<p>Run <code>python3 jarchive_download.py --help</code> for the options supported by your exact script version.</p>
+<h2 id="full-command-line-options" data-guide-key="g029">Full command-line options</h2>
+<p data-guide-key="g030">Run <code>python3 jarchive_download.py --help</code> for the options supported by your exact script version.</p>
 <table>
 <thead>
 <tr>
-  <th>Option</th>
-  <th>Default</th>
-  <th>Meaning</th>
+  <th data-guide-key="g031">Option</th>
+  <th data-guide-key="g032">Default</th>
+  <th data-guide-key="g033">Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
   <td><code>hash</code></td>
-  <td><strong>required</strong></td>
-  <td>SHA-1 (40 hex digits) or SHA-256 (64 hex digits)</td>
+  <td><strong data-guide-key="g034">required</strong></td>
+  <td data-guide-key="g035">SHA-1 (40 hex digits) or SHA-256 (64 hex digits)</td>
 </tr>
 <tr>
   <td><code>--output PATH</code></td>
   <td><code>&lt;SHA-256&gt;.jar</code></td>
-  <td>Destination; does not overwrite existing files</td>
+  <td data-guide-key="g036">Destination; does not overwrite existing files</td>
 </tr>
 <tr>
   <td><code>--dry-run</code></td>
-  <td>off</td>
-  <td>Show sources without downloading JAR ranges; remote index may still be fetched</td>
+  <td data-guide-key="g037">off</td>
+  <td data-guide-key="g038">Show sources without downloading JAR ranges; remote index may still be fetched</td>
 </tr>
 <tr>
   <td><code>--source {auto,lite,full}</code></td>
   <td><code>auto</code></td>
-  <td>Choose an archive copy; auto ranks by bytes to decompress and tries fallbacks</td>
+  <td data-guide-key="g039">Choose an archive copy; auto ranks by bytes to decompress and tries fallbacks</td>
 </tr>
 <tr>
   <td><code>--index PATH</code></td>
-  <td>automatic</td>
-  <td>Use a local index directory; incompatible with <code>--index-url</code></td>
+  <td data-guide-key="g040">automatic</td>
+  <td data-guide-key="g041">Use a local index directory; incompatible with <code>--index-url</code></td>
 </tr>
 <tr>
   <td><code>--index-url URL</code></td>
-  <td>project pages URL</td>
-  <td>Explicit remote index location, even when a local index exists</td>
+  <td data-guide-key="g042">project pages URL</td>
+  <td data-guide-key="g043">Explicit remote index location, even when a local index exists</td>
 </tr>
 <tr>
   <td><code>--index-offline</code></td>
-  <td>off</td>
-  <td>No remote index requests; previously cached index resources required</td>
+  <td data-guide-key="g044">off</td>
+  <td data-guide-key="g045">No remote index requests; previously cached index resources required</td>
 </tr>
 <tr>
   <td><code>--index-fetch-timeout SECONDS</code></td>
   <td><code>20</code></td>
-  <td>Hard timeout for each remote index request</td>
+  <td data-guide-key="g046">Hard timeout for each remote index request</td>
 </tr>
 <tr>
   <td><code>--cache-dir PATH</code></td>
   <td><code>.jarchive-cache</code></td>
-  <td>Save reusable index resources and validated complete compressed ranges</td>
+  <td data-guide-key="g047">Save reusable index resources and validated complete compressed ranges</td>
 </tr>
 <tr>
   <td><code>--no-cache</code></td>
-  <td>off</td>
-  <td>Disable archive range caching; does not disable remote index caching</td>
+  <td data-guide-key="g048">off</td>
+  <td data-guide-key="g049">Disable archive range caching; does not disable remote index caching</td>
 </tr>
 <tr>
   <td><code>--base-url URL</code></td>
-  <td>IA archive download base</td>
-  <td>Use another archive download base; IA storage discovery only applies to the default URL</td>
+  <td data-guide-key="g050">IA archive download base</td>
+  <td data-guide-key="g051">Use another archive download base; IA storage discovery only applies to the default URL</td>
 </tr>
 <tr>
   <td><code>--no-direct</code></td>
-  <td>off</td>
-  <td>Skip IA storage-node discovery and use the configured base URL only</td>
+  <td data-guide-key="g052">off</td>
+  <td data-guide-key="g053">Skip IA storage-node discovery and use the configured base URL only</td>
 </tr>
 <tr>
   <td><code>--metadata-timeout SECONDS</code></td>
   <td><code>7</code></td>
-  <td>Timeout for Internet Archive metadata discovery</td>
+  <td data-guide-key="g054">Timeout for Internet Archive metadata discovery</td>
 </tr>
 <tr>
   <td><code>--request-timeout SECONDS</code></td>
   <td><code>45</code></td>
-  <td>Hard limit for one byte-range request</td>
+  <td data-guide-key="g055">Hard limit for one byte-range request</td>
 </tr>
 <tr>
   <td><code>--connect-timeout SECONDS</code></td>
   <td><code>5</code></td>
-  <td>Connection timeout for byte-range requests</td>
+  <td data-guide-key="g056">Connection timeout for byte-range requests</td>
 </tr>
 <tr>
   <td><code>--stall-limit SECONDS</code></td>
   <td><code>120</code></td>
-  <td>Allow this long without a completed new range before failing</td>
+  <td data-guide-key="g057">Allow this long without a completed new range before failing</td>
 </tr>
 <tr>
   <td><code>--route-passes N</code></td>
   <td><code>2</code></td>
-  <td>Maximum passes across available download routes per range (1-5)</td>
+  <td data-guide-key="g058">Maximum passes across available download routes per range (1-5)</td>
 </tr>
 <tr>
   <td><code>--time-limit SECONDS</code></td>
-  <td><code>0</code> (off)</td>
-  <td>Optional <em>total</em> transfer time limit; disabled by default</td>
+  <td data-guide-key="g059"><code>0</code> (off)</td>
+  <td data-guide-key="g060">Optional <em data-guide-key="g061">total</em> transfer time limit; disabled by default</td>
 </tr>
 <tr>
   <td><code>--chunk-kib N</code></td>
   <td><code>1024</code></td>
-  <td>Compressed bytes per request, in KiB (maximum 4096)</td>
+  <td data-guide-key="g062">Compressed bytes per request, in KiB (maximum 4096)</td>
 </tr>
 <tr>
   <td><code>--max-download-mib N</code></td>
   <td><code>512</code></td>
-  <td>Hard cap on compressed bytes processed per source, including cached bytes</td>
+  <td data-guide-key="g063">Hard cap on compressed bytes processed per source, including cached bytes</td>
 </tr>
 <tr>
   <td><code>--max-jar-mib N</code></td>
   <td><code>128</code></td>
-  <td>Maximum uncompressed JAR size</td>
+  <td data-guide-key="g064">Maximum uncompressed JAR size</td>
 </tr>
 <tr>
   <td><code>--verbose</code></td>
-  <td>off</td>
-  <td>Show source offsets, request settings, and full errors for each route attempt; full failure diagnostics appear automatically if a source fails</td>
+  <td data-guide-key="g065">off</td>
+  <td data-guide-key="g066">Show source offsets, request settings, and full errors for each route attempt; full failure diagnostics appear automatically if a source fails</td>
 </tr>
 </tbody>
 </table>
-<p>When choosing <code>--chunk-kib</code>, smaller chunks can reduce wasted data on a failed request, but increase request overhead; <strong>keep the same value between resumed attempts</strong> to maximize cache reuse.</p>
-<h2 id="errors-and-troubleshooting">Errors and troubleshooting</h2>
+<p data-guide-key="g067">When choosing <code>--chunk-kib</code>, smaller chunks can reduce wasted data on a failed request, but increase request overhead; <strong data-guide-key="g068">keep the same value between resumed attempts</strong> to maximize cache reuse.</p>
+<h2 id="errors-and-troubleshooting" data-guide-key="g069">Errors and troubleshooting</h2>
 <ul>
-<li><strong>Python, <code>lzma</code>, or <code>curl</code> missing:</strong> Install Python with LZMA support and the <code>curl</code> command.<ul>
-<li>On <em>Linux</em>, run <code>sudo apt update &amp;&amp; sudo apt install -y python3 curl</code></li>
-<li>On <em>Windows</em> run <code>winget install --id Python.Python.3.14 -e</code> and restart PowerShell</li>
-<li>On <em>macOS</em> run <code>brew install python</code> (if Homebrew is missing, install it first: <code>/bin/bash -c &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)&quot;</code>)</li>
+<li data-guide-key="g070"><strong data-guide-key="g071">Python, <code>lzma</code>, or <code>curl</code> missing:</strong> Install Python with LZMA support and the <code>curl</code> command.<ul>
+<li data-guide-key="g072">On <em>Linux</em>, run <code>sudo apt update &amp;&amp; sudo apt install -y python3 curl</code></li>
+<li data-guide-key="g073">On <em>Windows</em> run <code>winget install --id Python.Python.3.14 -e</code> and restart PowerShell</li>
+<li data-guide-key="g074">On <em>macOS</em> run <code>brew install python</code> (if Homebrew is missing, install it first: <code>/bin/bash -c &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)&quot;</code>)</li>
 </ul>
 </li>
-<li><strong>HTTP 500 / 504 / range timeout:</strong> Internet Archive may be overloaded. The downloader tries known direct storage servers and the normal route</li>
-<li><strong><code>No successful HTTP range within the stall/time limit</code>:</strong> Try <code>--request-timeout 90 --stall-limit 240</code> if the connection is slow but usable</li>
-<li><strong><code>Output exists (will not overwrite)</code>:</strong> Use a new <code>--output</code> filename or explicitly remove/rename the existing file after inspecting it</li>
-<li><strong><code>SHA-1 not found</code>, <code>SHA-256 not found</code>:</strong> Verify you copied the full 40- or 64-digit hash of an indexed file, not its CRC32 or an unrelated hash</li>
-<li><strong>Index HTTP 404:</strong> Verify <a href="https://toca-1.github.io/new-j2me-software-archive-search/retrieval/v1/manifest.json">retrieval/v1/manifest.json</a> loads</li>
-<li><strong>Missing cached index in <code>--index-offline</code> mode:</strong> Perform the lookup once while online (or use <code>--index PATH</code>)</li>
-<li><strong>Damaged or stale cached data:</strong> The script automatically rejects ranges whose local checksum does not match. If in doubt, retry with <code>--no-cache</code> or delete <code>.jarchive-cache/</code> (this discards resumable progress)</li>
-<li><strong>Download cap exceeded:</strong> Review the planned compressed upper bound and only increase <code>--max-download-mib</code> if you are comfortable with the additional data transfer</li>
+<li data-guide-key="g075"><strong data-guide-key="g076">HTTP 500 / 504 / range timeout:</strong> Internet Archive may be overloaded. The downloader tries known direct storage servers and the normal route</li>
+<li data-guide-key="g077"><strong data-guide-key="g078"><code>No successful HTTP range within the stall/time limit</code>:</strong> Try <code>--request-timeout 90 --stall-limit 240</code> if the connection is slow but usable</li>
+<li data-guide-key="g079"><strong data-guide-key="g080"><code>Output exists (will not overwrite)</code>:</strong> Use a new <code>--output</code> filename or explicitly remove/rename the existing file after inspecting it</li>
+<li data-guide-key="g081"><strong data-guide-key="g082"><code>SHA-1 not found</code>, <code>SHA-256 not found</code>:</strong> Verify you copied the full 40- or 64-digit hash of an indexed file, not its CRC32 or an unrelated hash</li>
+<li data-guide-key="g083"><strong data-guide-key="g084">Index HTTP 404:</strong> Verify <a href="https://toca-1.github.io/new-j2me-software-archive-search/retrieval/v1/manifest.json">retrieval/v1/manifest.json</a> loads</li>
+<li data-guide-key="g085"><strong data-guide-key="g086">Missing cached index in <code>--index-offline</code> mode:</strong> Perform the lookup once while online (or use <code>--index PATH</code>)</li>
+<li data-guide-key="g087"><strong data-guide-key="g088">Damaged or stale cached data:</strong> The script automatically rejects ranges whose local checksum does not match. If in doubt, retry with <code>--no-cache</code> or delete <code>.jarchive-cache/</code> (this discards resumable progress)</li>
+<li data-guide-key="g089"><strong data-guide-key="g090">Download cap exceeded:</strong> Review the planned compressed upper bound and only increase <code>--max-download-mib</code> if you are comfortable with the additional data transfer</li>
 </ul>
-<h2 id="privacy-trust-and-rights">Privacy, trust and rights</h2>
-<p>The downloader sends archive range requests to the Internet Archive, and index lookups to the public project's GitHub Pages site. These services can see the requests and IP address; the requested hash prefix is part of the index shard URL. Index metadata and individual archive JARs come from third-party resources. Integrity checks confirm the file matches the published hash; they cannot make untrusted game software safe to execute. Use an appropriate sandbox for unknown software. Most importantly, no original JARs are hosted in this repository. Rights to archived software remain with their respective rights holders.</p>
-<p>This is an independently built community tool, not an official Internet Archive feature. See <a href="https://github.com/toca-1/new-j2me-software-archive-search/blob/main/docs/ATTRIBUTION.md">ATTRIBUTION.md</a> for technical references and attribution notes.</p>
+<h2 id="privacy-trust-and-rights" data-guide-key="g091">Privacy, trust and rights</h2>
+<p data-guide-key="g092">The downloader sends archive range requests to the Internet Archive, and index lookups to the public project's GitHub Pages site. These services can see the requests and IP address; the requested hash prefix is part of the index shard URL. Index metadata and individual archive JARs come from third-party resources. Integrity checks confirm the file matches the published hash; they cannot make untrusted game software safe to execute. Use an appropriate sandbox for unknown software. Most importantly, no original JARs are hosted in this repository. Rights to archived software remain with their respective rights holders.</p>
+<p data-guide-key="g093">This is an independently built community tool, not an official Internet Archive feature. See <a href="https://github.com/toca-1/new-j2me-software-archive-search/blob/main/docs/ATTRIBUTION.md">ATTRIBUTION.md</a> for technical references and attribution notes.</p>
 
       </div>
     </article>
