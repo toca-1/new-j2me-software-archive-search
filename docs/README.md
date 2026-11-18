@@ -2,7 +2,7 @@
 
 [Search J2ME games, apps, and exact JAR builds](https://toca-1.github.io/new-j2me-software-archive-search/) by filename, title, vendor, or various hashes (CRC32, SHA-1, SHA-256). A current browser with JavaScript enabled is required.
 
-This independent index covers [TwoSpacesSG's **New J2ME Software Archive**](https://archive.org/details/96x65pixels_j2me) (JARchive Full/Lite v11) and the [96x65pixels J2ME Mini collection](https://archive.org/details/96x65pixels_j2me_mini), plus separate links to matching upstream sources described in [`SOURCES.md`](SOURCES.md). The current v2 search index holds **621,715 unique JAR contents** from **817,643 archive-source entries** (including 1,428 new Mini-only JARs). For an alternative visual exploration of the archive refer to [this website](https://f.nnproject.cc/jarchive/).
+This independent index covers [TwoSpacesSG's "New J2ME Software Archive"](https://archive.org/details/96x65pixels_j2me) (JARchive Full/Lite v11) and the [96x65pixels J2ME Mini collection](https://archive.org/details/96x65pixels_j2me_mini), plus separate links to matching upstream sources described in [`SOURCES.md`](SOURCES.md). The current v2 search index holds 621,715 unique JAR contents from 817,643 archive-source entries (including 1,428 new Mini-only JARs). For an alternative visual exploration of the archive refer to [this website](https://f.nnproject.cc/jarchive/).
 
 ## Search features
 
