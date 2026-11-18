@@ -92,5 +92,7 @@
   "g090": "Limită de descărcare depășită:",
   "g091": "Confidențialitate, încredere și drepturi",
   "g092": "Downloaderul trimite cereri de intervale către Internet Archive și căutări în index către site-ul public GitHub Pages al proiectului. Aceste servicii văd cererile și adresa IP; prefixul hashului căutat apare în URL-ul segmentului de index. Metadatele și fișierele JAR individuale provin de la terți. Verificările de integritate confirmă potrivirea cu hashul publicat, dar nu fac sigur de rulat un program necunoscut. Folosește un mediu izolat adecvat. Acest depozit nu găzduiește JAR-uri originale. Drepturile asupra programelor arhivate aparțin în continuare titularilor.",
-  "g093": "Acesta este un instrument comunitar dezvoltat independent, nu o funcție oficială Internet Archive. Vezi {0} pentru referințe tehnice și atribuiri."
+  "g093": "Acesta este un instrument comunitar dezvoltat independent, nu o funcție oficială Internet Archive. Vezi {0} pentru referințe tehnice și atribuiri.",
+  "g094": "Fișierele JAR disponibile doar în Mini folosesc un index separat la {0} și sunt descărcate direct de pe Internet Archive, fără extragerea intervalelor 7z. Indexul Lite/Full rămâne neschimbat. Înainte de salvare sunt verificate SHA-1, SHA-256, CRC32, dimensiunea și integritatea ZIP.",
+  "g095": "Folosește un index SHA Mini local în locul celui publicat la {0}"
 }

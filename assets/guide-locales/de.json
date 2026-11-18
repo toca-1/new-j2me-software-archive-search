@@ -92,5 +92,7 @@
   "g090": "Download-Obergrenze überschritten:",
   "g091": "Datenschutz, Vertrauen und Rechte",
   "g092": "Der Downloader sendet Archiv-Bereichsanfragen an das Internet Archive und Indexabfragen an die öffentliche GitHub-Pages-Seite des Projekts. Diese Dienste können Anfragen und IP-Adressen sehen; das angefragte Hash-Präfix steht in der URL des Index-Shards. Index-Metadaten und einzelne JAR-Dateien stammen von Dritten. Integritätsprüfungen bestätigen lediglich die Übereinstimmung mit dem veröffentlichten Hash; sie machen fremde Spielesoftware nicht sicher. Führen Sie unbekannte Programme in einer geeigneten Sandbox aus. Dieses Repository hostet keine Original-JARs. Die Rechte an archivierter Software verbleiben bei den jeweiligen Rechteinhabern.",
-  "g093": "Dies ist ein unabhängig entwickeltes Community-Werkzeug und keine offizielle Funktion des Internet Archive. Technische Quellen und Hinweise zur Namensnennung finden Sie in {0}."
+  "g093": "Dies ist ein unabhängig entwickeltes Community-Werkzeug und keine offizielle Funktion des Internet Archive. Technische Quellen und Hinweise zur Namensnennung finden Sie in {0}.",
+  "g094": "JARs, die nur in Mini vorkommen, verwenden eine separate Suche unter {0} und werden direkt vom Internet Archive heruntergeladen, statt per 7z-Bereichsextraktion. Der ursprüngliche Lite-/Full-Abrufindex bleibt unverändert. Vor dem Speichern werden SHA-1, SHA-256, CRC32, Dateigröße und ZIP-Integrität überprüft.",
+  "g095": "Eine lokale Mini-SHA-Suchdatei anstelle der veröffentlichten {0} verwenden"
 }

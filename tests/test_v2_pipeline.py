@@ -16,6 +16,7 @@ from build_site import build as build_index
 from check_full_index import check_full_index
 from prepare_v2 import build as prepare_v2
 from verify_v2 import verify as verify_v2
+from rebuild_all import rebuild_v2, RebuildError
 
 
 class V2Pipeline(unittest.TestCase):
@@ -102,6 +103,58 @@ class V2Pipeline(unittest.TestCase):
             self.assertEqual(manifest['mini_rows'],1)
             self.assertEqual(manifest['mini_only'],1)
             self.assertEqual(manifest['unique_files'],3)
+
+            # The public one-command entry point must reconstruct the old
+            # reference first, then build and verify a complete Mini v2 index.
+            base_enrichment = root / 'base_enrichment'
+            base_enrichment.mkdir()
+            (base_enrichment / 'jarchive-enriched.csv').write_bytes(old_csv.read_bytes())
+            (base_enrichment / 'jarchive-enriched-details.jsonl.gz').write_bytes(
+                details_path.read_bytes())
+            mini_manifest = root / 'mini_sha1_manifest.csv'
+            with mini_manifest.open('w', encoding='utf-8', newline='') as stream:
+                w = csv.DictWriter(stream, fieldnames=(
+                    'sha1', 'archive', 'internal_path', 'filename', 'size_bytes'))
+                w.writeheader()
+                w.writerow({'sha1':new_sha1, 'archive':'#.7z',
+                            'internal_path':'007 Top Agent/Bond.jar',
+                            'filename':'Bond.jar', 'size_bytes':jar.stat().st_size})
+            # Separately sourced assets should be copied, never reconstructed.
+            (old / 'upstream').mkdir()
+            (old / 'upstream' / 'test.json').write_text('old-upstream')
+            (root / 'retrieval/v1').mkdir(parents=True)
+            (root / 'retrieval/v1/manifest.json').write_text('old-retrieval')
+            candidate = root / 'one_command_v2'
+            report = rebuild_v2(
+                reference=old, out=candidate, enriched_dir=base_enrichment,
+                expected_rows=3, expected_unique=2, record_chunk=2,
+                name_shards=4, copy_reference_extras=True,
+                mini_csv=mini_csv, mini_extracted=root/'extracted',
+                mini_manifest=mini_manifest,
+                combined_csv=enrichment/'jarchive-enriched.csv',
+                mini_extra=1, mini_link_rows=1)
+            self.assertEqual(report['unique_jar_contents'], 3)
+            self.assertEqual(report['mini_download_rows'], 1)
+            self.assertEqual(json.loads((candidate/'data/manifest.json').read_text())['mini_only'], 1)
+            self.assertTrue((candidate/'data/mini/cli.json.gz').is_file())
+            self.assertTrue((candidate/'rebuild-report.json').is_file())
+            self.assertEqual((candidate/'data/upstream/test.json').read_text(), 'old-upstream')
+            self.assertEqual((candidate/'retrieval/v1/manifest.json').read_text(), 'old-retrieval')
+            with self.assertRaisesRegex(RebuildError, 'Reference counts do not match'):
+                rebuild_v2(reference=candidate/'data', out=root/'wrong_reference',
+                           enriched_dir=base_enrichment, expected_rows=3,
+                           expected_unique=2, mini_csv=mini_csv,
+                           mini_extracted=root/'extracted', mini_manifest=mini_manifest,
+                           combined_csv=enrichment/'jarchive-enriched.csv',
+                           mini_extra=1, mini_link_rows=1)
+            self.assertFalse((root/'wrong_reference').exists())
+            with self.assertRaisesRegex(RebuildError, 'already exists'):
+                rebuild_v2(reference=old, out=candidate,
+                           enriched_dir=base_enrichment, expected_rows=3,
+                           expected_unique=2, mini_csv=mini_csv,
+                           mini_extracted=root/'extracted', mini_manifest=mini_manifest,
+                           combined_csv=enrichment/'jarchive-enriched.csv',
+                           mini_extra=1, mini_link_rows=1)
 
 
 if __name__ == '__main__':

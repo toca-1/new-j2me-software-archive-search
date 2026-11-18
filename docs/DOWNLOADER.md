@@ -25,7 +25,7 @@ Alternatively:
 
 ## How it works
 
-The script downloads only portions of the original solid-compressed 7z archive over HTTP Range, starts decompression at an indexed independent LZMA2 restart, and saves the JAR only if the content matches the verified index. More specifically:
+For the original Full/Lite collections, the script downloads only portions of the solid-compressed 7z archive over HTTP Range, starts decompression at an indexed independent LZMA2 restart, and saves the JAR only if the content matches the verified index. More specifically:
 
 - It fetches the small `retrieval/v1/manifest.json` and the required gzip-compressed SHA lookup shard(s) from GitHub Pages
 - It selects the archive copy requiring the least decompression. If a hash has multiple sources, it can try others upon failure
@@ -33,6 +33,8 @@ The script downloads only portions of the original solid-compressed 7z archive o
 - Successful complete HTTP ranges are cached under `.jarchive-cache/`; rerunning the same command resumes from those cached ranges instead of starting again
 - The displayed percentage is progress on the decoding. A compressed transfer upper bound is printed, but the actual transfer may be much smaller
 - Before saving, the recovered JAR must pass its expected file size, CRC32, SHA and ZIP internal integrity checks
+
+Mini-only JARs use a separate lookup at `data/mini/cli.json.gz` and are downloaded directly from Internet Archive instead of by 7z range extraction. The original Lite/Full retrieval index remains unchanged. Mini downloads are checked against SHA-1, SHA-256, CRC32, file size, and ZIP integrity before saving.
 
 ### Examples
 
@@ -48,6 +50,7 @@ Use a custom filename, or force the archive source:
 python3 jarchive_download.py YOUR_HASH --output my-game.jar
 python3 jarchive_download.py YOUR_HASH --source full
 python3 jarchive_download.py YOUR_HASH --source lite
+python3 jarchive_download.py YOUR_HASH --source mini
 ```
 
 Allow more time for slow or inconsistent connections; after Ctrl+C or a temporary failure, run the exact same command again to resume where the download left off:
@@ -67,6 +70,9 @@ Use a complete local retrieval index or a custom index server:
 ```bash
 python3 jarchive_download.py YOUR_HASH --index /PATH/TO/jarchive-retrieval-v1
 python3 jarchive_download.py YOUR_HASH --index-url https://EXAMPLE.ORG/RETRIEVAL
+
+# Before publishing a new Mini map, or to test against a local map:
+python3 jarchive_download.py YOUR_HASH --mini-map /PATH/TO/data/mini/cli.json.gz
 ```
 
 ## Full command-line options
@@ -78,7 +84,8 @@ Run `python3 jarchive_download.py --help` for the options supported by your exac
 | `hash` | **required** | SHA-1 (40 hex digits) or SHA-256 (64 hex digits) |
 | `--output PATH` | `<SHA-256>.jar` | Destination; does not overwrite existing files |
 | `--dry-run` | off | Show sources without downloading JAR ranges; remote index may still be fetched |
-| `--source {auto,lite,full}` | `auto` | Choose an archive copy; auto ranks by bytes to decompress and tries fallbacks |
+| `--source {auto,lite,full,mini}` | `auto` | Choose an archive copy; auto ranks by bytes to decompress and tries fallbacks |
+| `--mini-map PATH` | automatic | Use a local Mini-only SHA lookup instead of the published `data/mini/cli.json.gz` |
 | `--index PATH` | automatic | Use a local index directory; incompatible with `--index-url` |
 | `--index-url URL` | project pages URL | Explicit remote index location, even when a local index exists |
 | `--index-offline` | off | No remote index requests; previously cached index resources required |
@@ -110,13 +117,13 @@ When choosing `--chunk-kib`, smaller chunks can reduce wasted data on a failed r
 - **`No successful HTTP range within the stall/time limit`:** Try `--request-timeout 90 --stall-limit 240` if the connection is slow but usable
 - **`Output exists (will not overwrite)`:** Use a new `--output` filename or explicitly remove/rename the existing file after inspecting it
 - **`SHA-1 not found`, `SHA-256 not found`:** Verify you copied the full 40- or 64-digit hash of an indexed file, not its CRC32 or an unrelated hash
-- **Index HTTP 404:** Verify [retrieval/v1/manifest.json](https://toca-1.github.io/new-j2me-software-archive-search/retrieval/v1/manifest.json) loads
+- **Index HTTP 404:** For Lite/Full check [retrieval/v1/manifest.json](https://toca-1.github.io/new-j2me-software-archive-search/retrieval/v1/manifest.json); for Mini-only check [data/mini/cli.json.gz](https://toca-1.github.io/new-j2me-software-archive-search/data/mini/cli.json.gz)
 - **Missing cached index in `--index-offline` mode:** Perform the lookup once while online (or use `--index PATH`)
 - **Damaged or stale cached data:** The script automatically rejects ranges whose local checksum does not match. If in doubt, retry with `--no-cache` or delete `.jarchive-cache/` (this discards resumable progress)
 - **Download cap exceeded:** Review the planned compressed upper bound and only increase `--max-download-mib` if you are comfortable with the additional data transfer
 
 ## Privacy, trust and rights
 
-The downloader sends archive range requests to the Internet Archive, and index lookups to the public project's GitHub Pages site. These services can see the requests and IP address; the requested hash prefix is part of the index shard URL. Index metadata and individual archive JARs come from third-party resources. Integrity checks confirm the file matches the published hash; they cannot make untrusted game software safe to execute. Use an appropriate sandbox for unknown software. Most importantly, no original JARs are hosted in this repository. Rights to archived software remain with their respective rights holders.
+The downloader sends archive range or individual Mini JAR requests to the Internet Archive, and index lookups to the public project's GitHub Pages site. These services can see the requests and IP address; the requested hash prefix is part of the index shard URL. Index metadata and individual archive JARs come from third-party resources. Integrity checks confirm the file matches the published hash; they cannot make untrusted game software safe to execute. Use an appropriate sandbox for unknown software. Most importantly, no original JARs are hosted in this repository. Rights to archived software remain with their respective rights holders.
 
 This is an independently built community tool, not an official Internet Archive feature. See [`ATTRIBUTION.md`](ATTRIBUTION.md) for technical references and attribution notes.

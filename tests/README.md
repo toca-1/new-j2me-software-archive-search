@@ -11,7 +11,7 @@ python3 tests/check_repo.py
 python3 -m unittest discover -s tests -p 'test_*.py'
 node --check assets/app.js
 node --check assets/i18n.js
-node --test tests/app.test.cjs
+node --test tests/app.test.cjs tests/mini_downloads.test.cjs
 ```
 
 ## Before deploying (complete `data/` required)

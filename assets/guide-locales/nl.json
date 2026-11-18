@@ -92,5 +92,7 @@
   "g090": "Downloadlimiet overschreden:",
   "g091": "Privacy, vertrouwen en rechten",
   "g092": "De downloader stuurt archiefbereikverzoeken naar het Internet Archive en indexopvragingen naar de openbare GitHub Pages-site van het project. Deze diensten kunnen verzoeken en IP-adressen zien; het opgevraagde hashvoorvoegsel staat in de URL van het indexsegment. Indexmetadata en losse JAR-bestanden komen van derden. Integriteitscontroles bevestigen de overeenkomst met de gepubliceerde hash, maar maken onbekende software niet veilig om uit te voeren. Gebruik een geschikte sandbox. Deze repository host geen oorspronkelijke JAR-bestanden. De rechten op gearchiveerde software blijven bij de betreffende rechthebbenden.",
-  "g093": "Dit is een onafhankelijk ontwikkeld hulpmiddel van de gemeenschap, geen officiële functie van het Internet Archive. Zie {0} voor technische bronnen en naamsvermelding."
+  "g093": "Dit is een onafhankelijk ontwikkeld hulpmiddel van de gemeenschap, geen officiële functie van het Internet Archive. Zie {0} voor technische bronnen en naamsvermelding.",
+  "g094": "JAR-bestanden die alleen in Mini voorkomen gebruiken een aparte zoekindex in {0} en worden rechtstreeks van Internet Archive gedownload, zonder 7z-bereikextractie. De bestaande Lite/Full-index blijft ongewijzigd. SHA-1, SHA-256, CRC32, bestandsgrootte en ZIP-integriteit worden vóór het opslaan gecontroleerd.",
+  "g095": "Gebruik een lokale Mini-SHA-index in plaats van de gepubliceerde {0}"
 }

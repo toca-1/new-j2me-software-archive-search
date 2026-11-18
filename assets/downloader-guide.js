@@ -3,7 +3,7 @@
 // Locales translate prose only. The original DOM supplies command/code/link nodes;
 // numbered placeholders are reordered around them, never interpreted as HTML.
 window.J2ME_DownloaderGuide = (() => {
-  const REVISION = '20261118-guide-v1';
+  const REVISION = '20261118-guide-v2';
   const script = document.currentScript;
   const localeRoot = script?.src
     ? script.src.replace(/downloader-guide\.js(?:\?.*)?$/, 'guide-locales/')

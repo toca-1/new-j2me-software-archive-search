@@ -1,6 +1,14 @@
 # Sources and archive coverage
 
-This document records which Internet Archive collections and which files within them have been examined for the [New J2ME Software Archive Search](https://toca-1.github.io/new-j2me-software-archive-search/). The description of said archive identifies ten historical upstream collections:
+This document records the indexed collections and separately examined upstream sources for the [J2ME archive search site](https://toca-1.github.io/new-j2me-software-archive-search/).
+
+## Indexed archive collections (current v2)
+
+The search index combines **JARchive v11** (618,031 source entries), **JARchiveLite v11** (198,184) from the [New J2ME Software Archive](https://archive.org/details/96x65pixels_j2me), and **96x65pixels J2ME Mini** (1,428 new source entries) from [the Mini collection](https://archive.org/details/96x65pixels_j2me_mini). The v2 index contains **817,643 source entries** representing **621,715 unique SHA-256 file contents**. Its separate Mini SHA-1 lookup provides **225,867** individual-member URLs, most pointing to files already present in v1 rather than creating duplicate records. See the [index-v2 release](https://github.com/toca-1/new-j2me-software-archive-search/releases/tag/index-v2) for the verified CSV and its checksum.
+
+The upstream coverage research below is a **separate historical investigation**, not a claim that its unmatched JARs are included as searchable records.
+
+The description of the original JARchive identifies ten historical upstream collections:
 
 | Historical upstream collection | Processing performed for this project |
 | --- | --- |
@@ -25,7 +33,7 @@ Additionally, the third-party mirror [nnproject](https://f.nnproject.cc/jarchive
 4. For supported sources, test at least one individual Internet Archive archive-member URL by downloading the JAR and checking its SHA-256 before adding source mappings
 5. Add links for matching hashes to `data/upstream/`. These mappings are separate from the searchable JARchive records
 
-## Missing-file investigation
+## Missing-file investigation (historical v1 comparison)
 
 Files whose SHA-256 values are absent from the original JARchive index are recorded separately in `missing_files/`. The consolidated inventory, `missing_files/all_unmatched_deduplicated.csv`, is a separate large dataset which contains one row per distinct SHA-256 and retains recorded source information and locations. The `source_archives` and `locations_json` columns allow the same file content to be associated with multiple upstream collections without counting it as multiple distinct files.
 

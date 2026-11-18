@@ -92,5 +92,7 @@
   "g090": "Plafond de téléchargement dépassé :",
   "g091": "Confidentialité, confiance et droits",
   "g092": "Le téléchargeur envoie des requêtes de plages d’archives à Internet Archive et des recherches d’index au site public GitHub Pages du projet. Ces services peuvent voir les requêtes et l’adresse IP ; le préfixe du hash demandé figure dans l’URL du segment d’index. Les métadonnées et les fichiers JAR proviennent de tiers. Les contrôles d’intégrité confirment la correspondance avec le hash publié, mais ne rendent pas un logiciel inconnu sûr à exécuter. Utilisez un environnement isolé adapté. Ce dépôt n’héberge aucun JAR d’origine. Les droits des logiciels archivés restent détenus par leurs ayants droit.",
-  "g093": "Cet outil communautaire est développé indépendamment et n’est pas une fonction officielle d’Internet Archive. Consultez {0} pour les références techniques et les mentions d’attribution."
+  "g093": "Cet outil communautaire est développé indépendamment et n’est pas une fonction officielle d’Internet Archive. Consultez {0} pour les références techniques et les mentions d’attribution.",
+  "g094": "Les JAR propres à Mini utilisent un index distinct dans {0} et sont téléchargés directement depuis Internet Archive, sans extraction de plages 7z. L’index Lite/Full reste inchangé. Les empreintes SHA-1 et SHA-256, le CRC32, la taille et l’intégrité ZIP sont vérifiés avant l’enregistrement.",
+  "g095": "Utiliser un index SHA Mini local à la place du fichier publié {0}"
 }

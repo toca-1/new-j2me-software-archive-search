@@ -175,6 +175,23 @@ class RepositoryChecks(unittest.TestCase):
         for page in (search, guide):
             self.assertIn('data-i18n-aria-label="searchSection"', page)
 
+    def test_downloader_guide_translations_match_current_html_slots(self):
+        markup = (ROOT / 'html/downloader-help.html').read_text(encoding='utf-8')
+        keys = re.findall(r'data-guide-key="([a-z][0-9]+)"', markup)
+        self.assertEqual(len(keys), len(set(keys)), 'Guide keys must be unique')
+        english = get_json(ROOT / 'assets/guide-locales/en.json')
+        self.assertEqual(set(keys), set(english), 'English guide/HTML keys disagree')
+        for locale_path in sorted((ROOT / 'assets/guide-locales').glob('*.json')):
+            translated = get_json(locale_path)
+            with self.subTest(locale=locale_path.stem):
+                self.assertEqual(set(translated), set(english))
+                for key, original in english.items():
+                    self.assertIsInstance(translated[key], str)
+                    self.assertTrue(translated[key].strip())
+                    self.assertEqual(sorted(re.findall(r'\{[0-9]+\}', original)),
+                                     sorted(re.findall(r'\{[0-9]+\}', translated[key])),
+                                     f'Placeholder mismatch in {locale_path.name}: {key}')
+
     def test_rendered_downloader_guide_matches_markdown_source(self):
         # The rendered HTML is a copy of the maintained Markdown guide.
         # Detect source edits that require regenerating the static HTML page.

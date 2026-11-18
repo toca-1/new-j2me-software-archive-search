@@ -92,5 +92,7 @@
   "g090": "Překročený limit stahování:",
   "g091": "Soukromí, důvěra a práva",
   "g092": "Stahovač posílá požadavky na části archivu do Internet Archive a dotazy na index na veřejný web GitHub Pages projektu. Tyto služby vidí požadavky a IP adresu; prefix požadovaného hashe je součástí URL segmentu indexu. Metadata i jednotlivé soubory JAR pocházejí od třetích stran. Kontrola integrity potvrzuje shodu se zveřejněným hashem, nikoliv bezpečnost neznámého softwaru. Neznámé programy spouštějte ve vhodném izolovaném prostředí. Tento repozitář nehostuje původní soubory JAR. Práva k archivovanému softwaru zůstávají jejich držitelům.",
-  "g093": "Jde o nezávislý komunitní nástroj, nikoli oficiální funkci Internet Archive. Technické zdroje a poděkování najdete v {0}."
+  "g093": "Jde o nezávislý komunitní nástroj, nikoli oficiální funkci Internet Archive. Technické zdroje a poděkování najdete v {0}.",
+  "g094": "Soubory JAR dostupné pouze v Mini používají samostatný index {0} a stahují se přímo z Internet Archive bez extrakce rozsahů 7z. Původní index Lite/Full zůstává beze změny. Před uložením se ověří SHA-1, SHA-256, CRC32, velikost a integrita ZIP.",
+  "g095": "Použít místní index SHA Mini místo zveřejněného souboru {0}"
 }

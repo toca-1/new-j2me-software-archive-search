@@ -9,7 +9,7 @@
   <title>JAR downloader</title>
   <link rel="stylesheet" href="../assets/site.css?v=20261118-mini-links">
   <script defer src="../assets/i18n.js?v=20261118-mini-links"></script>
-  <script defer src="../assets/downloader-guide.js?v=20261118-guide-v1"></script>
+  <script defer src="../assets/downloader-guide.js?v=20261118-guide-v2"></script>
   <script defer src="../assets/help.js?v=20261118-guide-v1"></script>
 </head>
 <body>
@@ -25,7 +25,7 @@
     <section class="hero"><h1 data-i18n="downloaderGuideTitle">JAR downloader</h1></section>
     <article class="help-article">
       <p class="guide-source"><a href="https://github.com/toca-1/new-j2me-software-archive-search/blob/main/docs/DOWNLOADER.md" data-i18n="guide">Full setup guide</a></p>
-      <!-- Source SHA-256 (docs/DOWNLOADER.md): c4cde80c79f51fd035511bf1ba6546ccbc6e598364aff7ed930a6c54e51f4150 -->
+      <!-- Source SHA-256 (docs/DOWNLOADER.md): 90a35dba9174a88eda8a1c82869d86685233f4b8320278230469aa5e5d2c61ab -->
       <div class="guide-document" lang="en">
 <p data-guide-key="g000">Use a python script to recover individual JAR files from the Internet archive using their SHA-1 or SHA-256 checksum.</p>
 <h2 id="quick-start" data-guide-key="g001">Quick start</h2>
@@ -49,7 +49,7 @@
 </li>
 </ol>
 <h2 id="how-it-works" data-guide-key="g015">How it works</h2>
-<p data-guide-key="g016">The script downloads only portions of the original solid-compressed 7z archive over HTTP Range, starts decompression at an indexed independent LZMA2 restart, and saves the JAR only if the content matches the verified index. More specifically:</p>
+<p data-guide-key="g016">For the original Full/Lite collections, the script downloads only portions of the solid-compressed 7z archive over HTTP Range, starts decompression at an indexed independent LZMA2 restart, and saves the JAR only if the content matches the verified index. More specifically:</p>
 <ul>
 <li data-guide-key="g017">It fetches the small <code>retrieval/v1/manifest.json</code> and the required gzip-compressed SHA lookup shard(s) from GitHub Pages</li>
 <li data-guide-key="g018">It selects the archive copy requiring the least decompression. If a hash has multiple sources, it can try others upon failure</li>
@@ -58,6 +58,7 @@
 <li data-guide-key="g021">The displayed percentage is progress on the decoding. A compressed transfer upper bound is printed, but the actual transfer may be much smaller</li>
 <li data-guide-key="g022">Before saving, the recovered JAR must pass its expected file size, CRC32, SHA and ZIP internal integrity checks</li>
 </ul>
+<p data-guide-key="g094">Mini-only JARs use a separate lookup at <code>data/mini/cli.json.gz</code> and are downloaded directly from Internet Archive instead of by 7z range extraction. The original Lite/Full retrieval index remains unchanged. Mini downloads are checked against SHA-1, SHA-256, CRC32, file size, and ZIP integrity before saving.</p>
 <h3 id="examples" data-guide-key="g023">Examples</h3>
 <p data-guide-key="g024">Preview which archive source would be used:</p>
 <pre><code class="language-bash">python3 jarchive_download.py YOUR_HASH --dry-run
@@ -66,6 +67,7 @@
 <pre><code class="language-bash">python3 jarchive_download.py YOUR_HASH --output my-game.jar
 python3 jarchive_download.py YOUR_HASH --source full
 python3 jarchive_download.py YOUR_HASH --source lite
+python3 jarchive_download.py YOUR_HASH --source mini
 </code></pre>
 <p data-guide-key="g026">Allow more time for slow or inconsistent connections; after Ctrl+C or a temporary failure, run the exact same command again to resume where the download left off:</p>
 <pre><code class="language-bash">python3 jarchive_download.py YOUR_HASH --request-timeout 90 --stall-limit 240
@@ -76,6 +78,9 @@ python3 jarchive_download.py YOUR_HASH --source lite
 <p data-guide-key="g028">Use a complete local retrieval index or a custom index server:</p>
 <pre><code class="language-bash">python3 jarchive_download.py YOUR_HASH --index /PATH/TO/jarchive-retrieval-v1
 python3 jarchive_download.py YOUR_HASH --index-url https://EXAMPLE.ORG/RETRIEVAL
+
+# Before publishing a new Mini map, or to test against a local map:
+python3 jarchive_download.py YOUR_HASH --mini-map /PATH/TO/data/mini/cli.json.gz
 </code></pre>
 <h2 id="full-command-line-options" data-guide-key="g029">Full command-line options</h2>
 <p data-guide-key="g030">Run <code>python3 jarchive_download.py --help</code> for the options supported by your exact script version.</p>
@@ -104,9 +109,14 @@ python3 jarchive_download.py YOUR_HASH --index-url https://EXAMPLE.ORG/RETRIEVAL
   <td data-guide-key="g038">Show sources without downloading JAR ranges; remote index may still be fetched</td>
 </tr>
 <tr>
-  <td><code>--source {auto,lite,full}</code></td>
+  <td><code>--source {auto,lite,full,mini}</code></td>
   <td><code>auto</code></td>
   <td data-guide-key="g039">Choose an archive copy; auto ranks by bytes to decompress and tries fallbacks</td>
+</tr>
+<tr>
+  <td><code>--mini-map PATH</code></td>
+  <td>automatic</td>
+  <td data-guide-key="g095">Use a local Mini-only SHA lookup instead of the published <code>data/mini/cli.json.gz</code></td>
 </tr>
 <tr>
   <td><code>--index PATH</code></td>
@@ -213,13 +223,13 @@ python3 jarchive_download.py YOUR_HASH --index-url https://EXAMPLE.ORG/RETRIEVAL
 <li data-guide-key="g077"><strong data-guide-key="g078"><code>No successful HTTP range within the stall/time limit</code>:</strong> Try <code>--request-timeout 90 --stall-limit 240</code> if the connection is slow but usable</li>
 <li data-guide-key="g079"><strong data-guide-key="g080"><code>Output exists (will not overwrite)</code>:</strong> Use a new <code>--output</code> filename or explicitly remove/rename the existing file after inspecting it</li>
 <li data-guide-key="g081"><strong data-guide-key="g082"><code>SHA-1 not found</code>, <code>SHA-256 not found</code>:</strong> Verify you copied the full 40- or 64-digit hash of an indexed file, not its CRC32 or an unrelated hash</li>
-<li data-guide-key="g083"><strong data-guide-key="g084">Index HTTP 404:</strong> Verify <a href="https://toca-1.github.io/new-j2me-software-archive-search/retrieval/v1/manifest.json">retrieval/v1/manifest.json</a> loads</li>
+<li data-guide-key="g083"><strong data-guide-key="g084">Index HTTP 404:</strong> For Lite/Full check <a href="https://toca-1.github.io/new-j2me-software-archive-search/retrieval/v1/manifest.json">retrieval/v1/manifest.json</a>; for Mini-only check <a href="https://toca-1.github.io/new-j2me-software-archive-search/data/mini/cli.json.gz">data/mini/cli.json.gz</a></li>
 <li data-guide-key="g085"><strong data-guide-key="g086">Missing cached index in <code>--index-offline</code> mode:</strong> Perform the lookup once while online (or use <code>--index PATH</code>)</li>
 <li data-guide-key="g087"><strong data-guide-key="g088">Damaged or stale cached data:</strong> The script automatically rejects ranges whose local checksum does not match. If in doubt, retry with <code>--no-cache</code> or delete <code>.jarchive-cache/</code> (this discards resumable progress)</li>
 <li data-guide-key="g089"><strong data-guide-key="g090">Download cap exceeded:</strong> Review the planned compressed upper bound and only increase <code>--max-download-mib</code> if you are comfortable with the additional data transfer</li>
 </ul>
 <h2 id="privacy-trust-and-rights" data-guide-key="g091">Privacy, trust and rights</h2>
-<p data-guide-key="g092">The downloader sends archive range requests to the Internet Archive, and index lookups to the public project's GitHub Pages site. These services can see the requests and IP address; the requested hash prefix is part of the index shard URL. Index metadata and individual archive JARs come from third-party resources. Integrity checks confirm the file matches the published hash; they cannot make untrusted game software safe to execute. Use an appropriate sandbox for unknown software. Most importantly, no original JARs are hosted in this repository. Rights to archived software remain with their respective rights holders.</p>
+<p data-guide-key="g092">The downloader sends archive range or individual Mini JAR requests to the Internet Archive, and index lookups to the public project's GitHub Pages site. These services can see the requests and IP address; the requested hash prefix is part of the index shard URL. Index metadata and individual archive JARs come from third-party resources. Integrity checks confirm the file matches the published hash; they cannot make untrusted game software safe to execute. Use an appropriate sandbox for unknown software. Most importantly, no original JARs are hosted in this repository. Rights to archived software remain with their respective rights holders.</p>
 <p data-guide-key="g093">This is an independently built community tool, not an official Internet Archive feature. See <a href="https://github.com/toca-1/new-j2me-software-archive-search/blob/main/docs/ATTRIBUTION.md">ATTRIBUTION.md</a> for technical references and attribution notes.</p>
 
       </div>

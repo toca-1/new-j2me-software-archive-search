@@ -92,5 +92,7 @@
   "g090": "Limite di download superato:",
   "g091": "Privacy, affidabilità e diritti",
   "g092": "Il downloader invia richieste di intervalli dell'archivio a Internet Archive e ricerche dell'indice al sito GitHub Pages pubblico del progetto. Questi servizi possono vedere richieste e indirizzo IP; il prefisso dell'hash richiesto compare nell'URL dello shard. I metadati e i singoli JAR provengono da terze parti. I controlli d'integrità confermano la corrispondenza con l'hash pubblicato, ma non rendono sicuro un programma sconosciuto. Usa un ambiente isolato adatto. Questo repository non ospita JAR originali. I diritti sul software archiviato rimangono ai rispettivi titolari.",
-  "g093": "Questo strumento comunitario è sviluppato in modo indipendente e non è una funzione ufficiale di Internet Archive. Consulta {0} per riferimenti tecnici e attribuzioni."
+  "g093": "Questo strumento comunitario è sviluppato in modo indipendente e non è una funzione ufficiale di Internet Archive. Consulta {0} per riferimenti tecnici e attribuzioni.",
+  "g094": "I JAR esclusivi di Mini utilizzano un indice separato in {0} e vengono scaricati direttamente da Internet Archive, senza estrazione di intervalli 7z. L’indice Lite/Full originale resta invariato. Prima del salvataggio vengono verificati SHA-1, SHA-256, CRC32, dimensione e integrità ZIP.",
+  "g095": "Usa un indice SHA Mini locale anziché quello pubblicato in {0}"
 }

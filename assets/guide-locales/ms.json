@@ -92,5 +92,7 @@
   "g090": "Had muat turun dilepasi:",
   "g091": "Privasi, kepercayaan dan hak",
   "g092": "Pemuat turun menghantar permintaan julat arkib ke Internet Archive dan pertanyaan indeks ke laman GitHub Pages awam projek. Perkhidmatan ini boleh melihat permintaan serta alamat IP; awalan hash yang diminta ada dalam URL serpihan indeks. Metadata indeks dan fail JAR individu datang daripada pihak ketiga. Semakan integriti mengesahkan padanan dengan hash yang diterbitkan, bukan menjadikan perisian tidak dipercayai selamat dijalankan. Gunakan persekitaran terasing yang sesuai. Repositori ini tidak mengehos JAR asal. Hak perisian yang diarkibkan kekal pada pemegang hak masing-masing.",
-  "g093": "Ini ialah alat komuniti yang dibangunkan secara bebas, bukannya ciri rasmi Internet Archive. Lihat {0} untuk rujukan teknikal dan nota atribusi."
+  "g093": "Ini ialah alat komuniti yang dibangunkan secara bebas, bukannya ciri rasmi Internet Archive. Lihat {0} untuk rujukan teknikal dan nota atribusi.",
+  "g094": "JAR yang hanya terdapat dalam Mini menggunakan indeks berasingan di {0} dan dimuat turun terus daripada Internet Archive tanpa pengekstrakan julat 7z. Indeks Lite/Full asal kekal tidak berubah. SHA-1, SHA-256, CRC32, saiz fail dan integriti ZIP disemak sebelum disimpan.",
+  "g095": "Gunakan indeks SHA Mini tempatan sebagai ganti {0} yang diterbitkan"
 }

@@ -8,7 +8,8 @@ core file with SHA-256, and publishes a *new* candidate directory.
 
 This orchestrates the other tested tools in tools/; it is NOT an independent
 rehash of 816,215 JAR bytes, nor a generator for separate upstream archives.
-See docs/REBUILD_ALL.md for exact prerequisites and limitations.
+The optional --mini-* flags extend this verified v1 workflow to v2, without
+weakening v1's strict comparison. See docs/REBUILD_ALL.md for limitations.
 """
 from __future__ import annotations
 
@@ -163,6 +164,11 @@ def rebuild(*, reference: Path, out: Path, archive_dir: Path | None = None,
             archive_paths[filename] = path
         mode = 'archive-reference-reconstruction'
     ensure_new_output(out, reference, sources)
+    reference_manifest = json.loads((reference / 'manifest.json').read_text(encoding='utf-8'))
+    if (reference_manifest.get('unique_files'), reference_manifest.get('total_rows')) != (expected_unique, expected_rows):
+        raise RebuildError('Reference counts do not match the expected v1 base. '
+                           'The current v2 data/ cannot be used as the v1 reference; '
+                           'use a separate index-v1 checkout.')
     if out in (reference, enriched_dir):
         raise RebuildError('Cannot write into the reference or an input directory')
 
@@ -282,11 +288,115 @@ def rebuild(*, reference: Path, out: Path, archive_dir: Path | None = None,
     return report
 
 
+
+def rebuild_v2(*, reference: Path, out: Path, mini_csv: Path,
+               mini_extracted: Path, mini_manifest: Path, combined_csv: Path,
+               mini_extra: int = 1428, mini_link_rows: int = 225867,
+               **base_options) -> dict:
+    """Build v1 against its v1 reference, then add independently verified Mini JARs.
+
+    This deliberately keeps v1's strict comparison separate from legitimate v2
+    changes. Only a fully validated candidate is renamed into the requested path.
+    """
+    reference = reference.expanduser().resolve(strict=True)
+    out = out.expanduser().resolve(strict=False)
+    mini_csv = mini_csv.expanduser().resolve(strict=True)
+    mini_extracted = mini_extracted.expanduser().resolve(strict=True)
+    mini_manifest = mini_manifest.expanduser().resolve(strict=True)
+    combined_csv = combined_csv.expanduser().resolve(strict=True)
+    if not mini_extracted.is_dir():
+        raise RebuildError(f'Mini extracted JAR directory is missing: {mini_extracted}')
+    if mini_extra < 1 or mini_link_rows < mini_extra:
+        raise RebuildError('Invalid Mini expected counts')
+    inputs = [mini_csv, mini_extracted, mini_manifest, combined_csv]
+    for key in ('enriched_dir', 'archive_dir'):
+        if base_options.get(key) is not None:
+            inputs.append(base_options[key].expanduser().resolve(strict=True))
+    if base_options.get('archive_paths'):
+        inputs += [path.expanduser().resolve(strict=True)
+                   for path in base_options['archive_paths'].values()]
+    ensure_new_output(out, reference, inputs)
+    old_rows = base_options.get('expected_rows', 816215)
+    old_unique = base_options.get('expected_unique', 620287)
+    record_chunk = base_options.get('record_chunk', 4096)
+    name_shards = base_options.get('name_shards', 1024)
+    max_paths = base_options.get('max_original_paths', 2)
+    with tempfile.TemporaryDirectory(prefix='.j2me-v2-staging-', dir=out.parent) as scratch:
+        stage = Path(scratch)
+        base = stage / 'base-v1'
+        v2 = stage / 'v2'
+        v2.mkdir()
+        print('V2 stage 1/6: Reconstruct and verify v1 against the v1 reference', flush=True)
+        base_report = rebuild(reference=reference, out=base, **base_options)
+        print('V2 stage 2/6: Independently hash and enrich Mini-only JARs', flush=True)
+        enriched = v2 / 'enrichment'
+        run_tool('prepare_v2.py', '--base-data', base / 'data',
+                 '--mini-csv', mini_csv, '--extracted', mini_extracted,
+                 '--out', enriched, '--expected-base', old_unique,
+                 '--expected-extra', mini_extra, '--expected-rows', old_rows)
+        data = v2 / 'data'
+        print('V2 stage 3/6: Build and fully validate all core search shards', flush=True)
+        args = ['--input', enriched / ENRICHMENT_NAMES[0],
+                '--details', enriched / ENRICHMENT_NAMES[1], '--out', data,
+                '--expected-count', old_rows + mini_extra,
+                '--expected-unique', old_unique + mini_extra,
+                '--record-chunk', record_chunk, '--name-shards', name_shards,
+                '--name-layout', 'published', '--max-original-paths', max_paths]
+        if base_options.get('temp_dir') is not None:
+            args += ['--temp-dir', base_options['temp_dir']]
+        run_tool('build_site.py', *args)
+        print('V2 stage 4/6: Generate folders, summaries, and verified Mini download maps', flush=True)
+        run_tool('build_folder_groups.py', '--repo', v2)
+        run_tool('build_search_summaries.py', '--repo', v2)
+        run_tool('build_mini_downloads.py', '--manifest', mini_manifest,
+                 '--v2-csv', combined_csv, '--expected-rows', mini_link_rows,
+                 '--out', data / 'mini')
+        print('V2 stage 5/6: Revalidate and verify exact preservation of v1 data', flush=True)
+        args = ['--data', data]
+        if base_options.get('temp_dir') is not None:
+            args += ['--temp-dir', base_options['temp_dir']]
+        run_tool('check_full_index.py', *args)
+        run_tool('check_folder_index.py', '--repo', v2, '--require-folders')
+        run_tool('verify_v2.py', '--old-data', base / 'data',
+                 '--new-data', data, '--mini-csv', mini_csv,
+                 '--expected-old', old_unique, '--expected-new', old_unique + mini_extra,
+                 '--expected-rows', old_rows + mini_extra, '--expected-mini', mini_extra)
+        reused = {}
+        if base_options.get('copy_reference_extras', True):
+            for rel in ('data/upstream', 'retrieval/v1'):
+                asset = base / rel
+                if asset.exists():
+                    (v2 / rel).parent.mkdir(parents=True, exist_ok=True)
+                    copy_read_only(asset, v2 / rel)
+                    reused[rel] = 'Copied unchanged from verified v1 reference'
+                else:
+                    reused[rel] = 'Not present in v1 reference'
+        print('V2 stage 6/6: Save provenance and publish new candidate', flush=True)
+        m = json.loads((data / 'manifest.json').read_text(encoding='utf-8'))
+        report = {
+            'method': 'v1 reference-backed; Mini-only JAR bytes independently verified',
+            'unique_jar_contents': m['unique_files'], 'archive_rows': m['total_rows'],
+            'mini_only': m['mini_only'], 'mini_rows': m['mini_rows'],
+            'mini_download_rows': mini_link_rows,
+            'v1_validation': base_report,
+            'validation': 'Full index, folder index, and exact v1 record/detail preservation passed',
+            'reused_optional_assets': reused,
+            'output_not_deployed': True,
+        }
+        (v2 / 'rebuild-report.json').write_text(
+            json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + '\n',
+            encoding='utf-8')
+        if out.exists() or out.is_symlink():
+            raise RebuildError(f'Output appeared during rebuild: {out}')
+        os.rename(v2, out)
+    print(f'\nSUCCESS: Verified v2 candidate ready at {out}', flush=True)
+    return report
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--reference-data', type=Path, default=Path('data'),
-                        help='Existing validated data/ (default: ./data)')
+                        help='Validated v1 data/ (default: ./data; v2 main requires an explicit v1 path)')
     parser.add_argument('--archive-dir', type=Path,
                         help='Directory containing all four original .7z archives')
     for flag, help_text in (
@@ -296,6 +406,18 @@ def main(argv=None) -> int:
         ('--full-info', 'Override the Full infofiles .7z (or complete JSON)'),
     ):
         parser.add_argument(flag, type=Path, help=help_text)
+    parser.add_argument('--mini-only-csv', type=Path,
+                        help='Enable v2: CSV of independently verified Mini-only JARs')
+    parser.add_argument('--mini-extracted', type=Path,
+                        help='v2: extracted Mini package directories for JAR-byte rehashing')
+    parser.add_argument('--mini-manifest', type=Path,
+                        help='v2: SHA-1 manifest of all Mini archive members')
+    parser.add_argument('--combined-csv', type=Path,
+                        help='v2: complete verified v2 source-row CSV for Mini map validation')
+    parser.add_argument('--mini-extra', type=int, default=1428,
+                        help='Expected number of new Mini-only JAR contents')
+    parser.add_argument('--mini-link-rows', type=int, default=225867,
+                        help='Expected number of Mini URLs in download map')
     parser.add_argument('--enriched-dir', type=Path,
                         help='Use already reconstructed CSV + JSONL.gz instead of archives')
     parser.add_argument('--out', required=True, type=Path,
@@ -319,13 +441,26 @@ def main(argv=None) -> int:
         (ARCHIVE_NAMES[3], args.full_info),
     ) if path is not None}
     try:
-        rebuild(reference=args.reference_data, archive_dir=args.archive_dir,
-                enriched_dir=args.enriched_dir, out=args.out, temp_dir=args.temp_dir,
-                expected_rows=args.expected_rows, expected_unique=args.expected_unique,
-                record_chunk=args.record_chunk, name_shards=args.name_shards,
-                max_original_paths=args.max_original_paths, strict_info=args.strict_info,
-                copy_reference_extras=not args.no_copy_reference_extras,
-                archive_paths=override)
+        options = dict(reference=args.reference_data, archive_dir=args.archive_dir,
+                       enriched_dir=args.enriched_dir, out=args.out, temp_dir=args.temp_dir,
+                       expected_rows=args.expected_rows, expected_unique=args.expected_unique,
+                       record_chunk=args.record_chunk, name_shards=args.name_shards,
+                       max_original_paths=args.max_original_paths, strict_info=args.strict_info,
+                       copy_reference_extras=not args.no_copy_reference_extras,
+                       archive_paths=override)
+        mini_inputs = (args.mini_only_csv, args.mini_extracted,
+                       args.mini_manifest, args.combined_csv)
+        if any(value is not None for value in mini_inputs):
+            if not all(value is not None for value in mini_inputs):
+                raise RebuildError('v2 requires all four Mini inputs: --mini-only-csv, '
+                                   '--mini-extracted, --mini-manifest, --combined-csv')
+            rebuild_v2(**options, mini_csv=args.mini_only_csv,
+                       mini_extracted=args.mini_extracted,
+                       mini_manifest=args.mini_manifest,
+                       combined_csv=args.combined_csv,
+                       mini_extra=args.mini_extra, mini_link_rows=args.mini_link_rows)
+        else:
+            rebuild(**options)
     except (RebuildError, OSError, ValueError, subprocess.CalledProcessError,
             json.JSONDecodeError, KeyError) as error:
         print(f'FULL REBUILD FAILED: {error}', file=sys.stderr)

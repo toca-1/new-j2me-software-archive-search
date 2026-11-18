@@ -92,5 +92,7 @@
   "g090": "Batas unduhan terlampaui:",
   "g091": "Privasi, kepercayaan, dan hak",
   "g092": "Pengunduh mengirim permintaan rentang arsip ke Internet Archive dan pencarian indeks ke situs GitHub Pages publik proyek. Layanan ini dapat melihat permintaan serta alamat IP; awalan hash yang dicari merupakan bagian dari URL pecahan indeks. Metadata dan berkas JAR berasal dari pihak ketiga. Pemeriksaan integritas hanya memastikan berkas cocok dengan hash yang diterbitkan, bukan menjadikan perangkat lunak tidak dikenal aman dijalankan. Gunakan lingkungan terisolasi yang sesuai. Repositori ini tidak menghosting JAR asli. Hak atas perangkat lunak yang diarsipkan tetap milik pemegang haknya.",
-  "g093": "Ini adalah alat komunitas independen, bukan fitur resmi Internet Archive. Lihat {0} untuk rujukan teknis dan catatan atribusi."
+  "g093": "Ini adalah alat komunitas independen, bukan fitur resmi Internet Archive. Lihat {0} untuk rujukan teknis dan catatan atribusi.",
+  "g094": "JAR yang hanya ada di Mini menggunakan indeks terpisah di {0} dan diunduh langsung dari Internet Archive, bukan melalui ekstraksi rentang 7z. Indeks Lite/Full asli tidak berubah. SHA-1, SHA-256, CRC32, ukuran berkas, dan integritas ZIP diperiksa sebelum disimpan.",
+  "g095": "Gunakan indeks SHA Mini lokal sebagai pengganti {0} yang diterbitkan"
 }

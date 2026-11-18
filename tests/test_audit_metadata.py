@@ -82,6 +82,29 @@ class MetadataQualityTests(unittest.TestCase):
         self.assertEqual(sum(x['issue'] == 'primary_missing_manifest_present' and x['field'] == 'version'
                              for x in examples), 1)
 
+    def test_mini_only_collection_is_audited_without_lite_fallback(self):
+        records = checker.read_json(self.data / 'records/0001.json.gz', gz=True)
+        details = checker.read_json(self.data / 'details/0001.json.gz', gz=True)
+        records[0][3] = [[2, 'C.jar', '#.7z/C/C.jar', '33333333']]
+        records[0][4] = ['C', 'Mini Vendor', '3.0', 'CLDC-1.0', 'MIDP-2.0']
+        details[0] = [[2, {'MIDlet-Name': 'C', 'MIDlet-Vendor': 'Mini Vendor',
+                         'MIDlet-Version': '3.0',
+                         'MicroEdition-Configuration': 'CLDC-1.0',
+                         'MicroEdition-Profile': 'MIDP-2.0'}, ['C/C.jar'], 1]]
+        dump(self.data / 'records/0001.json.gz', records, compressed=True)
+        dump(self.data / 'details/0001.json.gz', details, compressed=True)
+        manifest = checker.read_json(self.data / 'manifest.json')
+        manifest['total_rows'] = 4
+        dump(self.data / 'manifest.json', manifest)
+        report, _, _ = checker.audit(self.data)
+        self.assertEqual(report['unique_files'], 3)
+        self.assertEqual(report['archive_member_sources'], 4)
+        self.assertEqual(report['collections']['96x65pixels J2ME mini']['detail_pairs'], 1)
+        self.assertEqual(report['collections']['96x65pixels J2ME mini']
+                         ['manifest_fields']['version']['present'], 1)
+        self.assertEqual(report['primary_fields']['version']['present'], 1)
+        self.assertEqual(report['observations']['primary_manifest_difference'].get('version', 0), 0)
+
     def test_cli_writes_bounded_reports_and_does_not_modify_source(self):
         before = {str(path.relative_to(self.data)): path.read_bytes()
                   for path in self.data.rglob('*') if path.is_file()}

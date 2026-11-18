@@ -92,5 +92,7 @@
   "g090": "Vượt giới hạn tải xuống:",
   "g091": "Quyền riêng tư, độ tin cậy và bản quyền",
   "g092": "Trình tải gửi yêu cầu khoảng dữ liệu kho đến Internet Archive và truy vấn chỉ mục đến trang GitHub Pages công khai của dự án. Các dịch vụ này có thể thấy yêu cầu và địa chỉ IP; tiền tố mã băm cần tìm nằm trong URL phân đoạn chỉ mục. Siêu dữ liệu và tệp JAR riêng lẻ đến từ bên thứ ba. Kiểm tra tính toàn vẹn xác nhận tệp khớp mã băm đã công bố, không đảm bảo phần mềm không rõ nguồn gốc an toàn khi chạy. Hãy dùng môi trường cách ly phù hợp. Kho mã nguồn này không lưu trữ JAR gốc. Quyền đối với phần mềm được lưu trữ thuộc về chủ sở hữu tương ứng.",
-  "g093": "Đây là công cụ cộng đồng được phát triển độc lập, không phải tính năng chính thức của Internet Archive. Xem {0} để biết nguồn tham khảo kỹ thuật và ghi công."
+  "g093": "Đây là công cụ cộng đồng được phát triển độc lập, không phải tính năng chính thức của Internet Archive. Xem {0} để biết nguồn tham khảo kỹ thuật và ghi công.",
+  "g094": "Các tệp JAR chỉ có trong Mini sử dụng chỉ mục riêng tại {0} và được tải trực tiếp từ Internet Archive, không cần trích xuất từng khoảng dữ liệu 7z. Chỉ mục Lite/Full ban đầu không thay đổi. SHA-1, SHA-256, CRC32, kích thước và tính toàn vẹn ZIP được kiểm tra trước khi lưu.",
+  "g095": "Dùng chỉ mục SHA Mini cục bộ thay cho {0} đã công bố"
 }

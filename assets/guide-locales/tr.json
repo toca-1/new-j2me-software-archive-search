@@ -92,5 +92,7 @@
   "g090": "İndirme sınırı aşıldı:",
   "g091": "Gizlilik, güven ve haklar",
   "g092": "İndirici, Internet Archive'a arşiv aralığı istekleri ve projenin herkese açık GitHub Pages sitesine dizin sorguları gönderir. Bu hizmetler istekleri ve IP adresinizi görebilir; sorgulanan karma öneki dizin parçasının URL'sinde bulunur. Dizin meta verileri ve JAR dosyaları üçüncü taraflardan gelir. Bütünlük denetimleri dosyanın yayımlanmış karmayla eşleştiğini doğrular, bilinmeyen yazılımı güvenli hale getirmez. Bilinmeyen yazılımlar için uygun bir yalıtılmış ortam kullanın. Bu depo özgün JAR dosyalarını barındırmaz. Arşivlenmiş yazılımın hakları ilgili hak sahiplerine aittir.",
-  "g093": "Bu bağımsız bir topluluk aracıdır; Internet Archive'ın resmi bir özelliği değildir. Teknik kaynaklar ve atıflar için {0} belgesine bakın."
+  "g093": "Bu bağımsız bir topluluk aracıdır; Internet Archive'ın resmi bir özelliği değildir. Teknik kaynaklar ve atıflar için {0} belgesine bakın.",
+  "g094": "Yalnızca Mini’de bulunan JAR dosyaları {0} konumundaki ayrı dizini kullanır ve 7z aralık çıkarımı yerine doğrudan Internet Archive üzerinden indirilir. Orijinal Lite/Full dizini değişmez. Kaydetmeden önce SHA-1, SHA-256, CRC32, dosya boyutu ve ZIP bütünlüğü denetlenir.",
+  "g095": "Yayımlanan {0} yerine yerel bir Mini SHA dizini kullan"
 }

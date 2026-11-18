@@ -92,5 +92,7 @@
   "g090": "Przekroczony limit pobierania:",
   "g091": "Prywatność, zaufanie i prawa",
   "g092": "Narzędzie wysyła żądania zakresów archiwum do Internet Archive, a zapytania o indeks do publicznej witryny GitHub Pages projektu. Usługi te mogą widzieć żądania i adres IP; prefiks szukanego hasha znajduje się w adresie URL segmentu indeksu. Metadane i pliki JAR pochodzą od stron trzecich. Kontrole integralności potwierdzają zgodność z opublikowanym hashem, ale nie czynią nieznanego oprogramowania bezpiecznym. Uruchamiaj je w odpowiedniej izolacji. Repozytorium nie przechowuje oryginalnych plików JAR. Prawa do zarchiwizowanego oprogramowania pozostają przy ich właścicielach.",
-  "g093": "Jest to niezależne narzędzie społeczności, nie oficjalna funkcja Internet Archive. Zobacz {0}, aby znaleźć źródła techniczne i informacje o autorstwie."
+  "g093": "Jest to niezależne narzędzie społeczności, nie oficjalna funkcja Internet Archive. Zobacz {0}, aby znaleźć źródła techniczne i informacje o autorstwie.",
+  "g094": "Pliki JAR dostępne tylko w Mini korzystają z oddzielnego indeksu {0} i są pobierane bezpośrednio z Internet Archive, bez wyodrębniania zakresów 7z. Indeks Lite/Full pozostaje bez zmian. Przed zapisaniem sprawdzane są SHA-1, SHA-256, CRC32, rozmiar i integralność ZIP.",
+  "g095": "Użyj lokalnego indeksu SHA Mini zamiast opublikowanego pliku {0}"
 }

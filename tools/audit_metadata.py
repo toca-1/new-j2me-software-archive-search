@@ -27,7 +27,7 @@ MANIFEST_KEYS = {
     'version': 'midlet-version', 'cldc': 'microedition-configuration',
     'midp': 'microedition-profile',
 }
-COLLECTIONS = ('JARchiveLite v11', 'JARchive v11')
+COLLECTIONS = ('JARchiveLite v11', 'JARchive v11', '96x65pixels J2ME mini')
 # Discovery only. A matching key does NOT establish device compatibility.
 EXTENSION_TERMS = (
     'screen', 'resolution', 'display', 'dimension', 'language',
@@ -80,8 +80,11 @@ def audit(data: Path, *, max_examples=12, max_total_examples=500):
         raise ValueError('Invalid unique_files or record_chunk in manifest')
 
     primary = {field: Counter() for field in FIELDS}
-    by_collection = {name: {'detail_pairs': 0, 'manifest_fields': {
-        field: Counter() for field in FIELDS}} for name in COLLECTIONS}
+    def collection_stats():
+        return {'detail_pairs': 0, 'manifest_fields': {field: Counter() for field in FIELDS}}
+
+    # Keep the historical v1 report shape when Mini is absent.
+    by_collection = {name: collection_stats() for name in COLLECTIONS[:2]}
     observations = {key: Counter() for key in (
         'source_crc_disagreement', 'missing_collection_detail',
         'duplicate_collection_detail', 'intra_manifest_conflict',
@@ -124,11 +127,13 @@ def audit(data: Path, *, max_examples=12, max_total_examples=500):
             source_collections = set()
             crcs = set()
             for source in sources:
-                if not isinstance(source, list) or len(source) != 4 or source[0] not in (0, 1):
+                if not isinstance(source, list) or len(source) != 4 or source[0] not in range(len(COLLECTIONS)):
                     raise ValueError(f'Invalid archive source at ID {id_}')
                 source_collections.add(source[0])
                 if nonblank(source[3]):
                     crcs.add(nonblank(source[3]).casefold())
+            if not source_collections:
+                raise ValueError(f'No archive sources at ID {id_}')
             if len(crcs) > 1:
                 observe('source_crc_disagreement', '', id_, sha,
                         manifest_value=', '.join(sorted(crcs)),
@@ -145,7 +150,7 @@ def audit(data: Path, *, max_examples=12, max_total_examples=500):
 
             parsed = {}
             for detail in pair_rows:
-                if not isinstance(detail, list) or len(detail) != 4 or detail[0] not in (0, 1) or not isinstance(detail[1], dict):
+                if not isinstance(detail, list) or len(detail) != 4 or detail[0] not in range(len(COLLECTIONS)) or not isinstance(detail[1], dict):
                     raise ValueError(f'Invalid metadata detail at ID {id_}')
                 coll, raw = detail[:2]
                 total_details += 1
@@ -154,7 +159,7 @@ def audit(data: Path, *, max_examples=12, max_total_examples=500):
                     continue
                 canonical = canonical_manifest(raw)
                 parsed[coll] = canonical
-                by_collection[COLLECTIONS[coll]]['detail_pairs'] += 1
+                by_collection.setdefault(COLLECTIONS[coll], collection_stats())['detail_pairs'] += 1
 
                 for name, value in raw.items():
                     key = str(name).strip().casefold()
@@ -186,33 +191,38 @@ def audit(data: Path, *, max_examples=12, max_total_examples=500):
             for coll in source_collections - parsed.keys():
                 observe('missing_collection_detail', '', id_, sha, COLLECTIONS[coll])
 
-            # The builder prefers Full metadata whenever Full is a source.
-            preferred = 1 if 1 in source_collections else 0
+            # Full, then Lite, then Mini; Mini-only records have no Full/Lite detail.
+            preferred = next(c for c in (1, 0, 2) if c in source_collections)
             preferred_values = parsed.get(preferred, {})
-            other_values = parsed.get(1 - preferred, {})
+            other_collections = sorted(source_collections - {preferred})
             for field, key in MANIFEST_KEYS.items():
                 preferred_raw = next((v for v in preferred_values.get(key, []) if v), '')
-                other_raw = next((v for v in other_values.get(key, []) if v), '')
+                other_fields = [(coll, next((v for v in parsed.get(coll, {}).get(key, []) if v), ''))
+                                for coll in other_collections]
                 actual = primary_values[field]
                 if not actual:
                     if preferred_raw:
                         observe('primary_missing_manifest_present', field, id_, sha,
                                 COLLECTIONS[preferred], manifest_value=preferred_raw,
                                 note='Selected primary field is blank')
-                    elif other_raw:
-                        observe('primary_missing_other_manifest_present', field, id_, sha,
-                                COLLECTIONS[1 - preferred], manifest_value=other_raw,
-                                note='Only the non-preferred collection has this field')
+                    else:
+                        for coll, other_raw in other_fields:
+                            if other_raw:
+                                observe('primary_missing_other_manifest_present', field, id_, sha,
+                                        COLLECTIONS[coll], manifest_value=other_raw,
+                                        note='Only a non-preferred collection has this field')
+                                break
                 elif preferred_raw and comparable(actual) != comparable(preferred_raw):
                     # Some MIDlet names come from MIDlet-1 rather than MIDlet-Name.
                     observe('primary_manifest_difference', field, id_, sha,
                             COLLECTIONS[preferred], actual, preferred_raw,
                             note='Informational; primary field can have a different origin')
-                if preferred_raw and other_raw and comparable(preferred_raw) != comparable(other_raw):
-                    observe('cross_collection_difference', field, id_, sha,
-                            collection='Full vs Lite' if preferred == 1 else 'Lite vs Full',
-                            primary_value=preferred_raw, manifest_value=other_raw,
-                            note='Same SHA-256, differing collection manifest values')
+                for coll, other_raw in other_fields:
+                    if preferred_raw and other_raw and comparable(preferred_raw) != comparable(other_raw):
+                        observe('cross_collection_difference', field, id_, sha,
+                                collection=f'{COLLECTIONS[preferred]} vs {COLLECTIONS[coll]}',
+                                primary_value=preferred_raw, manifest_value=other_raw,
+                                note='Same SHA-256, differing collection manifest values')
         if (shard + 1) % 20 == 0 or shard + 1 == (count + chunk - 1) // chunk:
             print(f'Audited {min((shard + 1) * chunk, count):,}/{count:,} unique records...', flush=True)
 
@@ -223,9 +233,9 @@ def audit(data: Path, *, max_examples=12, max_total_examples=500):
         'schema_version': 1,
         'basis': 'published schema-4 records and collection manifest details; no JAR bytes inspected',
         'units': {
-            'primary_fields': 'unique SHA-256 records (chosen Full metadata if available, else Lite)',
+            'primary_fields': 'unique SHA-256 records (chosen Full, else Lite, else Mini metadata)',
             'manifest_fields': 'distinct (SHA-256, collection) detail pairs',
-            'cross_collection': 'unique SHA-256 records with two comparable nonempty values',
+            'cross_collection': 'field-level comparisons between preferred and other source manifests',
             'examples': 'bounded observations, not a complete inventory of affected records',
         },
         'unique_files': count, 'archive_member_sources': total_sources,

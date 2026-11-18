@@ -2,7 +2,7 @@
 
 [Search J2ME games, apps, and exact JAR builds](https://toca-1.github.io/new-j2me-software-archive-search/) by filename, title, vendor, or various hashes (CRC32, SHA-1, SHA-256). A current browser with JavaScript enabled is required.
 
-This independent index covers [TwoSpacesSG's **New J2ME Software Archive**](https://archive.org/details/96x65pixels_j2me) as well as its upstream sources that are listed in the archive's description, cf. [`SOURCES.md`](SOURCES.md). For an alternative visual exploration of the archive refer to [this website](https://f.nnproject.cc/jarchive/).
+This independent index covers [TwoSpacesSG's **New J2ME Software Archive**](https://archive.org/details/96x65pixels_j2me) (JARchive Full/Lite v11) and the [96x65pixels J2ME Mini collection](https://archive.org/details/96x65pixels_j2me_mini), plus separate links to matching upstream sources described in [`SOURCES.md`](SOURCES.md). The current v2 search index holds **621,715 unique JAR contents** from **817,643 archive-source entries** (including 1,428 new Mini-only JARs). For an alternative visual exploration of the archive refer to [this website](https://f.nnproject.cc/jarchive/).
 
 ## Search features
 
@@ -24,26 +24,30 @@ Moreover, the following information and features are available once a search has
 - Export the full current search result set, including refinements and sorting (up to 10,000 unique files per export, not just the visible page)
 - Expandable manifest details and historical original-source locations
 - Expandable "Other files" browser for distinct JAR contents in the same archive folder with filtering
-## Obtain the verified base index
+## Obtain the verified file indexes
 
-The [index-v1 release](https://github.com/toca-1/new-j2me-software-archive-search/releases/tag/index-v1) provides `jarchive-combined-verified.csv.gz`, its `.sha256` checksum and a verification summary. The CSV records archive paths, filenames, sizes, CRC32, SHA-1 and SHA-256 values.
+The current [index-v2 release](https://github.com/toca-1/new-j2me-software-archive-search/releases/tag/index-v2) contains `jarchive-combined-verified-v2.csv.gz`, its `.sha256` checksum, and an acceptance report for the expanded three-collection index. The historical [index-v1 release](https://github.com/toca-1/new-j2me-software-archive-search/releases/tag/index-v1) remains available as the reference for rebuilding the original Full/Lite index. The CSVs record archive paths, filenames, sizes, CRC32, SHA-1, and SHA-256 values; they **do not contain JAR bytes**.
 
 ## Run or rebuild locally
 
-To rebuild the search index, you need a checkout containing the existing `data/` directory and the four original JARchive `.7z` archives. From the repository root, run:
+For a full v2 rebuild you need the **v1 reference index**, the four original JARchive inputs (or reconstructed v1 enrichment), and the prepared Mini inventories and extracted Mini-only JARs. From the repository root, run:
 
 ```sh
 python3 tools/rebuild_all.py \
-  --reference-data ./data \
+  --reference-data /path/to/v1-checkout/data \
   --archive-dir /path/to/jarchive-archives \
-  --out /path/to/new-output
+  --mini-only-csv /path/to/mini_only_enriched.csv \
+  --mini-extracted /path/to/mini/extracted \
+  --mini-manifest /path/to/mini_sha1_manifest.csv \
+  --combined-csv /path/to/jarchive-combined-verified-v2.csv \
+  --out /path/to/new-v2-output
 ```
 
-This reconstructs the search index, metadata, folder browser and search summaries, then validates the results against the existing index (the output must be a new directory). To preview the website locally, run `python3 -m http.server 8000` and open <http://localhost:8000/>. For prerequisites, limitations and detailed instructions, see [`REBUILD_ALL.md`](REBUILD_ALL.md). To assess missing or conflicting MIDlet metadata and discover candidate manifest fields for later research, see [`METADATA_QUALITY.md`](METADATA_QUALITY.md) and run `python3 tools/audit_metadata.py --data ./data --out /path/to/new-report-directory`.
+This first reproduces v1 against its historical reference, then builds and validates the Mini-expanded v2 index, folder browser, search summaries, and Mini download maps. The output must be a new directory, and separately sourced upstream mirrors are copied, not regenerated. To preview the website locally, run `python3 -m http.server 8000` and open <http://localhost:8000/>. For prerequisites, limitations and detailed instructions, see [`REBUILD_ALL.md`](REBUILD_ALL.md). To assess missing or conflicting MIDlet metadata and discover candidate manifest fields for later research, see [`METADATA_QUALITY.md`](METADATA_QUALITY.md) and run `python3 tools/audit_metadata.py --data ./data --out /path/to/new-report-directory`.
 
 ## Downloads, third-party content, and licensing
 
-This project is independently developed and is not affiliated with or endorsed by TwoSpacesSG, the archive contributors, or the Internet Archive. An optional Python downloader retrieves portions of the original archives from the Internet Archive and reconstructs individual JAR files locally on the user's computer.
+This project is independently developed and is not affiliated with or endorsed by TwoSpacesSG, the archive contributors, or the Internet Archive. An optional Python downloader retrieves portions of the original Full/Lite archives, or downloads verified individual Mini-only JARs, from the Internet Archive.
 
 **This project does not host or bundle the archived JAR files.**
 

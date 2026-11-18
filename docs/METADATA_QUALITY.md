@@ -1,8 +1,8 @@
 # Metadata quality audit
 
-`tools/audit_metadata.py` is an audit of the existing search-index metadata. It inventories which values are available, where the Lite and Full collection manifests disagree, and which manifest keys might warrant research for display size, language, or device support.
+`tools/audit_metadata.py` is an audit of the existing search-index metadata. It inventories which values are available, where different source-collection manifests disagree, including Mini-only metadata, and which manifest keys might warrant research for display size, language, or device support.
 
-## Run on the published index
+## Run on the published v2 index
 
 From the repository root (Python 3.9+):
 
@@ -32,10 +32,12 @@ print('Unique JAR contents:', report['unique_files'])
 print('Primary version:', report['primary_fields']['version'])
 print('Missing primary version, preferred manifest has value:',
       report['observations']['primary_missing_manifest_present'].get('version', 0))
-print('Full/Lite version disagreement:',
+print('Cross-collection version disagreement:',
       report['observations']['cross_collection_difference'].get('version', 0))
 PY
 ```
+
+Primary metadata selection follows the index builder: **Full** first, then **Lite**, then **Mini** for Mini-only files. The report counts each unique SHA-256 once and counts manifest fields per source/content detail pair. The 225,867 supplementary Mini URLs are not separate metadata records; they are not included in this audit.
 
 ## Limitations and safety
 

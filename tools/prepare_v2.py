@@ -225,12 +225,17 @@ def main():
     p.add_argument('--mini-csv', type=Path, required=True)
     p.add_argument('--extracted', type=Path, required=True)
     p.add_argument('--out', type=Path, required=True)
+    p.add_argument('--expected-base', type=int, default=620287)
+    p.add_argument('--expected-extra', type=int, default=1428)
+    p.add_argument('--expected-rows', type=int, default=816215)
     args = p.parse_args()
     try:
         build(args.base_data.expanduser().resolve(),
               args.mini_csv.expanduser().resolve(),
               args.extracted.expanduser().resolve(),
-              args.out.expanduser().absolute())
+              args.out.expanduser().absolute(),
+              expected_base=args.expected_base, expected_extra=args.expected_extra,
+              expected_rows=args.expected_rows)
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError, csv.Error) as error:
         print(f'PREPARATION FAILED: {error}', file=sys.stderr)
         return 1
