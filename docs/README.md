@@ -30,7 +30,7 @@ The current [release](https://github.com/toca-1/new-j2me-software-archive-search
 
 ## Run or rebuild locally
 
-For a full v2 rebuild you need the **v1 reference index**, the four original JARchive inputs (or reconstructed v1 enrichment), and the prepared Mini inventories and extracted Mini-only JARs. From the repository root, run:
+For a full v2 rebuild you need the v1 reference index, the four original JARchive inputs (or reconstructed v1 enrichment), and the prepared Mini inventories and extracted Mini-only JARs. From the repository root, run:
 
 ```sh
 python3 tools/rebuild_all.py \
