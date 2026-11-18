@@ -29,6 +29,11 @@ ITEM = "96x65pixels_j2me"
 DEFAULT_BASE_URL = f"https://archive.org/download/{ITEM}"
 ARCHIVE_NAMES = ("JARchiveLite_v11.7z", "JARchive_v11.7z")
 DEFAULT_INDEX_URL = "https://toca-1.github.io/new-j2me-software-archive-search/retrieval/v1"
+MINI_ITEM = "96x65pixels_j2me_mini"
+MINI_BASE_URL = f"https://archive.org/download/{MINI_ITEM}/"
+DEFAULT_MINI_INDEX_URL = "https://toca-1.github.io/new-j2me-software-archive-search/data"
+MINI_CLI_RESOURCE = "mini/cli.json.gz"
+MINI_TAIL_RE = re.compile(r"(?:%23|A-B|C-D|E-G|H-L|M-O|P-R|S|T-Z)\.7z/[A-Za-z0-9_.~%\-]+\Z")
 MAX_INDEX_BYTES = 8 * MIB
 MAX_INDEX_JSON_BYTES = 32 * MIB
 
@@ -66,6 +71,29 @@ def _validate_index_resource(raw: bytes, relative_name: str) -> None:
                     or len(obj["archives"]) != 2
                     or obj.get("sha256_prefix_length") not in (1, 2)):
                 raise ValueError("unexpected retrieval manifest format")
+        elif relative_name == MINI_CLI_RESOURCE:
+            if (obj.get("version") != 1 or obj.get("item") != MINI_ITEM
+                    or not isinstance(obj.get("sha256"), dict)
+                    or not isinstance(obj.get("sha1"), dict)
+                    or len(obj["sha256"]) > 20000
+                    or len(obj["sha256"]) != len(obj["sha1"])):
+                raise ValueError("unexpected Mini CLI mapping format")
+            for sha256, entry in obj["sha256"].items():
+                if (not isinstance(sha256, str) or not SHA256_RE.fullmatch(sha256)
+                        or not isinstance(entry, list) or len(entry) != 4):
+                    raise ValueError("invalid Mini SHA-256 mapping")
+                sha1, tail, size, crc = entry
+                if (not isinstance(sha1, str) or not SHA1_RE.fullmatch(sha1)
+                        or obj["sha1"].get(sha1) != sha256
+                        or not isinstance(tail, str) or not MINI_TAIL_RE.fullmatch(tail)
+                        or len(tail) > 8192 or not tail.lower().endswith('.jar')
+                        or type(size) is not int or not 0 < size <= 128 * MIB
+                        or not isinstance(crc, str) or not re.fullmatch(r"[0-9A-F]{8}", crc)):
+                    raise ValueError("invalid Mini download entry")
+            if (not all(isinstance(k, str) and SHA1_RE.fullmatch(k)
+                        and isinstance(v, str) and SHA256_RE.fullmatch(v)
+                        and v in obj["sha256"] for k, v in obj["sha1"].items())):
+                raise ValueError("invalid reverse Mini SHA-1 mappings")
         else:
             kind, name = relative_name.split("/", 1)
             prefix = name.split(".")[0]
@@ -128,7 +156,8 @@ class RemoteIndex:
         self.fetch_count = 0
 
     def get(self, relative: str) -> None:
-        if not re.fullmatch(r"(?:manifest\.json|(?:sha1|sha256)/[a-f0-9]{1,2}\.json\.gz)", relative):
+        if relative != MINI_CLI_RESOURCE and not re.fullmatch(
+                r"(?:manifest\.json|(?:sha1|sha256)/[a-f0-9]{1,2}\.json\.gz)", relative):
             raise RetrievalError(f"Disallowed index resource: {relative}")
         target = self.root / relative
         check = target.with_name(target.name + ".sha256")
@@ -609,6 +638,87 @@ def publish_verified_jar(output: Path, content: bytes) -> None:
             pass
 
 
+
+def load_mini_jar_map(raw: bytes, supplied: str) -> dict | None:
+    """Find a Mini-only JAR in the small verified SHA-1/SHA-256 overlay."""
+    _validate_index_resource(raw, MINI_CLI_RESOURCE)
+    obj = json.loads(gzip.decompress(raw))
+    sha256 = supplied if SHA256_RE.fullmatch(supplied) else obj['sha1'].get(supplied)
+    entry = obj['sha256'].get(sha256)
+    if entry is None:
+        return None
+    sha1, tail, size, crc = entry
+    return {'sha256': sha256, 'sha1': sha1, 'url': MINI_BASE_URL + tail,
+            'size': size, 'crc': crc}
+
+
+def retrieve_mini_map(args) -> bytes:
+    if args.mini_map is not None:
+        raw = args.mini_map.read_bytes()
+        _validate_index_resource(raw, MINI_CLI_RESOURCE)
+        print(f"Using local Mini download map: {args.mini_map}", flush=True)
+        return raw
+    remote = RemoteIndex(DEFAULT_MINI_INDEX_URL, args.cache_dir,
+                         offline=args.index_offline, timeout=args.index_fetch_timeout)
+    print(f"Using Mini download map: {remote.url}/{MINI_CLI_RESOURCE}", flush=True)
+    remote.get(MINI_CLI_RESOURCE)
+    return (remote.root / MINI_CLI_RESOURCE).read_bytes()
+
+
+def download_mini_jar(source: dict, *, connect_timeout: float, request_timeout: float,
+                      max_jar_mib: int, max_download_mib: int,
+                      absolute_deadline: float | None) -> bytes:
+    """Fetch one IA 7z member as a JAR and verify all published identifiers."""
+    size = source['size']
+    cap = min(max_jar_mib, max_download_mib) * MIB
+    if size > cap:
+        raise RetrievalError(f"Mini JAR size {size:,} exceeds download limit")
+    timeout = request_timeout
+    if absolute_deadline is not None:
+        timeout = min(timeout, absolute_deadline - time.monotonic())
+    if timeout <= 0:
+        raise RetrievalError('Time limit reached before Mini download')
+    require_curl()
+    with tempfile.TemporaryDirectory(prefix='jarchive-mini-') as temp:
+        output = Path(temp) / 'mini.jar'
+        command = ['curl', '--silent', '--show-error', '--location', '--fail',
+                   '--proto', '=https', '--proto-redir', '=https',
+                   '--max-redirs', '5', '--connect-timeout', str(min(connect_timeout, timeout)),
+                   '--max-time', str(timeout), '--max-filesize', str(cap),
+                   '--header', 'Accept-Encoding: identity', '--output', str(output),
+                   '--write-out', '%{http_code}', source['url']]
+        try:
+            completed = subprocess.run(command, stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE, check=False,
+                                       timeout=timeout + 2)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise RetrievalError(f'Mini download failed: {exc}') from exc
+        status = completed.stdout.decode('ascii', 'replace').strip()
+        if completed.returncode or status != '200':
+            explanation = completed.stderr.decode('utf-8', 'replace').strip()[-220:]
+            raise RetrievalError(f'Mini download HTTP {status or "unknown"}, curl '
+                                 f'exit {completed.returncode}: {explanation}')
+        if not output.is_file() or output.stat().st_size != size:
+            raise RetrievalError('Mini JAR size mismatch')
+        data = output.read_bytes()
+    if hashlib.sha256(data).hexdigest() != source['sha256']:
+        raise RetrievalError('Mini JAR SHA-256 mismatch')
+    if hashlib.sha1(data).hexdigest() != source['sha1']:
+        raise RetrievalError('Mini JAR SHA-1 mismatch')
+    if f'{zlib.crc32(data) & 0xffffffff:08X}' != source['crc']:
+        raise RetrievalError('Mini JAR CRC32 mismatch')
+    try:
+        with zipfile.ZipFile(io.BytesIO(data)) as jar:
+            if not jar.infolist():
+                raise RetrievalError('Mini JAR is an empty ZIP')
+            bad = jar.testzip()
+            if bad is not None:
+                raise RetrievalError(f'Mini JAR member CRC error: {bad}')
+    except (zipfile.BadZipFile, RuntimeError) as exc:
+        raise RetrievalError(f'Mini JAR is not a valid ZIP: {exc}') from exc
+    return data
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -617,12 +727,14 @@ def main(argv=None):
                         help="Use a local index directory (overrides automatic remote lookup)")
     parser.add_argument("--index-url", default=None,
                         help=f"Fetch lookup shards from a remote URL (default: {DEFAULT_INDEX_URL})")
+    parser.add_argument("--mini-map", type=Path,
+                        help="Use a local data/mini/cli.json.gz before v2 is published")
     parser.add_argument("--index-offline", action="store_true",
                         help="Use cached remote index resources without metadata HTTP requests")
     parser.add_argument("--index-fetch-timeout", type=float, default=20,
                         help="Hard time limit for each remote manifest/shard request")
     parser.add_argument("--output", type=Path, help="Output JAR name (default: SHA-256.jar)")
-    parser.add_argument("--source", choices=("auto", "lite", "full"), default="auto")
+    parser.add_argument("--source", choices=("auto", "lite", "full", "mini"), default="auto")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     parser.add_argument("--no-direct", action="store_true", help="Disable IA datanode discovery")
@@ -664,33 +776,71 @@ def main(argv=None):
     if args.index is not None and args.index_url is not None:
         parser.error("Specify either --index or --index-url, not both")
 
-    if args.index is not None:
-        if not (args.index / "manifest.json").is_file():
-            raise RetrievalError(f"Local index not found at {args.index}")
-        index_root = args.index
-        print(f"Using local index: {index_root}", flush=True)
-    elif args.index_url is None and Path("jarchive-retrieval-v1/manifest.json").is_file():
-        index_root = Path("jarchive-retrieval-v1")
-        print(f"Using local index: {index_root}", flush=True)
-    else:
-        remote = RemoteIndex(args.index_url or DEFAULT_INDEX_URL, args.cache_dir,
-                             offline=args.index_offline, timeout=args.index_fetch_timeout)
-        print(f"Using remote index: {remote.url}", flush=True)
-        index_root = remote.prepare(supplied)
-        print(f"Index resources: {remote.fetch_count} downloaded, "
-              f"{remote.hit_count} reused from cache", flush=True)
-
-    sha256, expected_sha1 = resolve_hash(index_root, supplied)
+    # retrieval/v1 remains the authoritative range-extraction index for the
+    # original Lite/Full files. Only a genuine "not in index" can fall back to
+    # the small independent Mini-only direct-JAR map.
+    mini = None
+    legacy_error = None
+    if args.source != 'mini':
+        try:
+            if args.index is not None:
+                if not (args.index / "manifest.json").is_file():
+                    raise RetrievalError(f"Local index not found at {args.index}")
+                index_root = args.index
+                print(f"Using local index: {index_root}", flush=True)
+            elif args.index_url is None and Path("jarchive-retrieval-v1/manifest.json").is_file():
+                index_root = Path("jarchive-retrieval-v1")
+                print(f"Using local index: {index_root}", flush=True)
+            else:
+                remote = RemoteIndex(args.index_url or DEFAULT_INDEX_URL, args.cache_dir,
+                                     offline=args.index_offline, timeout=args.index_fetch_timeout)
+                print(f"Using remote index: {remote.url}", flush=True)
+                index_root = remote.prepare(supplied)
+                print(f"Index resources: {remote.fetch_count} downloaded, "
+                      f"{remote.hit_count} reused from cache", flush=True)
+            sha256, expected_sha1 = resolve_hash(index_root, supplied)
+            sources = load_sources(index_root, sha256)
+            if args.source in ('lite', 'full'):
+                coll = 0 if args.source == 'lite' else 1
+                sources = [s for s in sources if s['collection'] == coll]
+                if not sources:
+                    raise RetrievalError(f'No {args.source} source for this hash')
+        except RetrievalError as exc:
+            can_fallback = (args.source == 'auto' and
+                            (args.mini_map is not None or
+                             (args.index is None and args.index_url is None)) and
+                            str(exc).startswith(('SHA-1 not found in index:',
+                                                 'SHA-256 not found in index:')))
+            if not can_fallback:
+                raise
+            legacy_error = exc
+    if args.source == 'mini' or legacy_error is not None:
+        raw = retrieve_mini_map(args)
+        mini = load_mini_jar_map(raw, supplied)
+        if mini is None:
+            if legacy_error is not None:
+                raise legacy_error
+            raise RetrievalError(f'Hash not found in Mini-only map: {supplied}')
+        sha256, expected_sha1 = mini['sha256'], mini['sha1']
     output = args.output or Path(sha256 + ".jar")
     if not args.dry_run and output.exists():
         parser.error(f"Output exists (will not overwrite): {output}")
-    sources = load_sources(index_root, sha256)
-    if args.source != "auto":
-        coll = 0 if args.source == "lite" else 1
-        sources = [s for s in sources if s["collection"] == coll]
-        if not sources:
-            raise RetrievalError(f"No {args.source} source for this hash")
-
+    if mini is not None:
+        print(f"SHA-1:   {mini['sha1']}\nSHA-256: {mini['sha256']}")
+        print(f"Mini-only source: {mini['url']}")
+        print(f"Expected JAR size: {mini['size']:,} bytes")
+        if args.dry_run:
+            print('Dry run: no JAR downloaded.')
+            return 0
+        absolute_deadline = time.monotonic() + args.time_limit if args.time_limit else None
+        data = download_mini_jar(mini, connect_timeout=args.connect_timeout,
+                                 request_timeout=args.request_timeout,
+                                 max_jar_mib=args.max_jar_mib,
+                                 max_download_mib=args.max_download_mib,
+                                 absolute_deadline=absolute_deadline)
+        publish_verified_jar(output, data)
+        print(f"PASS: saved verified Mini JAR to\n{output}")
+        return 0
     if expected_sha1:
         print(f"SHA-1:   {expected_sha1}\nSHA-256: {sha256}")
     else:

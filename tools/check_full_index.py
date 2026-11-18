@@ -103,7 +103,7 @@ def validate_record(record, record_id):
         require(isinstance(source, list) and len(source) == 4,
                 f'{context}: invalid four-field source')
         collection, filename, archive_path, crc = source
-        require(type(collection) is int and collection in (0, 1),
+        require(type(collection) is int and collection in (0, 1, 2),
                 f'{context}: invalid collection {collection!r}')
         require(isinstance(filename, str) and bool(filename),
                 f'{context}: empty or invalid filename')
@@ -231,7 +231,7 @@ def check_full_index(data: Path, *, progress=False, temp_dir: Path | None = None
                 ) WITHOUT ROWID;
             ''')
             counts = {'lite_only': 0, 'full_only': 0, 'shared_files': 0,
-                      'lite_rows': 0, 'full_rows': 0}
+                      'lite_rows': 0, 'full_rows': 0, 'mini_only': 0, 'mini_rows': 0}
             for shard in range(record_shards):
                 path = data / 'records' / f'{shard:04d}.json.gz'
                 records = read_json(path, gz=True)
@@ -258,20 +258,24 @@ def check_full_index(data: Path, *, progress=False, temp_dir: Path | None = None
                         counts['shared_files'] += 1
                     elif collections == {0}:
                         counts['lite_only'] += 1
-                    else:
+                    elif collections == {1}:
                         counts['full_only'] += 1
+                    elif collections == {2}:
+                        counts['mini_only'] += 1
+                    else:
+                        raise FullIndexError(f'Unexpected mixed collections for record ID {record_id}')
                     for source in record[3]:
-                        counts['lite_rows' if source[0] == 0 else 'full_rows'] += 1
+                        counts[{0:'lite_rows',1:'full_rows',2:'mini_rows'}[source[0]]] += 1
                 db.commit()
                 if (shard + 1) % 20 == 0 or shard + 1 == record_shards:
                     log(f'Validated records/details: {shard + 1}/{record_shards} shards')
 
-            for field in ('lite_only', 'full_only', 'shared_files', 'lite_rows', 'full_rows'):
+            for field in ('lite_only', 'full_only', 'shared_files', 'lite_rows', 'full_rows', 'mini_only', 'mini_rows'):
                 if field in manifest:
                     require(type(manifest[field]) is int and manifest[field] == counts[field],
                             f'Manifest {field}={manifest[field]!r}, computed {counts[field]}')
             if 'total_rows' in manifest:
-                source_rows = counts['lite_rows'] + counts['full_rows']
+                source_rows = counts['lite_rows'] + counts['full_rows'] + counts['mini_rows']
                 require(type(manifest['total_rows']) is int and manifest['total_rows'] == source_rows,
                         f'Manifest total_rows={manifest["total_rows"]!r}, computed {source_rows}')
 

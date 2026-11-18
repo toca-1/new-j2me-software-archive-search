@@ -163,6 +163,73 @@ test('refinement checks all words while explicit sorting respects file size', ()
   assert.deepEqual(Array.from(results), [2, 1]);
 });
 
+test('repeated refinements accumulate and Clear restores the original search', async () => {
+  const {run, context} = loadApp();
+  const nodes = paginationTestDom(context);
+  nodes.set('refine-query', {value: ''});
+  nodes.set('result-sort', {value: 'default'});
+  nodes.set('export-status', {textContent: ''});
+  nodes.set('export-csv', {disabled: false});
+  nodes.set('result-tools', {hidden: false});
+  run(`setResultControlsBusy = () => {};
+       setPaginationBusy = () => {};
+       renderPage = async () => {};
+       originalResults = {
+         ids: [0, 1, 2, 3, 4], busy: false, ready: true,
+         summaries: new Map([
+           [0, {title: 'Sonic the Hedgehog', fields: ['sonic the hedgehog'], bytes: 300}],
+           [1, {title: 'Panasonic Sonic', fields: ['panasonic sonic'], bytes: 200}],
+           [2, {title: 'Sonic Advance', fields: ['sonic advance'], bytes: 100}],
+           [3, {title: 'Sonic 2', fields: ['sonic 2'], bytes: 150}],
+           [4, {title: 'Panasonic hedgehog', fields: ['panasonic hedgehog'], bytes: 250}]
+         ])
+       };
+       active = [...originalResults.ids];`);
+  nodes.get('refine-query').value = '-hedgehog';
+  await run('applyResultTools()');
+  assert.deepEqual(Array.from(run('active')), [1, 2, 3]);
+  assert.equal(nodes.get('refine-query').value, '-hedgehog');
+
+  // Replacing the field with another exclusion should narrow, not restart.
+  nodes.get('refine-query').value = '-panasonic';
+  await run('applyResultTools()');
+  assert.deepEqual(Array.from(run('active')), [2, 3]);
+  assert.equal(nodes.get('refine-query').value, '-hedgehog -panasonic',
+    'Show all active constraints to avoid a misleading invisible filter');
+  nodes.get('result-sort').value = 'size-desc';
+  await run('applyResultTools()');
+  assert.deepEqual(Array.from(run('active')), [3, 2],
+    'Changing sort must retain both exclusions without duplicating them');
+  assert.equal(nodes.get('refine-query').value, '-hedgehog -panasonic');
+
+  nodes.get('refine-query').value = '';
+  await run('applyResultTools()');
+  assert.equal(run('active.length'), 5, 'Clear restores all initial results');
+  assert.equal(run('appliedRefinement'), '');
+
+  nodes.get('result-sort').value = 'default';
+  nodes.get('refine-query').value = '-panasonic';
+  await run('applyResultTools()');
+  assert.deepEqual(Array.from(run('active')), [0, 2, 3],
+    'The cleared Hedgehog exclusion must not leak into later refinements');
+  run('resetResultTools()');
+  assert.equal(run('appliedRefinement'), '',
+    'Starting a new search must forget refinements from the previous search');
+});
+
+test('cumulative refinement preserves quoted and @ filters without duplicating input', () => {
+  const {run} = loadApp();
+  assert.equal(run(`combinedRefinement('-hedgehog', '-panasonic')`),
+    '-hedgehog -panasonic');
+  assert.equal(run(`combinedRefinement('-hedgehog', '-hedgehog -panasonic')`),
+    '-hedgehog -panasonic');
+  assert.equal(run(`combinedRefinement('-hedgehog -panasonic', '-hedgehog')`),
+    '-hedgehog', 'Removing the final displayed term relaxes the query');
+  assert.equal(run(`combinedRefinement('-hedgehog', '@vendor="Sega Studios"')`),
+    '-hedgehog @vendor="Sega Studios"');
+  assert.equal(run(`combinedRefinement('-hedgehog', '')`), '', 'Clear resets all');
+});
+
 test('refinement exclusions work with inclusion, Unicode, and original ordering', () => {
   const {run} = loadApp();
   run(`let sample = {
@@ -766,6 +833,33 @@ test('missing optional summary shard falls back to full record metadata', async 
     'Operators must also work with the full-record fallback');
 });
 
+test('startup and index lookups revalidate cached v1 assets after a v2 release', async () => {
+  const {run, context} = loadApp();
+  const {nodes, section} = startupTestDom(context);
+  run('installResultTools = () => {};');
+  const stale = {...TEST_MANIFEST, unique_files: 620287};
+  const latest = {...TEST_MANIFEST, unique_files: 621715};
+  const requests = [];
+  // Simulate a browser with the old manifest cached: a normal fetch returns
+  // the stale copy; cache revalidation returns the currently deployed file.
+  context.fetch = async (url, options = {}) => {
+    requests.push({url, cache: options.cache});
+    return {ok: true, json: async () => options.cache === 'no-cache' ? latest : stale};
+  };
+  await run('init()');
+  assert.equal(section.hidden, true);
+  assert.equal(nodes.get('unique-count').textContent, '621,715');
+  assert.equal(requests[0].url, './data/manifest.json');
+  assert.equal(requests[0].cache, 'no-cache');
+
+  await run("fetchIndexWithRetry('names-v2/000.json.gz')");
+  await run("fetchIndexWithRetry('records/0000.json.gz')");
+  await run("fetchIndexWithRetry('mini/00.json.gz')");
+  assert.deepEqual(requests.map(item => item.cache),
+    ['no-cache', 'no-cache', 'no-cache', 'no-cache'],
+    'All v2 index assets must revalidate rather than mixing cached v1 shards');
+});
+
 test('temporary HTTP 503 is retried; permanent HTTP 404 is not', async () => {
   const {run, context} = loadApp();
   const requested = [];
@@ -890,6 +984,32 @@ test('download disclosure reveals all links at once after the optional lookup', 
   assert.equal(panel.hidden, false);
   assert.equal(run('upstreamCalls'), 1, 'Reopening does not repeat the lookup');
   assert.equal(archiveLinks.childElementCount, 3, 'No duplicate download links');
+});
+
+test('Mini-only results also show the verified CLI download fallback', () => {
+  const {run, context} = loadApp();
+  const find = downloadTestDom(context);
+  run('addFolderBrowser = async () => {};');
+  const miniOnly = run(`renderResult(17, [
+    '${'a'.repeat(64)}', '${'b'.repeat(40)}', 3072,
+    [[2, '007 Top Agent.jar', 'A-B/007 Top Agent.jar', '02C998DC']],
+    ['007 Top Agent', 'mob.ua', '0.9.20', 'CLDC-1.1', 'MIDP-2.0']
+  ])`);
+  const miniPanel = find(miniOnly, 'download-panel');
+  const miniFallback = find(miniPanel, 'fallback-download');
+  assert.ok(miniFallback, 'Mini-only records must offer Download not working?');
+  assert.equal(find(miniFallback, 'fallback-help-toggle').textContent, 'helpToggle ▾');
+  assert.equal(find(miniPanel, 'download-mirror-group'), null,
+    'Mini-only entries have no invented Lite/Full mirrors');
+  const linuxCommand = find(miniFallback, 'fallback-help-panel').children.find(x =>
+    x?.tagName === 'pre');
+  assert.match(linuxCommand.children[0].textContent, /python3 jarchive_download.py a{64}/);
+
+  const original = run(`renderResult(18, ${testRecord})`);
+  const originalFallback = find(original, 'fallback-download');
+  assert.ok(originalFallback, 'Original JARchive records retain the CLI fallback');
+  assert.equal(find(original, 'download-panel').children.filter(x =>
+    x.className === 'fallback-download').length, 1, 'Only one fallback per result');
 });
 
 test('closing while loading prevents a late reveal, and errors still show primary links', async () => {

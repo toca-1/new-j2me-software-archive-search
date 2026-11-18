@@ -9,7 +9,7 @@ window.J2ME_I18N = (() => {
   let chosen = {};
   // A locale file can be updated while an older response is still in a browser
   // cache. Keep the request versioned and revalidate before displaying UI text.
-  const LOCALE_REVISION = '20261117-export-speed';
+  const LOCALE_REVISION = '20261118-mini-links';
   // Resolve locale assets relative to this JS file, not the HTML document,
   // because the standalone help pages live inside html/.
   const localePath = document.currentScript?.src

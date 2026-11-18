@@ -264,11 +264,22 @@ class RepositoryChecks(unittest.TestCase):
         self.assertEqual(manifest['schema_version'], 4)
         self.assertGreater(manifest['record_chunk'], 0)
         self.assertGreater(manifest['names_chunks'], 0)
-        self.assertEqual(manifest['total_rows'], manifest['lite_rows'] + manifest['full_rows'])
+        # The published v1 index has Lite/Full only. The Mini v2 index adds
+        # 1,428 Mini-only source rows and records without removing old files.
+        mini_rows = manifest.get('mini_rows', 0)
+        mini_only = manifest.get('mini_only', 0)
+        self.assertEqual(manifest['total_rows'],
+                         manifest['lite_rows'] + manifest['full_rows'] + mini_rows)
         self.assertEqual(manifest['unique_files'],
-                         manifest['shared_files'] + manifest['lite_only'] + manifest['full_only'])
+                         manifest['shared_files'] + manifest['lite_only'] +
+                         manifest['full_only'] + mini_only)
         self.assertEqual(manifest['lite_rows'], manifest['shared_files'] + manifest['lite_only'])
         self.assertEqual(manifest['full_rows'], manifest['shared_files'] + manifest['full_only'])
+        if mini_rows:
+            self.assertEqual(manifest['collections'][-1], '96x65pixels J2ME mini')
+            self.assertEqual(summary['mini_only'], mini_only)
+        else:
+            self.assertEqual(mini_only, 0)
         for field, summary_field in (
             ('total_rows', 'rows'), ('unique_files', 'unique_content'),
             ('search_terms', 'search_terms'), ('shared_files', 'shared'),

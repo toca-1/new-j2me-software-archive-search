@@ -5,6 +5,7 @@ const ROOT = './data/';
 const I18N = window.J2ME_I18N;
 const t = (key, vars) => I18N.t(key, vars);
 const IA = 'https://archive.org/download/96x65pixels_j2me/';
+const MINI_IA = 'https://archive.org/download/96x65pixels_j2me_mini/';
 const ARCHIVES = ['JARchiveLite_v11.7z', 'JARchive_v11.7z'];
 // Full archive paths unavailable on the nnproject mirror.
 const NNPROJECT_FULL_MISSING = new Set([".                                       1/.                                       1 (WORMS) (1.0) (CLDC-1.1, MIDP-2.0) (BootJoker) (7f17fdeefba505d9fe2e5a51e789347e2f5153ec8ab8d32ac9c1c79b99e1c789).jar", "..VIETVTC..nguoi con gai mau lanh/..VIETVTC..nguoi con gai mau lanh (HeroCraft) (1.4.0) (CLDC-1.0, MIDP-2.0) (Main) (01505f772d07305863f419a69179c73e9ebebfdfc754e24d2592ef66c1b72ba3).jar", "ChinhDomTV/ChinhDomTV (nguyendoanchinh.wapsite.meTELEVISION%202G-S40) (1.01) (CLDC-1.0, MIDP-2.0) (GameMidlet) (9ce85ae8fddff39f10c5cea313c7c43d82b88761540c9406915cfb933a4e0f0f).jar", "M_YouTube_ChinhDom/M_YouTube_ChinhDom (m.youtube.comwatchdesktop_uri=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D-yOXycNEoAc&v=-yOXycNEoAc&gl=US) (1.01) (CLDC-1.0, MIDP-2.0) (GameMidlet) (1fa199e30bfadadde6ece841ad54e2e0b6afa13b9332cd9f738ad1aadb939571).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (532b09be357ff5054ba559825912bc6f43de6f8de41fdadeadc9773821e0a727).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (6847ae78ed5a35676f251f370584ccaaebee8a496080580abd5a22292c0ed425).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (ac001c962b1dc5803c34333fbed1f7d86e23b1ca52be7a11d1419a7e89f41381).jar", "Readme - T41/Readme - T41 (Cugel@T41) (0.0.1) (CLDC-1.0, MIDP-1.0) (nl.t41.midlet.readme.Main) (ea019cb412a7cabf0de0a34df8f198c9610505b4750bf3e2b448f79ea172228d).jar"]);
@@ -48,6 +49,7 @@ let pageRequestId = 0;
 const recordsCache = new Map(), detailsCache = new Map(), hashesCache = new Map(), namesCache = new Map();
 
 const upstreamShardCache = new Map();
+const miniShardCache = new Map();
 let upstreamSourcesPromise = null;
 
 function elem(tag, text, cls) {
@@ -83,6 +85,19 @@ function operatorHelpLink() {
   return link;
 }
 function urlFor(collection, archivePath) {
+  if (collection === 2) {
+    // In the index, a mini source path begins with its 7z package name.
+    const match = /^([^/]+\.7z)\/(.+)$/s.exec(archivePath);
+    if (!match) return '';
+    try {
+      const encode = value => encodeURIComponent(value).replace(/[!'()*]/g,
+        ch => '%' + ch.charCodeAt(0).toString(16).toUpperCase());
+      return MINI_IA + encode(match[1]) + '/' + encode(match[2]);
+    } catch (_) {
+      // Invalid legacy filename Unicode must not break the entire results UI.
+      return '';
+    }
+  }
   // Archive.org's 7z viewer URL-encodes the WHOLE member path (including '/').
   const member = encodeURIComponent(archivePath).replace(/[!'()*]/g, ch => '%' + ch.charCodeAt(0).toString(16).toUpperCase());
   return IA + ARCHIVES[collection] + '/' + member;
@@ -112,7 +127,10 @@ async function fetchIndexWithRetry(path) {
   for (let attempt = 1; attempt <= FETCH_MAX_ATTEMPTS; attempt++) {
     let response;
     try {
-      response = await fetch(url);
+      // Always revalidate generated index assets after a deployment. Otherwise
+      // a cached v1 manifest can overwrite the v2 count, and mixed-version
+      // name/record shards can point to incorrect record IDs.
+      response = await fetch(url, {cache: 'no-cache'});
     } catch (error) {
       // Retry temporary network failures, but not intentional cancellations.
       if (attempt === FETCH_MAX_ATTEMPTS || error?.name === 'AbortError') throw error;
@@ -329,7 +347,7 @@ function showDetails(target, detailRows) {
   }
   for (const [collection, raw, paths, allPathCount] of detailRows) {
     const section = elem('section', undefined, 'detail-group');
-    section.append(elem('h4', collection === 0 ? t('manifestLite') : t('manifestFull')));
+    section.append(elem('h4', collection === 0 ? t('manifestLite') : collection === 1 ? t('manifestFull') : '96x65pixels mini manifest'));
     const fields = elem('dl', undefined, 'manifest-grid');
     for (const [key, value] of Object.entries(raw)) {
       if (key === 'paths') continue;
@@ -496,18 +514,42 @@ async function upstreamMatchesFor(sha256) {
       url: upstreamMemberUrl(source.base_url, memberPath)};
   }).filter(Boolean);
 }
-async function appendUpstreamDownloads(sha256, list) {
-  try {
-    const matches = await upstreamMatchesFor(sha256);
-    if (!list.isConnected) return; // The search results could have changed.
-    // Build all optional rows before inserting them, avoiding individual updates.
-    const firstNumber = list.childElementCount + 1;
-    list.append(...matches.map((match, index) =>
-      downloadSourceRow(firstNumber + index, match.label, match.path, match.url)));
-  } catch (error) {
-    // Optional upstream URLs must not affect primary links or CLI fallback.
-    console.warn('Optional upstream download links unavailable:', error);
-  }
+// Load only the two-hex-digit SHA-1 bucket needed for this result.
+// The manifest compiler has already escaped the entire 7z member path,
+// including internal slashes, as Internet Archive expects.
+async function miniMatchFor(sha1) {
+  const hash = String(sha1).toLowerCase();
+  if (!/^[0-9a-f]{40}$/.test(hash)) throw new Error('Invalid mini SHA-1');
+  const bucket = await memoized(miniShardCache, hash.slice(0, 2),
+    () => readGzipJson(`mini/${hash.slice(0, 2)}.json.gz`), 12);
+  const match = bucket[hash];
+  if (!match) return null;
+  if (!Array.isArray(match) || match.length !== 3 ||
+      typeof match[0] !== 'string' || typeof match[1] !== 'string' ||
+      typeof match[2] !== 'string') throw new Error('Invalid mini download mapping');
+  return {label: '96x65pixels mini (' + match[0] + ')', path: match[1],
+    url: MINI_IA + match[2]};
+}
+async function appendOptionalDownloads(sha1, sha256, hasOriginalSource, hasMiniSource, list) {
+  // Fetch both independent optional sources concurrently. A failed lookup
+  // must never remove existing Lite/Full/nnproject links.
+  const [mini, upstream] = await Promise.all([
+    miniMatchFor(sha1).catch(error => {
+      console.warn('Optional mini archive link unavailable:', error);
+      return null;
+    }),
+    hasOriginalSource ? upstreamMatchesFor(sha256).catch(error => {
+      console.warn('Optional upstream download links unavailable:', error);
+      return [];
+    }) : Promise.resolve([])
+  ]);
+  if (!list.isConnected) return; // The search results could have changed.
+  const links = [...(mini ? [mini] : []), ...upstream];
+  const firstNumber = list.childElementCount + 1;
+  list.append(...links.map((match, index) =>
+    downloadSourceRow(firstNumber + index, match.label, match.path, match.url)));
+  if (!mini && hasMiniSource)
+    list.append(elem('p', '96x65pixels mini: direct link temporarily unavailable.', 'small'));
 }
 
 // END upstream direct download sources (v1)
@@ -536,7 +578,7 @@ function folderCatalog() {
       throw new Error('Folder index and search index do not match. Rebuild data/folders/.');
     // Verify the byte-identical manifest used when record IDs were assigned.
     if (!crypto?.subtle) throw new Error('Folder index requires a secure origin (localhost or HTTPS).');
-    const response = await fetch(ROOT + 'manifest.json');
+    const response = await fetch(ROOT + 'manifest.json', {cache: 'no-cache'});
     if (!response.ok) throw new Error('Could not verify search index manifest');
     const bytes = await response.arrayBuffer();
     const digest = await crypto.subtle.digest('SHA-256', bytes);
@@ -779,6 +821,7 @@ function renderResult(id, record) {
   const mirrorList = elem('div', undefined, 'download-list');
 
   for (const [coll, , path] of sources) {
+    if (coll === 2) continue; // Mini links are added from the verified SHA-1 mapping.
     iaList.append(downloadSourceRow(iaList.childElementCount + 1,
       coll === 0 ? 'JARchive Lite' : 'JARchive Full',
       path, urlFor(coll, path)));
@@ -822,7 +865,9 @@ function renderResult(id, record) {
     downloadToggle.setAttribute('aria-busy', 'true');
     if (!upstreamLookupStarted) {
       upstreamLookupStarted = true;
-      appendUpstreamDownloads(sha256, iaList).then(() => {
+      appendOptionalDownloads(sha1, sha256,
+        sources.some(source => source[0] === 0 || source[0] === 1),
+        sources.some(source => source[0] === 2), iaList).then(() => {
         // Even if the optional lookup fails, the primary links must be shown.
         upstreamReady = true;
         downloadToggle.removeAttribute('aria-busy');
@@ -847,6 +892,8 @@ function renderResult(id, record) {
     );
     downloadPanel.append(mirrors);
   }
+  // The CLI also supports Mini-only JARs through the published Mini lookup.
+  // Offer the same recovery instructions for every record, regardless of source.
   downloadPanel.append(fallbackDownloadAction(sha256));
 
   const more = elem('button', t('showMetadata'), 'metadata-toggle');
@@ -880,6 +927,7 @@ function renderResult(id, record) {
 }
 // Search within all original matches, with metadata loaded only on demand.
 let originalResults = null, resultViewVersion = 0;
+let appliedRefinement = '';
 let exportBusy = false;
 function resultTitle(id, record) {
   const match = labelsForMatches.get(id);
@@ -890,7 +938,8 @@ function setResultControlsBusy(busy) {
     .forEach(control => { control.disabled = busy; });
 }
 function resetResultTools() {
-  originalResults = null; resultViewVersion++; pageRequestId++; currentPage = 1;
+  originalResults = null; appliedRefinement = '';
+  resultViewVersion++; pageRequestId++; currentPage = 1;
   $('result-tools').hidden = true;
   $('refine-query').value = ''; $('result-sort').value = 'default';
   $('export-status').textContent = '';
@@ -1127,11 +1176,23 @@ function selectResultIds(state, query, order, parsed = parseSearchQuery(query)) 
   }
   return ids;
 }
+// Refinement is cumulative until Clear is pressed. The text field shows the
+// full set of active constraints after each application, even when a user
+// replaces its contents with just their next exclusion or @ filter.
+function combinedRefinement(previous, input) {
+  const next = input.trim();
+  if (!next || !previous) return next;
+  if (next === previous || next.startsWith(previous + ' ')) return next;
+  // Deleting the last term from the displayed query deliberately relaxes it.
+  if (previous.startsWith(next + ' ')) return next;
+  return `${previous} ${next}`;
+}
 async function applyResultTools() {
   const state = originalResults;
   if (!state || state.busy) return;
   const current = generation;
-  const query = $('refine-query').value.trim(), order = $('result-sort').value;
+  const query = combinedRefinement(appliedRefinement, $('refine-query').value);
+  const order = $('result-sort').value;
   const parsed = parseSearchQuery(query);
   state.busy = true; setResultControlsBusy(true); setPaginationBusy(true);
   try {
@@ -1139,7 +1200,10 @@ async function applyResultTools() {
     if (query || order !== 'default')
       await prepareResultSummaries(state, current);
     if (current !== generation || originalResults !== state) return;
-    active = selectResultIds(state, query, order, parsed); currentPage = 1; resultViewVersion++; pageRequestId++;
+    active = selectResultIds(state, query, order, parsed);
+    appliedRefinement = query;
+    $('refine-query').value = query;
+    currentPage = 1; resultViewVersion++; pageRequestId++;
     $('export-status').textContent = '';
     $('results').replaceChildren(); updatePaginationButtons();
     status(query ? t('subsetCount', {count: fmt(active.length), total: fmt(state.ids.length)}) :
@@ -1199,14 +1263,14 @@ function exportRecordRow(id, record) {
   const [sha256, sha1, bytes, sources, quick] = record;
   const [title, vendor, version, cldc, midp] = quick;
   const locations = sources.map(source => {
-    if (!Array.isArray(source) || (source[0] !== 0 && source[0] !== 1))
+    if (!Array.isArray(source) || (source[0] !== 0 && source[0] !== 1 && source[0] !== 2))
       throw new Error(`Invalid archive source for CSV export: ${id}`);
     return source;
   });
   const values = [id, title || resultTitle(id, record), vendor, version, cldc,
     midp, bytes, [...new Set(locations.map(source => String(source[3] || '').toUpperCase()).filter(Boolean))].join('\n'),
     sha1, sha256,
-    [...new Set(locations.map(source => source[0] === 0 ? 'Lite' : 'Full'))].join('\n'),
+    [...new Set(locations.map(source => source[0] === 0 ? 'Lite' : source[0] === 1 ? 'Full' : '96x65pixels mini'))].join('\n'),
     locations.map(source => source[1]).join('\n'),
     locations.map(source => source[2]).join('\n'),
     locations.map(source => urlFor(source[0], source[2])).join('\n')];

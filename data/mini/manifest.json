@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "item": "96x65pixels_j2me_mini",
+  "rows": 225867,
+  "shards": 256,
+  "packages": [
+    "#.7z",
+    "A-B.7z",
+    "C-D.7z",
+    "E-G.7z",
+    "H-L.7z",
+    "M-O.7z",
+    "P-R.7z",
+    "S.7z",
+    "T-Z.7z"
+  ],
+  "hash": "sha1",
+  "prefix_length": 2
+}

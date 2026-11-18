@@ -106,7 +106,7 @@ def build(repo: Path) -> None:
                 if not isinstance(bytesize, int):
                     raise ValueError(f'Invalid file size at ID {record_id}')
                 for source in sources:
-                    if source[0] not in (0,1) or not isinstance(source[2], str):
+                    if source[0] not in (0,1,2) or not isinstance(source[2], str):
                         raise ValueError(f'Invalid source at ID {record_id}')
                     folder, slash, _ = source[2].rpartition('/')
                     if not slash:

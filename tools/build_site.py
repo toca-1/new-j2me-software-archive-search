@@ -42,8 +42,10 @@ if __package__:
 else:
     from check_full_index import check_full_index
 
-COLLECTIONS = {'JARchiveLite v11': 0, 'JARchive v11': 1}
+COLLECTIONS = {'JARchiveLite v11': 0, 'JARchive v11': 1, '96x65pixels J2ME mini': 2}
 ARCHIVES = {0: 'JARchiveLite_v11.7z', 1: 'JARchive_v11.7z'}
+MINI_ARCHIVES = {'#.7z', 'A-B.7z', 'C-D.7z', 'E-G.7z', 'H-L.7z',
+                 'M-O.7z', 'P-R.7z', 'S.7z', 'T-Z.7z'}
 REQUIRED = {
     'collection', 'filename', 'archive_path', 'size_bytes', 'crc32', 'sha1',
     'sha256', 'archive_file', 'metadata_status', 'midlet_name', 'midlet_vendor',
@@ -141,7 +143,10 @@ def load_details(db, file, max_paths):
             if not isinstance(paths, list) or not all(isinstance(p, str) for p in paths):
                 raise ValueError(f'Details line {line_no}: paths must be strings')
             shown = paths if max_paths < 0 else paths[:max_paths]
-            payload = [clean_manifest(info.get('manifest')), shown, len(paths)]
+            path_count = info.get('path_count', len(paths))
+            if type(path_count) is not int or path_count < len(paths):
+                raise ValueError(f'Details line {line_no}: invalid path_count')
+            payload = [clean_manifest(info.get('manifest')), shown, path_count]
             batch.append((sha, coll, as_bytes(payload).decode('utf-8')))
             count += 1
             if len(batch) == 10000:
@@ -165,7 +170,7 @@ def load_csv(db, file, expected_count):
             label TEXT NOT NULL, id INTEGER NOT NULL, kind INTEGER NOT NULL,
             PRIMARY KEY(label,id,kind)) WITHOUT ROWID;
     ''')
-    counts = [0, 0]
+    counts = [0, 0, 0]
     batch = []
     with file.open('r', encoding='utf-8-sig', newline='') as stream:
         reader = csv.DictReader(stream)
@@ -174,7 +179,9 @@ def load_csv(db, file, expected_count):
             raise ValueError('Missing enriched CSV columns: ' + ', '.join(sorted(missing)))
         for line_no, row in enumerate(reader, 2):
             coll = COLLECTIONS.get(row.get('collection'))
-            if coll is None or row.get('archive_file') != ARCHIVES[coll]:
+            expected_archive = ARCHIVES.get(coll)
+            if coll is None or (coll in ARCHIVES and row.get('archive_file') != expected_archive) \
+                    or (coll == 2 and row.get('archive_file') not in MINI_ARCHIVES):
                 raise ValueError(f'CSV row {line_no}: collection/archive mismatch')
             sha1 = row['sha1'].lower()
             sha256 = row['sha256'].lower()
@@ -191,8 +198,10 @@ def load_csv(db, file, expected_count):
                 raise ValueError(f'CSV row {line_no}: invalid size') from error
             if size < 0 or not row['filename']:
                 raise ValueError(f'CSV row {line_no}: invalid size or filename')
-            if row['metadata_status'] != 'matched':
-                raise ValueError(f'CSV row {line_no}: metadata not matched')
+            if row['metadata_status'] != 'matched' and not (
+                coll == 2 and row['metadata_status'] in ('extracted', 'unavailable')
+            ):
+                raise ValueError(f'CSV row {line_no}: unexpected metadata status')
             batch.append((sha256, sha1, size, coll, row['filename'], path, crc,
                           row['midlet_name'] or '', row['midlet_vendor'] or '',
                           row['midlet_version'] or '', row['cldc'] or '', row['midp'] or ''))
@@ -355,14 +364,15 @@ def populate_index(db, stage, *, record_chunk, name_shards, max_paths, counts, d
         'total_rows': sum(counts), 'unique_files': unique,
         'lite_rows': counts[0], 'full_rows': counts[1],
         'shared_files': source_masks[3], 'lite_only': source_masks[1],
-        'full_only': source_masks[2],
+        'full_only': source_masks[2], 'mini_only': source_masks[4], 'mini_rows': counts[2],
         'record_chunk': record_chunk, 'names_chunks': number,
         'names_grams': 'names-v2/grams.json.gz',
         'search_terms': name_count, 'name_index_version': 4,
         'max_original_paths': max_paths, 'detail_records_input': detail_count,
         'schema': ['sha256', 'sha1', 'size', 'sources', 'primary_midlet_metadata'],
         'source_schema': ['collection_code', 'filename', 'archive_path', 'crc32'],
-        'collections': ['JARchiveLite v11', 'JARchive v11'],
+        'collections': ['JARchiveLite v11', 'JARchive v11'] +
+                       (['96x65pixels J2ME mini'] if counts[2] else []),
     }
     write_json(stage / 'manifest.json', manifest)
 
@@ -377,7 +387,8 @@ def populate_index(db, stage, *, record_chunk, name_shards, max_paths, counts, d
         'data_bytes': stats['bytes'],
         'data_mib': round(stats['bytes'] / 2**20, 2),
         'shared': source_masks[3], 'lite_only': source_masks[1],
-        'full_only': source_masks[2], 'details_imported': detail_count,
+        'full_only': source_masks[2], 'mini_only': source_masks[4],
+        'details_imported': detail_count,
         'max_original_paths': max_paths,
     }
     summary = stage / 'build-summary.json'
