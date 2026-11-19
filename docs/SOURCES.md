@@ -6,8 +6,6 @@ This document records the indexed collections and separately examined upstream s
 
 The search index combines JARchive v11 (618,031 source entries), JARchiveLite v11 (198,184) from the [New J2ME Software Archive](https://archive.org/details/96x65pixels_j2me), and 96x65pixels J2ME Mini (1,428 new source entries) from [the Mini collection](https://archive.org/details/96x65pixels_j2me_mini). The v2 index contains 817,643 source entries representing 621,715 unique SHA-256 file contents. Its separate Mini SHA-1 lookup provides 225,867 individual-member URLs, most pointing to files already present in v1 rather than creating duplicate records. See the [index-v2 release](https://github.com/toca-1/new-j2me-software-archive-search/releases/tag/index-v2) for the verified CSV and its checksum.
 
-The upstream coverage research below is a separate historical investigation, not a claim that its unmatched JARs are included as searchable records.
-
 The description of the original JARchive identifies ten historical upstream collections:
 
 | Historical upstream collection | Processing performed for this project |
@@ -23,7 +21,7 @@ The description of the original JARchive identifies ten historical upstream coll
 | [Ovi Store Panic (2015)](https://archive.org/details/2015_ovi_store_panic) | Not processed; downloads unavailable |
 | [Ovi Store Panic 2 (2015)](https://archive.org/details/2015_ovi_store_panic_2) | Not processed; downloads unavailable |
 
-Additionally, the third-party mirror [nnproject](https://f.nnproject.cc/jarchive/) has been incorporated into the site. For rebuilding directly from the original archives, see [`REBUILD.md`](REBUILD.md).
+Additionally, the third-party mirror [nnproject](https://f.nnproject.cc/jarchive/) has been incorporated into the site. Instructions on how to rebuild directly from the original archives can be found [in the readme](github.com/toca-1/new-j2me-software-archive-search/blob/main/docs/README.md#run-or-rebuild-locally).
 
 # Matching and publication methodology
 
