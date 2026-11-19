@@ -26,7 +26,7 @@ Moreover, the following information and features are available once a search has
 - Expandable "Other files" browser for distinct JAR contents in the same archive folder with filtering
 ## Obtain the verified file indexes
 
-The current [release](https://github.com/toca-1/new-j2me-software-archive-search/releases/tag/index-v2) contains `jarchive-combined-verified-v2.csv.gz`, its `.sha256` checksum, and an acceptance report for the expanded three-collection index. The CSVs record archive paths, filenames, sizes, CRC32, SHA-1, and SHA-256 values.
+The current [release](https://github.com/toca-1/new-j2me-software-archive-search/releases/tag/index-v2) contains `jarchive-combined-verified-v2.csv.gz`, its `.sha256` checksum, and an acceptance report for the expanded three-collection index. It provides verified, downloadable snapshots of the archive catalogues which are intended for reference, independent verification, and use by third-party tools without requiring a full archive rebuild. The release contains file paths, sizes, and checksums (but not the complete metadata and auxiliary indexes required to reproduce the website; how this is done is described in the very next section).
 
 ### Run or rebuild locally
 
