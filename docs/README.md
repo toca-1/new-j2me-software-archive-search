@@ -39,7 +39,7 @@ Then open the terminal in the location where the repository is cloned and run
 ```sh
 python3 tools/rebuild_independent.py
 ```
-This generates `jarchive-combined-verified-v2.csv.gz` and a standalone website preview containing the search index, folder browser, search summaries and Mini download maps. See [`REBUILD.md`](REBUILD.md) for output locations and limitations. To preview the checked-in website instead, run `python3 -m http.server 8000` from the repository root and open <http://localhost:8000/>.
+This generates `jarchive-combined-verified-v2.csv.gz` and a standalone website preview containing the search index, folder browser, search summaries and Mini download maps. To preview the checked-in website instead, run `python3 -m http.server 8000` from the repository root and open <http://localhost:8000/>.
 
 ## Downloads, third-party content, and licensing
 
