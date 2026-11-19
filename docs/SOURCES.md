@@ -21,7 +21,7 @@ The description of the original JARchive identifies ten historical upstream coll
 | [Ovi Store Panic (2015)](https://archive.org/details/2015_ovi_store_panic) | Not processed; downloads unavailable |
 | [Ovi Store Panic 2 (2015)](https://archive.org/details/2015_ovi_store_panic_2) | Not processed; downloads unavailable |
 
-Additionally, the third-party mirror [nnproject](https://f.nnproject.cc/jarchive/) has been incorporated into the site. Instructions on how to rebuild directly from the original archives can be found [in the readme](github.com/toca-1/new-j2me-software-archive-search/blob/main/docs/README.md#run-or-rebuild-locally).
+Additionally, the third-party mirror [nnproject](https://f.nnproject.cc/jarchive/) has been incorporated into the site. Instructions on how to rebuild directly from the original archives can be found [in the readme](https://github.com/toca-1/new-j2me-software-archive-search/blob/main/docs/README.md#run-or-rebuild-locally).
 
 # Matching and publication methodology
 
