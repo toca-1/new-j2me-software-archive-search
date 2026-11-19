@@ -6,7 +6,7 @@ Inputs in ~/Downloads: JARchiveLite_v11.7z, JARchive_v11.7z,
 96x65pixels_j2me_mini.zip (containing nine Mini 7z packages).
 Outputs under ~/j2me-independent-rebuild/independent-output/.
 No published CSV, historical reference index, or existing data/ is read.
-Resume by running the command again. See docs/REBUILD.md.
+Resume by running the command again.
 """
 
 from __future__ import annotations

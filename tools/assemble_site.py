@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 """Build a standalone website preview using newly generated index data only.
-
-The builders are from this checkout; existing data/ and historical releases
-are not used. See docs/REBUILD.md.
 """
 from __future__ import annotations
 
