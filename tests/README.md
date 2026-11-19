@@ -4,7 +4,7 @@ Requires **Python 3.9+** and **Node.js 18+**.
 
 ## Source and regression tests (no generated index needed)
 
-To cover repository assets/translations, indexing and rebuild logic using small synthetic fixtures, and browser search/UI behavior:
+To cover repository assets/translations, indexing and independent rebuild logic using small synthetic fixtures, and browser search/UI behavior:
 
 ```sh
 python3 tests/check_repo.py
@@ -27,4 +27,4 @@ The first is a quick sample-based smoke check, while the second verifies folder 
 python3 tools/check_full_index.py --repo .
 ```
 
-It checks all records, details, checksum lookups, searchable names and n-gram maps, using temporary SQLite files. If temporary space is limited, add `--temp-dir /existing/large/directory`. For rebuilding, see [`docs/REBUILD_ALL.md`](../docs/REBUILD_ALL.md).
+It checks all records, details, checksum lookups, searchable names and n-gram maps, using temporary SQLite files. If temporary space is limited, add `--temp-dir /existing/large/directory`. For rebuilding, see [`docs/REBUILD.md`](../docs/REBUILD.md).

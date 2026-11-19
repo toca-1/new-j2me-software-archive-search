@@ -30,20 +30,22 @@ The current [release](https://github.com/toca-1/new-j2me-software-archive-search
 
 ## Run or rebuild locally
 
-For a full v2 rebuild you need the v1 reference index, the four original JARchive inputs (or reconstructed v1 enrichment), and the prepared Mini inventories and extracted Mini-only JARs. From the repository root, run:
+With the original `JARchive_v11.7z`, `JARchiveLite_v11.7z`, and
+`96x65pixels_j2me_mini.zip` in `~/Downloads`, rebuild from the actual JAR bytes:
 
 ```sh
-python3 tools/rebuild_all.py \
-  --reference-data /path/to/v1-checkout/data \
-  --archive-dir /path/to/jarchive-archives \
-  --mini-only-csv /path/to/mini_only_enriched.csv \
-  --mini-extracted /path/to/mini/extracted \
-  --mini-manifest /path/to/mini_sha1_manifest.csv \
-  --combined-csv /path/to/jarchive-combined-verified-v2.csv \
-  --out /path/to/new-v2-output
+sudo apt install python3 7zip
+python3 tools/rebuild_independent.py
 ```
 
-This first reproduces v1 against its historical reference, then builds and validates the Mini-expanded v2 index, folder browser, search summaries, and Mini download maps. The output must be a new directory, and separately sourced upstream mirrors are copied, not regenerated. To preview the website locally, run `python3 -m http.server 8000` and open <http://localhost:8000/>. For prerequisites, limitations and detailed instructions, see [`REBUILD_ALL.md`](REBUILD_ALL.md). To assess missing or conflicting MIDlet metadata and discover candidate manifest fields for later research, see [`METADATA_QUALITY.md`](METADATA_QUALITY.md) and run `python3 tools/audit_metadata.py --data ./data --out /path/to/new-report-directory`.
+This generates `jarchive-combined-verified-v2.csv.gz` and a standalone website
+preview containing the search index, folder browser, search summaries and Mini
+download maps, without using the checked-in `data/` as input. The original
+upstream mirrors and v1 range-downloader mappings are not regenerated or
+changed. See [`REBUILD.md`](REBUILD.md) for output locations and limitations.
+
+To preview the checked-in website instead, run `python3 -m http.server 8000`
+from the repository root and open <http://localhost:8000/>.
 
 ## Downloads, third-party content, and licensing
 
