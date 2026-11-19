@@ -27,4 +27,4 @@ The first is a quick sample-based smoke check, while the second verifies folder 
 python3 tools/check_full_index.py --repo .
 ```
 
-It checks all records, details, checksum lookups, searchable names and n-gram maps, using temporary SQLite files. If temporary space is limited, add `--temp-dir /existing/large/directory`. For rebuilding, see [`docs/REBUILD.md`](../docs/REBUILD.md).
+It checks all records, details, checksum lookups, searchable names and n-gram maps, using temporary SQLite files. If temporary space is limited, add `--temp-dir /existing/large/directory`.
