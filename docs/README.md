@@ -28,7 +28,7 @@ Moreover, the following information and features are available once a search has
 
 The current [release](https://github.com/toca-1/new-j2me-software-archive-search/releases/tag/index-v2) contains `jarchive-combined-verified-v2.csv.gz`, its `.sha256` checksum, and an acceptance report for the expanded three-collection index. The CSVs record archive paths, filenames, sizes, CRC32, SHA-1, and SHA-256 values.
 
-## Run or rebuild locally
+### Run or rebuild locally
 
 Prerequisites:
 - download the original `JARchive_v11.7z`, `JARchiveLite_v11.7z`, and `96x65pixels_j2me_mini.zip` from the ["New" J2ME Software Archive](https://archive.org/details/96x65pixels_j2me) and the [96x65pixels J2ME Mini collection](https://archive.org/details/96x65pixels_j2me_mini), respectively and put them in `~/Downloads`
