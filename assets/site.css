@@ -14,6 +14,7 @@
 .manifest-grid dt{color:var(--muted)}.manifest-grid dd{margin:0;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere}
 .original-paths{display:grid;gap:10px}.original-path{padding:9px 10px;background:#182326;border-radius:7px;display:flex;justify-content:space-between;gap:10px;align-items:center}
 .original-path code{color:#c1cbd0;font-size:13px;overflow-wrap:anywhere;word-break:break-word;min-width:0}
+.original-path > .copy {flex-shrink: 0;white-space: nowrap}
 @media(max-width:650px){.manifest-grid{grid-template-columns:1fr;gap:4px}.manifest-grid dd{margin-bottom:11px}.original-path{align-items:flex-start;flex-direction:column}}
 
 /* Per-result fallback: quick copy action and expandable download instructions. */
